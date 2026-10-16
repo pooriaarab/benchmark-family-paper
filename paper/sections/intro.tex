@@ -2,7 +2,7 @@ Agent benchmarks get expensive, brittle, or stuck. A leaderboard fills up, the i
 
 This paper describes a smaller target. \texttt{benchmark-core} is a shared engine. \suitePackages{} packages sit on it, each with its own tasks and grader, published on npm and under \path{github.com/pooriaarab/benchmark-*}. The directory that lists them is \url{https://aibenchmarkindex.com}.
 
-The packages are not a claim about which model is best. Version \suiteVersion{} ships an offline mock provider and no public leaderboard. What we can check today is narrower. The grader separates a scripted good policy from a scripted bad policy, the same seed reproduces the run, and a second person can execute the benchmark with no API key. Section~\ref{sec:validation} reports those checks. Scores on real models are future work.
+The packages are not a claim about which model is best. Every package ships an offline mock provider, and there is no public leaderboard. What we can check today is narrower. The grader separates a scripted good policy from a scripted bad policy, the same seed reproduces the run, and a second person can execute the benchmark with no API key. Section~\ref{sec:validation} reports those checks. Scores on real models are future work.
 
 One install exposes four ways to run the same tasks. A program can import the SDK. A person can use the CLI. An agent can talk to the MCP server. A Worker or a Node process can mount the HTTP handler. The benchmark author writes tasks, a grader, and provenance. The engine builds the rest.
 
