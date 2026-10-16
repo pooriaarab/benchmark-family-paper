@@ -1,0 +1,13 @@
+class,packages,at_least,source
+unsolvable-tasks,hundred-step;pelican;schema-mutation,3,0.2.0 changelogs
+blind-strategy-credit,pelican;tool-errors;mcp-safety;checkout-consent;honesty;sycophancy;hundred-step;ranking-stability;exploit-resistance;latency-budget;crm-truthfulness;instruction-hierarchy;memory-conflict;accessibility-fix;silent-constraints;rollback-recovery,16,changelogs and PR threads
+honest-answer-rejected,pelican;skateboard;tool-errors;checkout-consent;honesty;ranking-stability;exploit-resistance;schema-mutation,8,changelogs and PR threads
+hidden-split-not-hidden,pelican;skateboard;apology-pizza;tool-errors;cost-per-task;mcp-safety;test-weakening;checkout-consent;honesty;sycophancy;hundred-step;ranking-stability,12,0.2.0 changelogs; sycophancy PR 20
+task-list-cache,mcp-safety;skateboard;payment-delegation,3,changelogs and PR threads
+dropped-breakdowns,pelican;tool-errors,2,changelogs and PR threads
+forged-report-rows,apology-pizza,1,0.2.0 changelog; PR 13
+evaluator-escape,test-weakening,1,0.2.0 changelog; npm deprecation note
+docs-ahead-of-code,sycophancy;pelican;hundred-step,3,changelogs and docs
+generator-bugs,accessibility-fix;ranking-stability;hundred-step,3,changelogs and PR threads
+lexical-detector-miss,crm-truthfulness;honesty,2,changelogs and review issues
+prompt-looser-than-grader,pelican;honesty,2,documented limits and changelog
