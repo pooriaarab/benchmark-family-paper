@@ -481,16 +481,23 @@ def sync_collection(api, dataset_ids: list[str]) -> str:
 
 
 def on_npm(pkg: str) -> bool:
-    """True when the package is published on npm. A non-zero `npm view`
-    (package missing) means the repo exists but has not shipped yet; a
-    missing npm binary is left for the index-entry npx call to report."""
+    """True when the package is published on npm. An E404 from `npm view`
+    means the repo exists but has not shipped yet. Any other failure -
+    network, registry, auth - raises so a transient error cannot silently
+    skip a package and still exit 0. A missing npm binary is left for
+    the index-entry npx call to report."""
     try:
         sh(["npm", "view", pkg, "version"])
         return True
     except FileNotFoundError:
         return True
-    except subprocess.CalledProcessError:
-        return False
+    except subprocess.CalledProcessError as exc:
+        if "E404" in (exc.stderr or ""):
+            return False
+        tail = (exc.stderr or str(exc)).strip().splitlines()
+        raise RuntimeError(
+            f"{pkg}: npm view failed, not treating as unpublished: "
+            f"{tail[-1] if tail else exc}") from exc
 
 
 def self_test() -> int:
@@ -578,10 +585,10 @@ def main() -> int:
     staged = []
     with tempfile.TemporaryDirectory(prefix="hf-stage-") as work:
         for pkg in packages:
-            if not on_npm(pkg):
-                print(f"{pkg}: skipped, not published on npm yet")
-                continue
             try:
+                if not on_npm(pkg):
+                    print(f"{pkg}: skipped, not published on npm yet")
+                    continue
                 rep = build_stage(pkg, Path(work))
             except Exception as exc:
                 print(f"{pkg}: FAILED {exc}")

@@ -16,14 +16,15 @@ benchmark-sycophancy
 benchmark-hundred-step
 benchmark-ranking-stability
 # Wave 2 (on npm as of 2026-10-16)
+benchmark-crm-truthfulness
 benchmark-latency-budget
 benchmark-schema-mutation
 # Wave 2, not on npm yet (skipped until published):
 # benchmark-exploit-resistance
-# benchmark-crm-truthfulness
 # benchmark-instruction-hierarchy
 # benchmark-memory-conflict
 # benchmark-accessibility-fix
-# benchmark-silent-constraints
 # benchmark-rollback-recovery
 # benchmark-payment-delegation
+# npm has a 0.0.0-stage placeholder tarball only, not a real release:
+# benchmark-silent-constraints
