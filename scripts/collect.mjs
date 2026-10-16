@@ -467,8 +467,10 @@ function mockScoresCsv(doc) {
     fmt(pkg.seed1.mean),
     fmt(pkg.seed1.ciLow),
     fmt(pkg.seed1.ciHigh),
+    fmt(pkg.seed1.mean - pkg.seed1.ciLow),
+    fmt(pkg.seed1.ciHigh - pkg.seed1.mean),
   ].join(","));
-  return `${["package,good,bad,seed1,ciLow,ciHigh", ...rows].join("\n")}\n`;
+  return `${["package,good,bad,seed1,ciLow,ciHigh,em,ep", ...rows].join("\n")}\n`;
 }
 
 function rewriteTables(doc) {

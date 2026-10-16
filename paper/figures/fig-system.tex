@@ -1,0 +1,40 @@
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  box/.style={draw, rounded corners=2pt, align=center, inner sep=3.5pt},
+  agent/.style={box, fill=oksky!30},
+  artifact/.style={box, fill=okorange!30},
+  engine/.style={box, fill=okgreen!25},
+  surf/.style={box, fill=okblue!15},
+  rev/.style={box, fill=okverm!25},
+  flow/.style={-{Stealth[length=2.2mm]}, semithick},
+  num/.style={font=\scriptsize\bfseries, midway, fill=white, inner sep=1pt},
+  lbl/.style={font=\scriptsize, midway, fill=white, inner sep=1pt, align=center},
+]
+\node[agent] (builder) {builder agent\\(coding CLI)};
+\node[artifact, right=6mm of builder] (package) {task set, grader,\\provenance};
+\node[engine, right=6mm of package] (eng) {\texttt{defineBenchmark}\\(shared engine)};
+\node[surf, right=6mm of eng, yshift=7mm] (sdk) {SDK};
+\node[surf, below=1.5mm of sdk] (cli) {CLI};
+\node[surf, below=1.5mm of cli] (mcp) {MCP};
+\node[surf, below=1.5mm of mcp] (http) {HTTP};
+\node[artifact, below=16mm of eng] (report) {run report:\\score, reason,\\bootstrap interval};
+\node[rev, below=20mm of builder] (reviewer) {independent reviewer\\(separate session,\\fixed protocol)};
+\node[artifact, right=6mm of reviewer] (hidden) {hidden split\\(fresh seed, kept\\out of the package)};
+
+\draw[flow] (builder) -- node[num]{1} (package);
+\draw[flow] (package) -- node[num]{2} (eng);
+\draw[flow] (eng.east) -- node[lbl]{3} (sdk.west);
+\draw[flow] (eng.east) -- (cli.west);
+\draw[flow] (eng.east) -- (mcp.west);
+\draw[flow] (eng.east) -- (http.west);
+\draw[flow] (mcp.south) |- node[num, pos=0.3]{4} (report.east);
+\draw[flow] (package.south) |- node[lbl, pos=0.3]{generates} (hidden.north);
+\draw[flow] (reviewer.east) -- node[num]{5} (hidden.west);
+\draw[flow] (reviewer.north) -- node[num]{6} (builder.south);
+\draw[flow, dashed] (reviewer.south) to[out=-25,in=215] node[lbl, pos=0.55]{probes} (report.south);
+\end{tikzpicture}
+\caption{The builder and the reviewer are different agents. 1: a coding agent writes the task set, grader, and provenance. 2: one \texttt{defineBenchmark} call on the shared engine. 3: the engine builds four runnable surfaces. 4: a run produces a scored report. 5: an independent reviewer in a separate session attacks the package and the hidden split, which the generator writes outside the published package. 6: findings return to the builder as fix work. The builder never reviews its own output.}
+\label{fig:system}
+\end{figure}
