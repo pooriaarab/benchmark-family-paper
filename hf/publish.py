@@ -24,6 +24,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -41,6 +42,11 @@ SECRET_RE = re.compile(
     r"(hidden|secret|private|internal|token|credential|password|apikey|api[_-]?key|holdout)",
     re.IGNORECASE,
 )
+# Extensions that may leave data/ for the public dataset. Everything else -
+# keys, certs, env files, archives - is refused and listed, even when it
+# matches neither SECRET_RE nor the dotfile rule. .mjs is deliberately absent:
+# generator scripts only ever ship from scripts/.
+DATA_EXT_ALLOWLIST = {".jsonl", ".json", ".md", ".csv", ".txt"}
 TAG_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
 SIZE_STEPS = [(1_000, "n<1K"), (10_000, "1K<n<10K"), (100_000, "10K<n<100K"),
               (1_000_000, "100K<n<1M"), (10_000_000, "1M<n<10M")]
@@ -108,22 +114,38 @@ def require_in_clone(src: Path, clone_root: Path) -> None:
 
 
 def stage_data(clone_dir: Path, stage_dir: Path) -> list[str]:
-    """Copy data/ (minus hidden splits and secrets) and the refresh scripts."""
-    copied = []
+    """Copy data/ (allowlisted extensions only) and the refresh scripts.
+
+    The extension allowlist is the first filter; SECRET_RE, dotfiles and
+    symlinks are the second. Every refused file is listed so nothing is
+    dropped silently."""
+    copied, refused = [], []
     clone_root = clone_dir.resolve()
     src_data = clone_dir / "data"
     if src_data.is_symlink():
         raise SystemExit(f"refusing symlinked data/ in {clone_dir}")
     for src in sorted(src_data.rglob("*")):
         rel = src.relative_to(clone_dir)
-        if src.is_symlink() or src.is_dir() or SECRET_RE.search(str(rel)) or any(
-                p.startswith(".") for p in rel.parts):
+        if src.is_dir():
             continue
-        require_in_clone(src, clone_root)
-        dest = stage_dir / rel
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(src, dest)
-        copied.append(str(rel))
+        if src.is_symlink():
+            refused.append((str(rel), "symlink"))
+        elif src.suffix.lower() not in DATA_EXT_ALLOWLIST:
+            refused.append((str(rel), f"extension {src.suffix or '(none)'} "
+                                     "not in allowlist"))
+        elif SECRET_RE.search(str(rel)):
+            refused.append((str(rel), "matches the secret/hidden name filter"))
+        elif any(p.startswith(".") for p in rel.parts):
+            refused.append((str(rel), "dotfile path"))
+        else:
+            require_in_clone(src, clone_root)
+            dest = stage_dir / rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dest)
+            copied.append(str(rel))
+    if refused:
+        print("refused data files: "
+              + ", ".join(f"{p} ({why})" for p, why in refused))
     scripts = {clone_dir / "scripts" / "gen-tasks.mjs"}
     prov = src_data / "PROVENANCE.md"
     if prov.exists():
@@ -238,8 +260,15 @@ deterministic grader. See PROVENANCE.md for contamination notes.
     return "\n".join(fm) + "\n\n" + body
 
 
+def license_url(licence: str) -> str:
+    """Croissant wants a URL for the licence; map the package's SPDX id."""
+    spdx = str(licence or "MIT").strip()
+    known = {"mit": "https://choosealicense.com/licenses/mit/"}
+    return known.get(spdx.lower(), f"https://spdx.org/licenses/{spdx}")
+
+
 def build_croissant(pkg: str, entry: dict, stats: dict, files: list[str],
-                    stage_dir: Path) -> dict:
+                    stage_dir: Path, licence: str) -> dict:
     """Croissant core fields plus the minimal RAI fields NeurIPS requires."""
     name = entry.get("name") or pkg
     repo_url = f"https://github.com/{GITHUB_ORG}/{pkg}"
@@ -275,7 +304,9 @@ def build_croissant(pkg: str, entry: dict, stats: dict, files: list[str],
             "data": {"@id": "cr:data", "@type": "@json"},
             "dataBiases": "cr:dataBiases", "dataCollection": "cr:dataCollection",
             "dataType": {"@id": "cr:dataType", "@type": "@vocab"},
-            "dct": "http://purl.org/dc/terms/", "examples": "cr:examples",
+            "dct": "http://purl.org/dc/terms/",
+            "equivalentProperty": "cr:equivalentProperty",
+            "examples": {"@id": "cr:examples", "@type": "@json"},
             "extract": "cr:extract", "field": "cr:field",
             "fileProperty": "cr:fileProperty", "fileObject": "cr:fileObject",
             "fileSet": "cr:fileSet", "format": "cr:format",
@@ -297,7 +328,7 @@ def build_croissant(pkg: str, entry: dict, stats: dict, files: list[str],
                        "http://mlcommons.org/croissant/RAI/1.0"],
         "name": name, "description": entry.get("tagline", ""),
         "url": hf_url, "sameAs": [repo_url, entry.get("docs", "")],
-        "license": "https://choosealicense.com/licenses/mit/",
+        "license": license_url(licence),
         "creator": {"@type": "Person", "name": "Pooria Arab",
                     "url": f"https://github.com/{GITHUB_ORG}"},
         "datePublished": entry.get("created", ""),
@@ -368,7 +399,8 @@ def build_stage(pkg: str, work_root: Path) -> dict:
                       pkg_json.get("keywords", []),
                       pkg_json.get("license", "MIT"))
     (stage_dir / "README.md").write_text(card)
-    croissant = build_croissant(pkg, entry, stats, files, stage_dir)
+    croissant = build_croissant(pkg, entry, stats, files, stage_dir,
+                                pkg_json.get("license", "MIT"))
     cro_path = stage_dir / "croissant.json"
     cro_path.write_text(json.dumps(croissant, indent=2) + "\n")
     check = validate_croissant(cro_path)
@@ -392,10 +424,16 @@ def hf_api():
 
 
 def hf_croissant(repo_id: str) -> dict:
-    """What Hugging Face auto-generates for this dataset; raises on error so a
-    failed fetch can never silently skip the metadata merge."""
+    """What Hugging Face auto-generates for this dataset. A 404 means the repo
+    has no files yet (first publish) and there is nothing to merge; any other
+    error raises so a failed fetch never silently skips the metadata merge."""
     url = f"https://huggingface.co/api/datasets/{repo_id}/croissant"
-    return json.loads(urllib.request.urlopen(url, timeout=30).read())
+    try:
+        return json.loads(urllib.request.urlopen(url, timeout=30).read())
+    except urllib.error.HTTPError as exc:
+        if exc.code == 404:
+            return {}
+        raise
 
 
 def merge_croissant(ours: dict, generated: dict) -> tuple[dict, list[str]]:
@@ -410,20 +448,20 @@ def merge_croissant(ours: dict, generated: dict) -> tuple[dict, list[str]]:
 
 
 def upload_dataset(api, pkg: str, stage_dir: Path) -> str:
+    """Upload the staging folder in a single commit. On re-runs the fields
+    the Hub auto-generated after the previous upload are merged into
+    croissant.json before the upload, so the file is written once."""
     repo_id = f"{HF_OWNER}/{pkg}"
     api.create_repo(repo_id, repo_type="dataset", private=False, exist_ok=True)
-    api.upload_folder(repo_id=repo_id, folder_path=str(stage_dir),
-                      repo_type="dataset", delete_patterns="*",
-                      commit_message="Publish benchmark task data")
     generated = hf_croissant(repo_id)
     if generated:
         cro_path = stage_dir / "croissant.json"
         merged, added = merge_croissant(json.loads(cro_path.read_text()), generated)
         if added:
             cro_path.write_text(json.dumps(merged, indent=2) + "\n")
-            api.upload_file(repo_id=repo_id, path_or_fileobj=str(cro_path),
-                            path_in_repo="croissant.json", repo_type="dataset",
-                            commit_message="Merge Hub-generated croissant fields")
+    api.upload_folder(repo_id=repo_id, folder_path=str(stage_dir),
+                      repo_type="dataset", delete_patterns="*",
+                      commit_message="Publish benchmark task data")
     return f"https://huggingface.co/datasets/{repo_id}"
 
 
@@ -442,10 +480,53 @@ def sync_collection(api, dataset_ids: list[str]) -> str:
     return f"https://huggingface.co/collections/{slug}"
 
 
+def on_npm(pkg: str) -> bool:
+    """True when the package is published on npm. A non-zero `npm view`
+    (package missing) means the repo exists but has not shipped yet; a
+    missing npm binary is left for the index-entry npx call to report."""
+    try:
+        sh(["npm", "view", pkg, "version"])
+        return True
+    except FileNotFoundError:
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
 def self_test() -> int:
-    """Build a temp clone whose scripts/ is a symlink to an outside dir and
-    assert that staging refuses it: a file inside a symlinked directory is
-    not itself a symlink, so only the resolve-inside-clone check catches it."""
+    """Two checks in a temp clone. (1) Staging drops every file outside the
+    extension allowlist, the secret/hidden name filter, dotfiles and
+    symlinks - including key/cert files that match no other rule. (2) A
+    symlinked scripts/ directory is refused outright: a file inside a
+    symlinked directory is not itself a symlink, so only the
+    resolve-inside-clone check catches it."""
+    failures = []
+    with tempfile.TemporaryDirectory(prefix="hf-selftest-") as work:
+        work_root = Path(work)
+        clone_dir = work_root / "clone"
+        (clone_dir / "data").mkdir(parents=True)
+        (clone_dir / "data" / "tasks.jsonl").write_text('{"id": "t1"}\n')
+        (clone_dir / "data" / "PROVENANCE.md").write_text("# provenance\n")
+        leak = work_root / "outside" / "leaked.jsonl"
+        leak.parent.mkdir()
+        leak.write_text('{"id": "must never ship"}\n')
+        for name in ("server.key", "id.pem", ".env", "credentials.json",
+                     "tasks.hidden.jsonl", "archive.tar.gz", "gen-tasks.mjs"):
+            (clone_dir / "data" / name).write_text("must never ship\n")
+        (clone_dir / "data" / "link.jsonl").symlink_to(leak)
+        stage_dir = work_root / "stage"
+        staged = stage_data(clone_dir, stage_dir)
+        want = {"data/tasks.jsonl", "data/PROVENANCE.md"}
+        dropped = {name for name in
+                   ("server.key", "id.pem", ".env", "credentials.json",
+                    "tasks.hidden.jsonl", "archive.tar.gz", "gen-tasks.mjs",
+                    "link.jsonl")
+                   if (stage_dir / "data" / name).exists()}
+        if set(staged) != want or dropped:
+            failures.append(f"staging kept the wrong files: staged={staged}, "
+                            f"leaked={sorted(dropped)}")
+        else:
+            print(f"self-test: allowlist staged only {sorted(want)} -> ok")
     with tempfile.TemporaryDirectory(prefix="hf-selftest-") as work:
         work_root = Path(work)
         clone_dir = work_root / "clone"
@@ -457,47 +538,64 @@ def self_test() -> int:
         (clone_dir / "scripts").symlink_to(outside, target_is_directory=True)
         try:
             stage_data(clone_dir, work_root / "stage")
+            failures.append("symlinked scripts/ was staged")
         except SystemExit as exc:
             print(f"self-test: symlinked scripts/ refused ({exc}) -> ok")
-            return 0
-        print("self-test FAILED: symlinked scripts/ was staged", file=sys.stderr)
+    if failures:
+        for f in failures:
+            print(f"self-test FAILED: {f}", file=sys.stderr)
         return 1
+    return 0
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--dry-run", action="store_true",
                     help="build and validate staging folders only, no upload")
-    ap.add_argument("--only", metavar="ID",
-                    help="process a single benchmark-<id>")
+    ap.add_argument("--only", metavar="ID", action="append",
+                    help="process only these benchmark-<id>s "
+                         "(comma-separated or repeated)")
     ap.add_argument("--self-test", action="store_true",
-                    help="run the built-in symlink-escape self test and exit")
+                    help="run the built-in staging-filter self test and exit")
     args = ap.parse_args()
     if args.self_test:
         return self_test()
     packages = load_packages()
     if args.only:
-        want = args.only if args.only.startswith("benchmark-") else f"benchmark-{args.only}"
-        packages = [p for p in packages if p == want]
-        if not packages:
-            print(f"error: {args.only} not in {LIST_FILE}", file=sys.stderr)
+        wanted = set()
+        for item in args.only:
+            for part in item.split(","):
+                part = part.strip()
+                if part:
+                    wanted.add(part if part.startswith("benchmark-")
+                               else f"benchmark-{part}")
+        missing = wanted - set(packages)
+        if missing:
+            print(f"error: not in {LIST_FILE}: {sorted(missing)}",
+                  file=sys.stderr)
             return 2
+        packages = [p for p in packages if p in wanted]
+    staged = []
     with tempfile.TemporaryDirectory(prefix="hf-stage-") as work:
         for pkg in packages:
+            if not on_npm(pkg):
+                print(f"{pkg}: skipped, not published on npm yet")
+                continue
             try:
                 rep = build_stage(pkg, Path(work))
             except Exception as exc:
                 print(f"{pkg}: FAILED {exc}")
                 return 1
+            staged.append(pkg)
             print(f"{rep['pkg']}: staged {rep['files']} files, "
                   f"{rep['tasks']} tasks, croissant: {rep['croissant']}")
     if args.dry_run:
         print("dry run: staging complete, no upload performed")
         return 0
     api = hf_api()
-    for pkg in packages:
+    for pkg in staged:
         print(upload_dataset(api, pkg, OUT_DIR / pkg))
-    print(sync_collection(api, [f"{HF_OWNER}/{p}" for p in packages]))
+    print(sync_collection(api, [f"{HF_OWNER}/{p}" for p in staged]))
     return 0
 
 
