@@ -1,5 +1,8 @@
 # One benchmark-<id> per line. publish.py clones pooriaarab/<name> at main
 # and stages data/ + scripts/gen-tasks.mjs for upload to pooria/<name>.
+# Ids without an npm release are skipped with a message, so a wave can be
+# listed before every package ships.
+# Wave 1
 benchmark-pelican
 benchmark-skateboard
 benchmark-apology-pizza
@@ -12,3 +15,15 @@ benchmark-honesty
 benchmark-sycophancy
 benchmark-hundred-step
 benchmark-ranking-stability
+# Wave 2 (on npm as of 2026-10-16)
+benchmark-latency-budget
+benchmark-schema-mutation
+# Wave 2, not on npm yet (skipped until published):
+# benchmark-exploit-resistance
+# benchmark-crm-truthfulness
+# benchmark-instruction-hierarchy
+# benchmark-memory-conflict
+# benchmark-accessibility-fix
+# benchmark-silent-constraints
+# benchmark-rollback-recovery
+# benchmark-payment-delegation

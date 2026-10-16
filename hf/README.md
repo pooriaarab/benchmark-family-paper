@@ -14,16 +14,20 @@ collection in sync.
    Croissant file with `mlcroissant` (required - the run fails without it).
    Fix the source repo, not the staging folder, when something looks wrong.
 3. Publish: `python3 hf/publish.py`. Creates the public dataset repo under
-   `pooria/` if missing, uploads the staging folder, merges the core fields
-   Hugging Face auto-generates into `croissant.json`, and adds the dataset to
-   the collection. Re-running is idempotent: `upload_folder` passes
-   `delete_patterns="*"`, so files removed from the staging filter are
-   deleted from the Hub on the next run.
+   `pooria/` if missing, merges any fields Hugging Face auto-generated after
+   the previous upload into `croissant.json`, uploads the staging folder in
+   one commit, and adds the dataset to the collection. Re-running is
+   idempotent: `upload_folder` passes `delete_patterns="*"`, so files
+   removed from the staging filter are deleted from the Hub on the next
+   run.
 4. Verify: `python3 hf/verify.py`. Prints `ok` or the failure per dataset.
 
-Use `--only <id>` on both scripts to process a single benchmark.
-`python3 hf/publish.py --self-test` runs the built-in check that a symlinked
-`scripts/` directory in a clone is refused.
+Use `--only <id>` to process a subset; `publish.py` accepts a
+comma-separated or repeated list (`--only pelican,skateboard`), and skips
+any listed id that has no npm release yet. `python3 hf/publish.py
+--self-test` runs the built-in checks that key/cert/dotfile/hidden/symlinked
+data files are refused and that a symlinked `scripts/` directory in a clone
+is rejected.
 
 ## Requirements
 
@@ -36,20 +40,27 @@ Use `--only <id>` on both scripts to process a single benchmark.
 
 ## Gotchas
 
-- **Hidden splits stay hidden.** Anything matching
-  `hidden|secret|private|internal|token|credential|password|apikey|api[_-]?key|holdout`
-  under `data/` (plus dotfiles, symlinks, and any path that resolves outside
-  the clone) is never staged. Hidden splits use a private seed and live
-  outside the public repos anyway.
+- **Hidden splits stay hidden.** Only `.jsonl`, `.json`, `.md`, `.csv` and
+  `.txt` files under `data/` are staged; every other extension (keys,
+  certs, env files, `.mjs` - scripts only ever ship from `scripts/`) is
+  refused and listed. On top of the allowlist, anything matching
+  `hidden|secret|private|internal|token|credential|password|apikey|api[_-]?key|holdout`,
+  dotfiles, symlinks, and any path that resolves outside the clone is
+  dropped too. Hidden splits use a private seed and live outside the public
+  repos anyway.
 - **Refresh scripts.** `scripts/gen-tasks.mjs` always ships; extra
   `scripts/*.mjs` files referenced by `data/PROVENANCE.md` (for example
   `fetch-prices.mjs` for live-feed sources) ship too.
-- **Croissant `@context`.** `mlcroissant` warns unless the full Croissant 1.0
-  context is present; `dataType` must map `@type: @vocab` so `sc:Text`
-  expands to `https://schema.org/Text`. `croissant.json` carries the minimal
+- **Croissant `@context`.** The context carries every key of the standard
+  Croissant 1.0 context (`equivalentProperty` included) plus the RAI terms;
+  `mlcroissant` warns when any standard key is missing. `dataType` must map
+  `@type: @vocab` so `sc:Text` expands to `https://schema.org/Text`, and
+  `license` comes from each package's `package.json` SPDX id.
+  `croissant.json` carries the minimal
   RAI fields (`rai:*`, `prov:wasDerivedFrom`, `prov:wasGeneratedBy`) required
-  by the NeurIPS 2026 Evaluations & Datasets hosting guidelines, then adopts
-  any extra core fields the Hub generates after upload.
+  by the NeurIPS 2026 Evaluations & Datasets hosting guidelines; on re-runs
+  it adopts any extra core fields the Hub generated after the previous
+  upload.
 - **Card facts.** Everything in `README.md` comes from the repo files and
   `npx <package> index-entry --json`; nothing is hand-written per package.
 - **Collections are by title.** The sync looks up the collection by title
