@@ -31,6 +31,7 @@ const INPUTS = [
   ["sections/engine.tex", "engine.tex"],
   ["sections/suite.tex", "suite.tex"],
   ["sections/validation.tex", "validation.tex"],
+  ["sections/adversarial.tex", "adversarial.tex"],
   ["sections/index.tex", "index.tex"],
   ["sections/related.tex", "related.tex"],
   ["sections/closing.tex", "closing.tex"],
