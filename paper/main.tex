@@ -26,8 +26,9 @@
 
 \input{generated/macros.tex}
 \input{generated/review.tex}
+\input{generated/defects-macros.tex}
 
-\title{benchmark-core and the AI Benchmark Index: deterministic, reproducible agent benchmarks with four surfaces}
+\title{Agents Can Build Benchmarks. They Cannot Review Their Own: 22 Cases}
 \author{%
   Pooria Arab\\
   Independent researcher\\
@@ -38,14 +39,13 @@
 \maketitle
 
 \begin{abstract}
-\texttt{benchmark-core} is a TypeScript engine for agent benchmarks.
-\suitePackages{} packages publish on top of it.
-Each package is one task set, one deterministic grader, a provenance record, and four runnable surfaces: an SDK, a command-line interface, an MCP server, and an HTTP handler.
-The numbers below come from \texttt{scripts/collect.mjs}, which runs the packages named in \texttt{paper/data/suite.txt}.
-A mock provider separates a scripted good policy from a scripted bad policy on every package.
-No real model was run for this paper, and the paper makes no claim about any model's ability.
-This release has no public model leaderboard.
-Results on real models are future work.
+More agent benchmarks are now written by the agents that models will later face.
+This paper asks what the record shows when the builder also checks the result.
+We report \suitePackages{} agent benchmarks built mainly by AI coding agents on one shared TypeScript engine; every package passed its own tests.
+Independent review then found defects in all \suitePackages{}: each needed at least one fix round (median \reviewRoundsMedian{}, maximum \reviewRoundsMax{}), the first twelve shipped a release whose changelog marks earlier scores incomparable, and at least \defectBlindStrategyCredit{} packages record a strategy that ignored the task and still earned credit.
+The artifact behind the finding is \texttt{benchmark-core}: one \texttt{defineBenchmark} call builds a task runner, a deterministic grader, and four runnable surfaces (SDK, CLI, MCP, HTTP) per package, and a mock provider separates an oracle script from a trivial script offline.
+We release the engine, the packages, the review protocol, and the defect counts with their public sources.
+This release reports no real-model results and keeps no leaderboard.
 \end{abstract}
 
 \section{Introduction}
@@ -89,6 +89,10 @@ Results on real models are future work.
 
 \section{Limitations, ethics, and availability}
 \input{sections/closing.tex}
+
+\section{Conclusion}
+\label{sec:conclusion}
+\input{sections/conclusion.tex}
 
 \bibliographystyle{plainnat}
 \bibliography{refs}
