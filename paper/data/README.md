@@ -57,7 +57,8 @@
   are excluded, and items the chair labelled "Fixed" inside the same
   review do not count. `council-reviews.csv` carries every review with
   its regex flag and `council-sample.csv` a deterministic stride sample
-  of 50 with a hand-checked `manual` column: all 50 matched the regex,
+  of 50 (every k-th review in the sorted list) with a hand-checked
+  `manual` column: all 50 matched the regex,
   so the estimate is reported as "about". `council-read.csv` is the full
   hand check: after reading the unflagged review bodies, it records the
   13 reviews the regex missed and the 1 it wrongly counted, and

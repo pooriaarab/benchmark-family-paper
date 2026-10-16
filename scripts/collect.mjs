@@ -600,6 +600,8 @@ function reviewDataMacrosTex() {
     `\\newcommand{\\councilSeverityFeaturePrs}{${need("severity_merged_feature_prs")}}`,
     `\\newcommand{\\councilSeverityApprovedPrs}{${need("severity_approved_feature_prs")}}`,
     `\\newcommand{\\councilSeverityChoreReviews}{${need("severity_chore_reviews")}}`,
+    `\\newcommand{\\councilSeverityRegexMissed}{${need("severity_regex_missed")}}`,
+    `\\newcommand{\\councilSeverityRegexFalsePositives}{${need("severity_regex_false_positives")}}`,
     `\\newcommand{\\councilSeverityReviewsRead}{${need("reviews_flagging_severity_read")}}`,
     `\\newcommand{\\councilSeverityPrsRead}{${need("prs_with_severity_read")}}`,
     `\\newcommand{\\councilSampleSize}{${need("sample_size")}}`,
