@@ -5,7 +5,7 @@
 - `suite.json` is the collector's raw output: index entries, provenance,
   and mock runs at seeds 1 and 2. `collectedAt` is the only volatile
   field.
-- `defects.csv` holds the defect classes in the independent-review
+- `defects.csv` holds the defect classes in the probing-review
   section, one row per class. `class` is a hyphenated id, `packages`
   lists the affected package ids without the `benchmark-` prefix
   (semicolon-separated), `at_least` is the sourced minimum count, and
@@ -42,8 +42,14 @@
   is `claude`. "Merged while the check showed failure" means at least one
   completed `vibecodereview` check-run on the merge head commit concluded
   `failure` (the last-run count is in `merged_council_check_last_failure`
-  for comparison); "test job" is the CI `check` job, which runs
-  `npm run ci:local`. `council-prs.csv` is the per-PR detail.
+  for comparison). Check runs are read with `filter=all`: the default
+  `filter=latest` hides a failed run once a re-run exists, which is how
+  the failed `vibecodereview` run on benchmark-honesty#16 was missed in
+  an earlier count. "Test job" is the CI `check` job, which runs
+  `npm run ci:local`; `merged_test_job_failure` counts merge heads whose
+  latest `check` run failed, and `merged_test_job_earlier_failure`
+  counts requests where a `check` run failed on an earlier commit.
+  `council-prs.csv` is the per-PR detail.
   `reviews_flagging_severity` and `prs_with_severity` are regex
   estimates: a review counts as raising a severity item when a bold span
   in its body names Critical or Major and marks it open, not fixed,
@@ -52,7 +58,11 @@
   review do not count. `council-reviews.csv` carries every review with
   its regex flag and `council-sample.csv` a deterministic stride sample
   of 50 with a hand-checked `manual` column: all 50 matched the regex,
-  so the estimate is reported as "about".
+  so the estimate is reported as "about". `council-read.csv` is the full
+  hand check: after reading the unflagged review bodies, it records the
+  13 reviews the regex missed and the 1 it wrongly counted, and
+  `reviews_flagging_severity_read` and `prs_with_severity_read` apply
+  those corrections (about 174 reviews on about 104 pull requests).
 - `trivial.csv` is the preregistered study's first result: per first-wave
   package, the best trivial-policy mean at 0.1.0 (`old`) and 0.2.0
   (`new`) and the winning policy. The registered plan and the deviation

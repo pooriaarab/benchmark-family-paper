@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Rebuild the council-review counts behind Section "Independent
-// adversarial review" from the live GitHub record of the 22 benchmark
+// Rebuild the council-review counts behind Section "Separate probing
+// review" from the live GitHub record of the 22 benchmark
 // repositories. Read-only: never pushes, comments, or edits.
 //
 // Outputs:
@@ -11,9 +11,14 @@
 //   paper/data/council-sample.csv   deterministic sample of reviews for
 //                                   the manual regex check; a `manual`
 //                                   column already filled in is kept.
+//   paper/data/council-read.csv     hand-read corrections to the regex:
+//                                   rows marked `miss` flag reviews the
+//                                   regex lost, `false_positive` rows it
+//                                   wrongly counted.
 //
 // Method notes live in paper/data/README.md. Counts derived from the
-// severity regex are estimates; the sample file records the hand check.
+// severity regex are estimates; the sample and read files record the
+// hand checks.
 
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -26,6 +31,7 @@ const outSummary = join(dataDir, "council.csv");
 const outPrs = join(dataDir, "council-prs.csv");
 const outReviews = join(dataDir, "council-reviews.csv");
 const outSample = join(dataDir, "council-sample.csv");
+const readPath = join(dataDir, "council-read.csv");
 
 // Same merged-chore rule as scripts/builders.mjs.
 const CHORE = /^Add (CITATION|the Zenodo DOI)|^Publish to ants\.land/;
@@ -74,10 +80,12 @@ function ghGraphql(query, vars) {
 
 // All completed runs of each named check on a commit. A re-run on the
 // same head posts a second run, so we keep both the latest conclusion
-// and whether any run concluded failure.
+// and whether any run concluded failure. filter=all is required: the
+// default filter=latest drops a failed run once a re-run exists (the
+// failed vibecodereview run on benchmark-honesty#16 is hidden that way).
 function checkRuns(repo, sha) {
   const data = JSON.parse(run("gh", [
-    "api", `repos/pooriaarab/${repo}/commits/${sha}/check-runs?per_page=100`,
+    "api", `repos/pooriaarab/${repo}/commits/${sha}/check-runs?per_page=100&filter=all`,
   ]));
   const byName = new Map();
   for (const cr of data.check_runs || []) {
@@ -142,6 +150,19 @@ function main() {
       pr[`check_${name}`] = runs.get(name)?.latest?.conclusion || "none";
       pr[`check_${name}_any_failure`] = runs.get(name)?.anyFailure ? 1 : 0;
     }
+    // A failed `check` run on an earlier commit of the request does not
+    // show on the merge head; count those separately.
+    const commits = run("gh", [
+      "api", `repos/pooriaarab/${pr.repo}/pulls/${pr.number}/commits?per_page=100`,
+      "--jq", ".[].sha",
+    ]).trim().split("\n").filter(Boolean);
+    let earlierCheckFail = 0;
+    for (const sha of commits) {
+      if (sha === pr.head) continue;
+      const earlier = checkRuns(pr.repo, sha).get("check");
+      if (earlier?.anyFailure) earlierCheckFail = 1;
+    }
+    pr.check_check_earlier_failure = earlierCheckFail;
   }
 
   const stateCount = (s) => reviews.filter((r) => r.state === s).length;
@@ -150,11 +171,44 @@ function main() {
   const approved = mergedFeature.filter((pr) => pr.approved);
   const anyCouncilFail = mergedFeature.filter((pr) => pr.check_vibecodereview_any_failure === 1);
   const lastCouncilFail = mergedFeature.filter((pr) => pr.check_vibecodereview === "failure");
-  const failedTestJob = mergedFeature.filter((pr) => pr.check_check === "failure"
-    || pr.check_check_any_failure === 1);
+  const lastTestFail = mergedFeature.filter((pr) => pr.check_check === "failure");
+  const earlierTestFail = mergedFeature.filter((pr) => pr.check_check_earlier_failure === 1);
   const severityReviews = reviews.filter((r) => r.severity === 1);
   const severityPrs = new Set(severityReviews.map((r) => `${r.repo}#${r.pr}`));
   const councilPrs = new Set(reviews.map((r) => `${r.repo}#${r.pr}`));
+
+  // Severity counts split by PR class, plus how many approved merged
+  // feature PRs carry a flagged review.
+  const sevOnFeature = severityReviews.filter((r) => r.cls === "merged_feature");
+  const sevOnChore = severityReviews.filter((r) => r.cls === "merged_chore");
+  const sevFeaturePrs = new Set(sevOnFeature.map((r) => `${r.repo}#${r.pr}`));
+  const approvedWithSev = mergedFeature.filter((pr) =>
+    pr.approved && sevFeaturePrs.has(`${pr.repo}#${pr.number}`));
+
+  // Hand-read corrections: council-read.csv lists review ids the regex
+  // missed (verdict `miss`) and ones it wrongly flagged
+  // (`false_positive`), recorded after reading the review bodies.
+  const corrections = [];
+  if (existsSync(readPath)) {
+    for (const line of readFileSync(readPath, "utf8").split(/\r?\n/).slice(1)) {
+      if (!line.trim()) continue;
+      const [repo, pr, index, verdict] = line.split(",");
+      const review = reviews.find((r) =>
+        r.repo === repo && r.pr === Number(pr) && r.index === Number(index));
+      corrections.push({ repo, pr: Number(pr), index: Number(index), verdict, review });
+    }
+  }
+  const missed = corrections.filter((c) => c.verdict === "miss");
+  const falsePositives = corrections.filter((c) => c.verdict === "false_positive");
+  const sevFull = severityReviews.length - falsePositives.length + missed.length;
+  const sevFullPrs = new Set(severityPrs);
+  for (const c of missed) sevFullPrs.add(`${c.repo}#${c.pr}`);
+  for (const c of falsePositives) {
+    if (!severityReviews.some((r) => r.repo === c.repo && r.pr === c.pr
+      && !(r.index === c.index))) {
+      sevFullPrs.delete(`${c.repo}#${c.pr}`);
+    }
+  }
 
   // Keep any manual verdicts already written for the sample.
   const manual = new Map();
@@ -185,10 +239,17 @@ function main() {
     ["merged_never_approved", neverApproved.length, "merged feature PRs reviewed but never APPROVED"],
     ["merged_approved", approved.length, "merged feature PRs with at least one APPROVED"],
     ["merged_council_check_failure", anyCouncilFail.length, "merged feature PRs on whose merge head a vibecodereview run concluded failure"],
-    ["merged_council_check_last_failure", lastCouncilFail.length, "of those, PRs whose latest vibecodereview run still concluded failure"],
-    ["merged_test_job_failure", failedTestJob.length, "merged feature PRs on whose merge head a ci `check` run concluded failure"],
+    ["merged_council_check_last_failure", lastCouncilFail.length, "of those; PRs whose latest vibecodereview run still concluded failure"],
+    ["merged_test_job_failure", lastTestFail.length, "merged feature PRs on whose merge head the latest ci `check` run concluded failure"],
+    ["merged_test_job_earlier_failure", earlierTestFail.length, "merged feature PRs where a `check` run failed on an earlier commit of the request"],
     ["reviews_flagging_severity", `~${severityReviews.length}`, "regex estimate: reviews raising an open Critical or Major item"],
     ["prs_with_severity", `~${severityPrs.size}`, "regex estimate: distinct PRs those reviews sit on"],
+    ["severity_merged_feature_reviews", sevOnFeature.length, "regex-flagged reviews on merged feature PRs"],
+    ["severity_merged_feature_prs", sevFeaturePrs.size, "distinct merged feature PRs with a flagged review"],
+    ["severity_approved_feature_prs", approvedWithSev.length, "approved merged feature PRs with a flagged review"],
+    ["severity_chore_reviews", sevOnChore.length, "regex-flagged reviews on merged chore PRs"],
+    ["reviews_flagging_severity_read", `~${sevFull}`, "hand-read estimate: regex count minus false positives plus missed reviews"],
+    ["prs_with_severity_read", `~${sevFullPrs.size}`, "distinct PRs after the hand-read corrections"],
     ["sample_size", sample.length, "deterministic stride sample for the hand check"],
   ];
 
@@ -198,10 +259,11 @@ function main() {
     `metric,value,note\n${metrics.map((r) =>
       r.map((v) => String(v).replaceAll(",", ";")).join(",")).join("\n")}\n`);
   writeFileSync(outPrs,
-    `repo,pr,class,council_reviews,approved,vibecodereview_latest,vibecodereview_any_failure,check_latest,check_any_failure\n${mergedFeature.map((pr) =>
+    `repo,pr,class,council_reviews,approved,vibecodereview_latest,vibecodereview_any_failure,check_latest,check_any_failure,check_earlier_failure\n${mergedFeature.map((pr) =>
       [pr.repo, pr.number, pr.cls, pr.councilCount, pr.approved ? 1 : 0,
         pr.check_vibecodereview, pr.check_vibecodereview_any_failure,
-        pr.check_check, pr.check_check_any_failure].map(csvField).join(",")).join("\n")}\n`);
+        pr.check_check, pr.check_check_any_failure,
+        pr.check_check_earlier_failure].map(csvField).join(",")).join("\n")}\n`);
   writeFileSync(outReviews,
     `repo,pr,class,review_index,state,submitted_at,regex_severity,excerpt\n${reviews.map((r) =>
       [r.repo, r.pr, r.cls, r.index, r.state, r.submittedAt, r.severity, r.excerpt]
