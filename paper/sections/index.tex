@@ -1,0 +1,7 @@
+The directory at \url{https://private-repo-337e.com} is a list, not a leaderboard. Each package prints an index entry. The fields we rely on are the id, name, tagline, tags, category, a short statement of what the benchmark measures, the npm name, the repository, a docs URL, the version, the task count, the data sources (name, kind, licence, URL), the grader string, the status, saturation, created and updated dates, and a share-card URL. \texttt{benchmark-core} exports that shape as \texttt{IndexEntry}. Table~\ref{tab:graders} is those strings, not a paraphrase.
+
+The permalink contract is \texttt{/benchmarks/<package>}. The pelican docs URL in the entry is \url{https://private-repo-337e.com/benchmarks/benchmark-pelican}, and the other packages follow the same pattern. A directory page should keep that path when the package name does not change.
+
+Discovery is two files in the package, both generated for the MCP registry and for agents that read a short brief. \texttt{server.json} names the stdio server. \texttt{llms.txt} is the short description. Neither file is a score. \texttt{npx <package> mcp} starts the server the registry entry points at.
+
+Status in this release is \texttt{\suiteStatus{}} for every package. That is a warning. The tasks and graders are real enough to run, and they are not a stable evaluation standard. A breaking change to a grader should be a new version, because an old report would otherwise become incomparable. The index entry carries the version for that reason.
