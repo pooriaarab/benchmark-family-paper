@@ -47,8 +47,10 @@ SIZE_STEPS = [(1_000, "n<1K"), (10_000, "1K<n<10K"), (100_000, "10K<n<100K"),
 
 
 def sh(cmd: list[str], cwd: Path | None = None) -> str:
+    # The HF write token must never reach git or npx child processes.
+    env = {k: v for k, v in os.environ.items() if k != "HF_TOKEN"}
     return subprocess.run(cmd, cwd=cwd, check=True, text=True,
-                          capture_output=True).stdout
+                          capture_output=True, env=env).stdout
 
 
 def load_packages(list_file: Path = LIST_FILE) -> list[str]:
@@ -66,14 +68,15 @@ def clone_package(pkg: str, dest: Path) -> None:
 
 
 def index_entry(pkg: str) -> dict:
-    """Facts from `npx <pkg> index-entry --json`, with a repo-file fallback."""
+    """Facts from `npx <pkg> index-entry --json`; raises if npx fails."""
+    last_err: Exception | None = None
     for argv in (["npx", "-y", pkg, "index-entry", "--json"],
                  ["npx", "-y", pkg, "index-entry"]):
         try:
             return json.loads(sh(argv))
-        except (subprocess.CalledProcessError, json.JSONDecodeError, FileNotFoundError):
-            continue
-    return {}
+        except (subprocess.CalledProcessError, json.JSONDecodeError, FileNotFoundError) as exc:
+            last_err = exc
+    raise RuntimeError(f"{pkg}: index-entry via npx failed: {last_err}")
 
 
 def task_stats(tasks_file: Path) -> dict:
@@ -97,9 +100,17 @@ def task_stats(tasks_file: Path) -> dict:
     }
 
 
+def require_in_clone(src: Path, clone_root: Path) -> None:
+    """Reject sources that resolve outside the clone: a file may not itself be
+    a symlink while a parent directory (for example ``scripts/``) is one."""
+    if not src.resolve().is_relative_to(clone_root):
+        raise SystemExit(f"refusing path outside clone: {src}")
+
+
 def stage_data(clone_dir: Path, stage_dir: Path) -> list[str]:
     """Copy data/ (minus hidden splits and secrets) and the refresh scripts."""
     copied = []
+    clone_root = clone_dir.resolve()
     src_data = clone_dir / "data"
     if src_data.is_symlink():
         raise SystemExit(f"refusing symlinked data/ in {clone_dir}")
@@ -108,6 +119,7 @@ def stage_data(clone_dir: Path, stage_dir: Path) -> list[str]:
         if src.is_symlink() or src.is_dir() or SECRET_RE.search(str(rel)) or any(
                 p.startswith(".") for p in rel.parts):
             continue
+        require_in_clone(src, clone_root)
         dest = stage_dir / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dest)
@@ -119,12 +131,14 @@ def stage_data(clone_dir: Path, stage_dir: Path) -> list[str]:
             scripts.add(clone_dir / m)
     for src in sorted(scripts):
         if src.exists() and not src.is_symlink():
+            require_in_clone(src, clone_root)
             dest = stage_dir / src.relative_to(clone_dir)
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, dest)
             copied.append(str(src.relative_to(clone_dir)))
     lic = clone_dir / "LICENSE"
     if lic.exists() and not lic.is_symlink():
+        require_in_clone(lic, clone_root)
         shutil.copy2(lic, stage_dir / "LICENSE")
         copied.append("LICENSE")
     return copied
@@ -320,16 +334,16 @@ def build_croissant(pkg: str, entry: dict, stats: dict, files: list[str],
 
 
 def validate_croissant(path: Path) -> str:
-    """Validate with mlcroissant when it is installed; skip cleanly otherwise."""
+    """Validate with mlcroissant, a required dependency. Any validation error
+    raises so the run exits non-zero instead of shipping a bad file."""
     try:
         import mlcroissant as mlc  # type: ignore
-    except ImportError:
-        return "mlcroissant not installed, skipped"
-    try:
-        mlc.Dataset(jsonld=str(path))
-        return "mlcroissant ok"
-    except Exception as exc:  # report, do not crash the stage
-        return f"mlcroissant warning: {exc}"
+    except ImportError as exc:
+        raise RuntimeError(
+            "mlcroissant is required to validate croissant.json: "
+            "pip install --user mlcroissant") from exc
+    mlc.Dataset(jsonld=str(path))
+    return "mlcroissant ok"
 
 
 def build_stage(pkg: str, work_root: Path) -> dict:
@@ -378,12 +392,10 @@ def hf_api():
 
 
 def hf_croissant(repo_id: str) -> dict:
-    """What Hugging Face auto-generates for this dataset, if anything."""
+    """What Hugging Face auto-generates for this dataset; raises on error so a
+    failed fetch can never silently skip the metadata merge."""
     url = f"https://huggingface.co/api/datasets/{repo_id}/croissant"
-    try:
-        return json.loads(urllib.request.urlopen(url, timeout=30).read())
-    except Exception:
-        return {}
+    return json.loads(urllib.request.urlopen(url, timeout=30).read())
 
 
 def merge_croissant(ours: dict, generated: dict) -> tuple[dict, list[str]]:
@@ -401,7 +413,7 @@ def upload_dataset(api, pkg: str, stage_dir: Path) -> str:
     repo_id = f"{HF_OWNER}/{pkg}"
     api.create_repo(repo_id, repo_type="dataset", private=False, exist_ok=True)
     api.upload_folder(repo_id=repo_id, folder_path=str(stage_dir),
-                      repo_type="dataset",
+                      repo_type="dataset", delete_patterns="*",
                       commit_message="Publish benchmark task data")
     generated = hf_croissant(repo_id)
     if generated:
@@ -430,13 +442,39 @@ def sync_collection(api, dataset_ids: list[str]) -> str:
     return f"https://huggingface.co/collections/{slug}"
 
 
+def self_test() -> int:
+    """Build a temp clone whose scripts/ is a symlink to an outside dir and
+    assert that staging refuses it: a file inside a symlinked directory is
+    not itself a symlink, so only the resolve-inside-clone check catches it."""
+    with tempfile.TemporaryDirectory(prefix="hf-selftest-") as work:
+        work_root = Path(work)
+        clone_dir = work_root / "clone"
+        (clone_dir / "data").mkdir(parents=True)
+        (clone_dir / "data" / "tasks.jsonl").write_text('{"id": "t1"}\n')
+        outside = work_root / "outside"
+        outside.mkdir()
+        (outside / "gen-tasks.mjs").write_text("// must never ship\n")
+        (clone_dir / "scripts").symlink_to(outside, target_is_directory=True)
+        try:
+            stage_data(clone_dir, work_root / "stage")
+        except SystemExit as exc:
+            print(f"self-test: symlinked scripts/ refused ({exc}) -> ok")
+            return 0
+        print("self-test FAILED: symlinked scripts/ was staged", file=sys.stderr)
+        return 1
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--dry-run", action="store_true",
                     help="build and validate staging folders only, no upload")
     ap.add_argument("--only", metavar="ID",
                     help="process a single benchmark-<id>")
+    ap.add_argument("--self-test", action="store_true",
+                    help="run the built-in symlink-escape self test and exit")
     args = ap.parse_args()
+    if args.self_test:
+        return self_test()
     packages = load_packages()
     if args.only:
         want = args.only if args.only.startswith("benchmark-") else f"benchmark-{args.only}"
