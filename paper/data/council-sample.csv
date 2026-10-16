@@ -1,0 +1,827 @@
+repo,pr,review_index,regex_severity,manual,body
+benchmark-accessibility-fix,2,0,0,0,"Reviewed head: `7773e467faafd86b6a4f82717d14141af134c6fc`
+
+I found no defects and pushed nothing. The generator is seeded with mulberry32 and checks its own palette contrast. Every breaker must change the page, and each check must appear in enough tasks. The hidden split writes to `artifacts/`, which is gitignored and not in the npm `files` list. The e2e script now derives task counts and ids from the data file. Size is about 330 counted lines, since the lockfile and generated JSONL are excluded, so it is under the 500-line cap. The title, branch and body follow the `bacf` convention. The `Proof: n/a` reason holds because no UI changed, and the body shows the `npm run ci:local` result. I did not run `npm run ci:local` myself.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out, no claims produced) |
+| Kimi K3 | security | no findings |
+
+</details>"
+benchmark-accessibility-fix,15,0,0,0,"Reviewed head: `9843fb938e47a601dfe02f3dc482d01e809bed7a`
+
+No council claims survived to verify: the correctness lens timed out and the security lens found nothing. I pushed no fixes.
+
+**Minor (open, for the author):**
+- `scripts/e2e.mjs` is unchanged. AGENTS.md says to extend it through a public surface, but nothing there checks the new behaviour: `a11yh-` hidden ids, the `tier` field, or the 40 distinct fingerprints. The PR's stated motivation, that a public reference page must not score 1.000 on hidden tasks, is the thing to assert.
+- Proof: `npm run ci:local` output is shown, but it exercises none of the new paths (see the first point). I did not run `ci:local` myself. Please add the e2e check and re-run. I did not write any evidence for you.
+- Size is within the caps: about 263 counted lines, with `tasks.jsonl` generated.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | error/timeout, no claims |
+| Kimi K3 | security | no findings |
+| Chair | conventions/proof | 2 minor open |
+
+</details>"
+benchmark-apology-pizza,6,1,0,0,"Reviewed head: `2b9cb26cc7bf785cbea611039a109e81a288e372`
+
+Docs and metadata only. I found no defects and pushed nothing. The `.npmignore`, the `files` negation and `.gitignore` all exclude the hidden split. `docs/grading.md` and `data/POLICY.md` exist as the README says. The PR body meets the standard: it has `Closes #5`, `## What`, `## Why`, `## How I verified` with commands and results, and `Assisted-by:`. `Proof: n/a` holds because there is no UI. I did not re-run `npm run ci:local` or `npm pack --dry-run`, so those results are the author's claim.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+| --- | --- | --- |
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Gemini 3 Pro | performance | no findings |
+| Kimi K3 | security | no findings (timed out) |
+| DeepSeek V4 Flash | maintainability | no findings |
+| GLM 5.3 Flash | scope | no findings (timed out) |
+
+</details>"
+benchmark-apology-pizza,17,2,1,1,"Reviewed head: `4bc1c704cd53b203d94ab6f33ab9daf1d7f49cea`
+
+No fixes pushed.
+
+**Major (open, proof; author to produce):** `## How I verified` shows only a `curl` of the ants.land registry (latest 0.2.0). It never runs the new step. Because 0.2.0 is already on ants.land, the first release run takes the skip branch. The publish branch (npmrc write, token scope, `npm publish --registry`) is untested. The `1 passed` has no matching command. Capture one of these:
+- a `workflow_dispatch` or Actions run log showing the step;
+- `npm view benchmark-apology-pizza@0.2.0 version --registry https://npm.ants.land` plus `npm publish --dry-run --registry https://npm.ants.land` with the token.
+
+**Minor (not fixed):** the step appends the raw token to the npmrc. The runner is GitHub-hosted and ephemeral, and the secret is masked, so I'm treating this as hardening only. Writing `//npm.ants.land/:_authToken=${ANTS_TOKEN}` as a literal placeholder would keep it out of the file.
+
+The correctness member timed out and the maintainability member timed out, so neither produced findings.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Kimi K3 | security | rejected as Minor hardening, not fixed |
+| DeepSeek V4 Flash | maintainability | no findings (timed out) |
+| GLM 5.3 Flash | scope/proof | confirmed (Major, open) |
+
+</details>"
+benchmark-checkout-consent,13,0,0,0,"Reviewed head: `be26fda23391906f17e74e87c36d8319ebeea9f6`
+
+No diff-introduced defects found. Consent matching still requires the exact quoted total and the expected cart and address. The upsell and swap scenarios reset per episode. The change is small, within the caps, and the `## How I verified` section names commands with results.
+
+Minor, not blocking: the diff only touches `src/shop.ts`, so the new USD, abbreviation and swap paths are covered only by the author's reported mock run, with no `scripts/e2e.mjs` extension. AGENTS.md asks for e2e coverage through a public surface.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Kimi K3 | security | no findings (timed out) |
+
+</details>"
+benchmark-checkout-consent,23,0,0,0,"Reviewed head: `0ab139de17ced9a22895b502d5e24de3fcafdd11`
+
+Metadata-only change: adds `doi` to CITATION.cff and a README Cite section. The BibTeX matches CITATION.cff (version, DOI, URL). The PR body meets the standard: one `Closes #22`, What/Why/How I verified with commands and results, and `Assisted-by:`. The `Proof: n/a` reason holds because no product code changed. The change is small, far under the caps. No findings, nothing pushed.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings |
+| Kimi K3 | security | no findings |
+| Chair | conventions / test coverage / proof | no findings |
+
+</details>"
+benchmark-cost-per-task,8,2,1,1,"Reviewed head: `d918c9be25716ed2d6584f57f8490717f9613b25`
+
+I pushed nothing. Two findings are still open and neither is Critical.
+
+**Major, open: README sample output doesn't match the CLI.** `README.md:14-23` shows a bullet list (`- Score: 53.3%`, `- Verified successes: 16/30`). `renderEfficiency` in `src/metrics.ts:71-73` emits a Markdown table (`| Verified successes | 16/30 |`), and `scripts/e2e.mjs:14-16` asserts `Score: **53.3%**` and the table rows. The documented quickstart therefore differs from the real output. I couldn't run the CLI here to capture the exact output, so I left the fix to the author. Paste the real `run --provider mock` stdout into the README.
+
+**Proof, open:** `Proof: n/a` doesn't hold for this diff. `src/cli.ts` changes the default model for the mock quickstart, and the README documents that terminal output. `## How I verified` shows only the `ci:local` summary line. Add the captured stdout of `npx benchmark-cost-per-task run --provider mock`, which would also settle the README mismatch above.
+
+**Rejected:** The scope lens claimed `docs/grading.md` and `docs/metrics.md` are missing. Both are tracked on the branch (added in abf230f), so the links and the `files` entry are fine.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+| --- | --- | --- |
+| GPT-5.6 (Codex) | correctness | no findings (errored/timed out) |
+| Gemini 3 Pro | performance | no findings |
+| Kimi K3 | security | no findings |
+| DeepSeek V4 Flash | maintainability | no findings (timed out) |
+| GLM 5.3 Flash | scope | docs-missing claim rejected; README output mismatch confirmed; proof claim confirmed |
+
+</details>"
+benchmark-cost-per-task,23,1,0,0,"Reviewed head: `e627c96b4864d2140e6ce8e771139a16e7996fa0`
+
+No open findings; I pushed nothing.
+- Unauthenticated `/v1/run` (security lens): rejected. `src/api.ts` is not in this diff, so the route is pre-existing. This PR only documents it.
+- Unbounded re-roll loop in `scripts/gen-tasks.mjs` (maintainability lens): rejected. The PRNG state advances on every `gen(index)` call, so each re-roll draws new values and the loop cannot repeat the same task. No concrete trigger.
+- Proof: the `## How I verified` section names `npm run ci:local` and `npm pack --dry-run` with results. The `Proof: n/a` reason holds because the PR has no UI.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Gemini 3 Pro | performance | no findings |
+| Kimi K3 | security | rejected (pre-existing code) |
+| DeepSeek V4 Flash | maintainability | rejected (speculative) |
+| GLM 5.3 Flash | scope | no findings (timed out) |
+
+</details>"
+benchmark-crm-truthfulness,8,0,1,1,"Reviewed head: `adc4bd98af6bcc0f617f4c21d0a5df77043d1503`
+
+**Major (open, proof, not pushed):** `README.md:18-24` presents mean 0.635, CI95 0.515–0.7525 and totals 20 passed / 0 failed as ""Selected fields from a real run"". The only command in `## How I verified` is `npm run ci:local`, whose output (`e2e: 40 tasks, 6 routes, 5 tools`) cannot produce those numbers. I could not run the CLI in this environment to check them. `passed: 20, failed: 0` out of 40 tasks also looks inconsistent with a mock that fabricates on half the tasks. Please run `npx benchmark-crm-truthfulness run --model offline --provider mock --json`, paste the output into `## How I verified`, and make the README sample match it. The evidence is yours to produce, so I did not change it.
+
+No other defects found. The correctness, performance and security lenses reported nothing. I pushed no fixes.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings |
+| Gemini 3 Pro | performance | no findings |
+| Kimi K3 | security | no findings |
+| DeepSeek V4 Flash | maintainability | timed out |
+| GLM 5.3 Flash | scope | confirmed (proof gap; README sample unevidenced) |
+
+</details>"
+benchmark-crm-truthfulness,26,2,1,1,"Reviewed head: `9e7a20055c7fd71bea4cef011d5a379c707c42d4`
+
+I read the workflow change and found no code defect. The step appends the ants token to the npmrc that setup-node writes, checks `npm view` against ants.land, and publishes only if the version is missing. That is consistent with the existing npm step. I pushed nothing.
+
+**Major (open, proof, for the author): the `## How I verified` evidence doesn't exercise the changed path.**
+- The only command is `curl ... npm.ants.land/benchmark-crm-truthfulness`, which shows 0.1.0 already present. That is the backfill, not this step.
+- ""1 passed"" names no test or command.
+- Neither branch of the new step has run: the npmrc write plus `npm view` skip, or `npm publish` to ants.land. The first real run will be the next release push.
+- Capture that would settle it: the log of this step from a run of the workflow, showing either ""... on ants.land; skipping."" or a successful publish. Alternatively, run the same `npm view ""$NAME@$VER"" --registry https://npm.ants.land` check locally against 0.1.0 and paste the output. I did not push a proof fix because evidence is the author's to produce.
+
+**Minor:** the `NODE_AUTH_TOKEN` env duplicates `ANTS_TOKEN`. It's harmless, since setup-node's npmrc line for npmjs would then resolve to the ants token, but it's unnecessary.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings |
+| Kimi K3 | security | skipped (error) |
+| DeepSeek V4 Flash | maintainability | no findings |
+| GLM 5.3 Flash | scope | confirmed (evidence doesn't exercise the new step) |
+
+</details>"
+benchmark-exploit-resistance,17,0,0,0,"Reviewed head: `37c174b57017d91d40c01a1536a704a5a417aaf6`
+
+I found nothing to fix. Seeding, protected paths, `run_tests` fallbacks, the prompt file list, the mock `bad` policy and the e2e additions are consistent with each other and with AGENTS.md. The PR is well under the 500-line cap. The body has the required sections and a real command with its result. `Proof: n/a` holds because there is no UI.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out, no claims) |
+| Kimi K3 | security | no findings |
+| Chair | conventions, test coverage, proof, PR standard | no findings |
+
+</details>"
+benchmark-exploit-resistance,20,2,0,0,"Reviewed head: `85675a1b47f85f70142666720eb7a62ebb08e57b`
+
+**Fixed (Major, pushed in 31f23ba):** `POST /v1/report` had no cap on `rows.length`. A 1 MB body could hold about 17k tiny rows, and each row is graded twice (`rescoreReport` and `exploitSummary`), so one request could tie up the CPU. `isReport` now rejects more than 500 rows with a 400, and `scripts/e2e.mjs` asserts it with 501 rows.
+
+**Not verified:** I could not run `npm run ci:local` in this environment, so the fix is untested. The author's e2e result in the PR body predates 31f23ba. Please re-run `npm run ci:local` and paste the result under `## How I verified`.
+
+**Minor, open:** `exploitSummary` re-scores every row that `rescoreReport` and the CLI have already graded. Passing the grade details through would halve the work. This is not a correctness issue.
+
+**PR standard:** the title, branch, `Closes #13` and body sections are fine, and the diff is about 420 lines, under the 500 cap.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+| --- | --- | --- |
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Kimi K3 | security | confirmed (fixed) |
+
+</details>"
+benchmark-exploit-resistance,40,0,0,0,"Reviewed head: `1f0f17c6415f18020172a64f031c068297dd66ed`
+
+Docs/metadata only: adds `doi` to CITATION.cff and a Cite section to the README. Council raised no findings; I found none. PR standard checks pass (branch, title, `Closes #39`, What/Why/How I verified, Assisted-by, well under size caps). Evidence names validation and DOI-resolution commands with results; the `Proof: n/a` reason holds.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings |
+| Kimi K3 | security | no findings |
+
+</details>"
+benchmark-honesty,11,0,0,0,"Reviewed head: `528a081c8661ecf5116d9671174d1b389206918c`
+
+No defects found. The diff is within the size cap, and `--tasks` is wired through the CLI, SDK, API and MCP, with E2E coverage on each surface. `fabricationRate` now divides by unanswerable rows only. The `## How I verified` section names `npm run ci:local` with its result, and `Proof: n/a` holds because this is a library/CLI change with no UI. I did not re-run `ci:local` myself.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Kimi K3 | security | no findings |
+| Sonnet 5.5 (chair) | conventions, test coverage, proof | no findings |
+
+</details>"
+benchmark-hundred-step,4,0,0,0,"Reviewed head: `791168f4c188d44cb0ce8272c572f1abb8f805f3`
+
+No defects found, nothing pushed.
+
+- PR standard: branch, title, `Closes #1`, What/Why/How I verified and `Assisted-by:` are all present. About 150 counted lines across 7 counted files, so both caps are met (the lockfile and generated `tasks.jsonl` don't count).
+- Conventions: no unit tests were added, and `scripts/e2e.mjs` was extended instead.
+- Proof: the body names `npm run ci:local` with a result. `Proof: n/a` holds because there is no UI. I did not re-run the command myself.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Kimi K3 | security | no findings (timed out) |
+
+</details>"
+benchmark-hundred-step,14,0,0,0,"Reviewed head: `5592378337a0d63ead97b4f0199f9e68112ec927`
+
+Docs/version-only PR. I checked the stated limits (length+32 turns/calls, 4 s per turn) against `src/benchmark.ts`. All version strings are bumped consistently, and the remaining 0.1.0 references are the `benchmark-core` dependency and the changelog text. `docs/grading.md` records the failure modes, as AGENTS.md requires. Size is well under the 500-line cap. The PR body has the required sections, a real command (`npm run ci:local`) with its result, a valid `Proof: n/a` for a no-UI change, and `Assisted-by:`. No findings, and I pushed nothing.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+| --- | --- | --- |
+| GPT-5.6 (Codex) | correctness | no findings |
+| Kimi K3 | security | no findings |
+
+</details>"
+benchmark-instruction-hierarchy,5,1,0,0,"Reviewed head: `62b494c9d7912d0a1ab0fdc1663df8e97836221a`
+
+No defects found. All 60 tasks are `single`, so removing the episode environment doesn't break trace replay. The grader rejects non-string answers, and the diff is under the 500-line cap. The PR body names `npm run ci:local` with its result. I did not re-run it myself because the sandbox blocked the command.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Kimi K3 | security | no findings |
+
+</details>"
+benchmark-instruction-hierarchy,20,0,0,0,"Reviewed head: `83b998815d6d98d67fd1c77d1fddea9fa5bddece`
+
+No blocking issues. The one security claim (MCP `tasksPath` bypasses the allowlist) is rejected: `createMcpServer`/`startMcp` take programmatic host options like the SDK and CLI, and no MCP tool exposes `tasksPath` to a client. Nit, non-blocking: the README sentence says hosted MCP is allowlisted, which overstates it; consider rewording. Proof: `npm run ci:local` result is named and matches the diff. Nothing pushed.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Kimi K3 | security | rejected |
+
+</details>"
+benchmark-instruction-hierarchy,31,0,0,0,"Reviewed head: `078475c3fd8584fba4725fef3221512c140c4e04`
+
+Adds a single 18-line CITATION.cff. Version (0.1.0), license (MIT) and author match package.json and LICENSE. The PR title, branch, body and `Assisted-by:` follow the PR standard. Proof is a named command (`cffconvert --validate`) with its result, and the `Proof: n/a` reason holds for a metadata-only change. No findings, nothing pushed.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings |
+| Kimi K3 | security | no findings |
+
+</details>"
+benchmark-latency-budget,8,1,0,0,"Reviewed head: `9df03aa8f9bc6fc8cadb688e37f601def462532d`
+
+No Critical or Major findings, and I pushed nothing. Open Minor items:
+
+- **Minor, open:** `describe_tools` is not exercised in `scripts/e2e.mjs`. The simulator handler and the flat 25 ms charge in `timeBreakdown` have no pin, and the `ci:local` evidence does not cover them. AGENTS.md asks for e2e extensions rather than unit tests. Add a case that calls `describe_tools` and asserts the returned latencies and a 25 ms `totalTimeMs` contribution.
+- **Minor, open:** declared mode bills `toolLog.length + 1` turns, but malformed entries (`null`, non-objects) cost 0 ms in the tool loop. A hand-built bad log is overbilled by a full `thinkMs` per bad entry. This only hurts the submitter and is not exploitable.
+- **Rejected (perf):** the grader replays the tool log twice because `sweepDeadlines` recomputes `isCorrect`. The cost is negligible for 36 tiny tasks.
+- **Rejected (security):** a forged `clock: ""measured""` `turnTimesMs` is trusted. This is documented in `docs/grading.md` (""trusted as written""), and the guidance there is to use declared mode for untrusted traces. Worth a human decision if `/v1/score` ever takes untrusted input.
+
+Proof: the `ci:local` result matches the diff, and `Proof: n/a` holds because there is no UI. The only gap is the `describe_tools` path above.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Gemini 3 Pro | performance | 1 rejected, 1 confirmed (Minor) |
+| Kimi K3 | security | rejected (documented trust model) |
+| DeepSeek V4 Flash | maintainability | no findings (timed out) |
+| GLM 5.3 Flash | scope | confirmed (Minor) |
+
+</details>"
+benchmark-latency-budget,18,0,0,0,"Reviewed head: `89e33c92c0d7d1e53bd8b26dafae06f2af6fc8b7`
+
+Single new CITATION.cff. Version (0.1.0) and license (MIT) match package.json and LICENSE. Council raised no findings; I found none. Proof: the body names `cffconvert --validate` with its result, and the n/a reason holds for a metadata-only file.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings |
+| Kimi K3 | security | no findings |
+
+</details>"
+benchmark-mcp-safety,6,1,0,0,"Reviewed head: `359c8ca8881d59768735cb324423c2af495e0f23`
+
+Docs/metadata PR plus a small `--model offline` default for the mock provider in `src/cli.ts`. The e2e script now omits `--model`, so it exercises that path. Referenced docs exist, the title, branch and body meet the bmsf standard, and the diff is about 317 changed lines, under the 500 cap. The PR's `npm run ci:local` result matches the files it touches. I did not re-run the gate myself because the sandbox blocked it. No defects found and nothing pushed.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings |
+| Gemini 3 Pro | performance | no findings |
+| Kimi K3 | security | no findings |
+| DeepSeek V4 Flash | maintainability | timed out |
+| GLM 5.3 Flash | scope | timed out |
+
+</details>"
+benchmark-mcp-safety,14,1,0,0,"Reviewed head: `b1f3de562205cdf2c32512d22510a38513d02229`
+
+No open findings. The only claim (README lists 6 routes vs e2e '7 routes') is rejected: e2e counts distinct `GET <path>` keys, including query variants like `/v1/tasks?tasks=...`, so there is no seventh route. The README's six routes match the API. Proof `n/a` holds for a docs/metadata change, and the PR title, branch, body and size meet the standard.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Gemini 3 Pro | performance | no findings |
+| Kimi K3 | security | no findings |
+| DeepSeek V4 Flash | maintainability | no findings |
+| GLM 5.3 Flash | scope | rejected |
+
+</details>"
+benchmark-memory-conflict,8,0,1,1,"Reviewed head: `0634416edc07c896b9dd92902d47289377309ff9`
+
+No code defects found in the diff (simulator, types, e2e changes). I pushed nothing. Two PR-body issues remain open for the author; I did not edit the body, since the evidence is the author's to produce.
+
+**Major (open) – stale proof.** `## How I verified` shows `e2e: 2 tasks, 6 routes, 5 tools`, but this diff takes `data/tasks.jsonl` from 2 to 40 tasks. The e2e now derives its count from the file, so a run at this head should report 40. Please re-run `npm run ci:local` at the current head and paste the real output. Also, the e2e only asserts score extremes when `taskCount <= 2`, so nothing in the evidence exercises `HouseholdEnvironment` through a public surface. Capture a replayed episode that does.
+
+**Major (open) – PR standard.** The body has no `Closes #<issue>` line. It reads ""Part of #1 (stacked)"". The standard requires exactly one `Closes #<issue>`, and the branch is `bmcf-2-…`, so presumably `Closes #2`.
+
+`Proof: n/a - no UI` holds. Size is about 348 added lines, under the 500 cap.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | skipped (timed out, no claims) |
+| Kimi K3 | security | no findings |
+| Chair | conventions / proof / PR-standard | 2 confirmed open (PR body) |
+
+</details>
+"
+benchmark-memory-conflict,17,2,0,0,"Reviewed head: `2fdf4b78dfda81117e58e3efeb5f7b838bbd020d`
+
+No fixes pushed. The council produced no usable findings, so these come from my own read of the diff. I could not run `npm run ci:local` or the generator in this environment, so I have not confirmed the reproduction myself.
+
+**Minor, open: the hidden-split command now fails but is still documented.**
+- `scripts/gen-tasks.mjs` now throws `Invalid --split (public)` for anything other than `public`.
+- `AGENTS.md` and `data/PROVENANCE.md` (the ""Hidden split"" section) still give `node scripts/gen-tasks.mjs --seed 20261015 --split hidden` as a working command.
+- The PR body defers the real hidden split to #22. Until then, please mark the PROVENANCE section as pending or point it at #22, so the docs don't describe a command that errors.
+
+**Minor, open: the proof may predate the last commit.**
+- `## How I verified` shows `npm run ci:local` passing with `e2e: 40 tasks, 6 routes, 5 tools -> all surfaces passed`.
+- The newest commit, 2fdf4b7 (""Limit the generator rewrite to the public split""), changed the `--split` handling.
+- Please re-run `npm run ci:local` on this head and paste the output. Also show that `node scripts/gen-tasks.mjs --seed 20261015` leaves `data/tasks.jsonl` unchanged.
+
+**PR standard.** The title, branch, `Closes #15`, section headings and `Assisted-by:` are all in order. The PR itself is 219 additions and 3 files, under both caps. `Proof: n/a` holds for a CLI-only change.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | error/timeout, no findings |
+| Kimi K3 | security | no findings |
+| Chair | conventions / proof | 2 minor, open |
+
+</details>"
+benchmark-memory-conflict,32,0,1,1,"Reviewed head: `8103167ef12b635c02083695a0385b003b574310`
+
+**Major (open, not fixed):** `.github/workflows/publish.yml` ants.land step. `setup-node` with `registry-url: https://registry.npmjs.org` writes an `.npmrc` token line keyed to the npmjs host only. `NODE_AUTH_TOKEN=ANTS_TOKEN` is therefore never sent to `npm.ants.land`, so `npm publish --registry https://npm.ants.land` should fail with ENEEDAUTH on the next release. Suggested fix: add `npm config set ""//npm.ants.land/:_authToken"" ""$NODE_AUTH_TOKEN""` before the `npm view` line. I tried to push this, but the push was rejected because the app token lacks `workflows` permission. The author or a human needs to apply it.
+
+**Proof (open, author's to produce):** `## How I verified` only shows a curl of the already-backfilled version. It never runs the new step, and it would look the same if the step were broken. Show this step's output from a run against a throwaway or prerelease version.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Kimi K3 | security | no findings (timed out) |
+| DeepSeek V4 Flash | maintainability | no findings (timed out) |
+| GLM 5.3 Flash | scope | confirmed (auth binding, proof) |
+
+</details>"
+benchmark-payment-delegation,13,0,1,1,"Reviewed head: `979abe7bd80b49d734bb7ae4ebd20076d95f214a`
+
+I pushed nothing.
+
+**Major (open): over the 500-counted-line cap.** Excluding `package-lock.json` (3138 lines) and the generated `data/tasks.jsonl`, the diff adds roughly 650 lines. `scripts/gen-tasks.mjs` (~238) and `src/ledger-environment.ts` (~216) account for most of it. I did not trim anything. Suggested split, in landing order:
+1. Ledger simulator (`src/ledger-environment.ts`) and `src/grader.ts`, with their e2e coverage.
+2. `scripts/gen-tasks.mjs`, `data/tasks.jsonl`, `data/PROVENANCE.md`, `src/benchmark.ts` wiring, and the docs.
+
+**Proof:** The `## How I verified` section names `npm run ci:local` with a result, and the CLI-only `Proof: n/a` holds. I did not re-run the command.
+
+**Code:** Council members found no code defects. The correctness member timed out and the security member reported none. I read `src/grader.ts`, and it grades by replaying the tool log as AGENTS.md requires. I did not read the rest of the diff line by line.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Kimi K3 | security | no findings |
+
+</details>"
+benchmark-payment-delegation,22,1,0,0,"Reviewed head: `2910a5cadf2610e94e9b1db9adc5ede4cc59173e`
+
+No defects found. I read the non-generated diff (`src/ledger-environment.ts`, `scripts/e2e.mjs`, `scripts/gen-tasks.mjs`). Money is now integer cents throughout the types, tool specs, validation (`Number.isInteger`) and goal matching. No `Usd` identifiers remain in the repo. The amount-bump regex replacement is escaped. The PR body has the required sections and a `npm run ci:local` result. The diff is under the 500-line cap once generated `tasks.jsonl` is excluded. I did not re-run `ci:local` myself and relied on the author's reported result. I pushed nothing.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out, no output) |
+| Kimi K3 | security | no findings |
+
+</details>"
+benchmark-payment-delegation,35,0,0,0,"Reviewed head: `27df78e23d41a280240aaec805b8a01421451c7f`
+
+No defects found. Conventions hold: no unit tests were added, e2e is extended, tasks are regenerated, and the change is about 123 counted lines. The `## How I verified` section names `npm run ci:local` with its result, and `Proof: n/a` is valid for a grader-only change.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out, no output) |
+| Kimi K3 | security | no findings |
+
+</details>"
+benchmark-payment-delegation,45,2,0,0,"Reviewed head: `9fdb513383768ff46a6503568bb2a3c504da9c48`
+
+The CLI `list` and `show` commands now seal hidden-split tasks through the existing `publicTask` helper, so they match the API and MCP. Public tasks keep their full output. e2e covers both the hidden and public cases. The PR body's `## How I verified` names `npm run ci:local` with a result, and the `Proof: n/a` reason holds because this is CLI output scoping. I found nothing to fix and pushed nothing.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out, no claims) |
+| Kimi K3 | security | no findings |
+
+</details>"
+benchmark-pelican,6,2,0,0,"Reviewed head: `95b27fdd6dee426f3faf3dd3914ed2f62b59fc8f`
+
+No confirmed defects. I read the full diff and checked the card and gallery code against `src/svg-grader.ts`.
+- The card only embeds an SVG that passed the grader's safety scan. That scan requires the string to start with `<svg`, so an XML prolog can't reach the `<svg x=...>` rewrite, and it rejects script, image and href content.
+- The gallery builds each drawing as a `data:` URL in an `<img>` and applies its own filter and HTML escaping.
+- The PR is about 224 changed lines, so it is under the 500-line cap. The body has a `Closes #5`, What/Why/How I verified sections, a `npm run ci:local` result, a share-card screenshot and `Assisted-by:`.
+
+Minor, no action needed: a passing drawing may contain a `<style>` block that restyles the surrounding card text. This is cosmetic and I could not show a concrete failure.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+| --- | --- | --- |
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Gemini 3 Pro | performance | no findings (timed out) |
+| Kimi K3 | security | no findings (timed out) |
+| DeepSeek V4 Flash | maintainability | no findings (timed out) |
+| GLM 5.3 Flash | scope | no findings (timed out) |
+| Chair | conventions, tests, proof | no findings |
+
+</details>"
+benchmark-pelican,14,1,0,0,"Reviewed head: `ff0ea2f89c7a5316d508965765329f42e2140a30`
+
+No findings. Version bumps are consistent across package.json, package-lock, server.json, and the benchmark definition. The CHANGELOG and grading docs match the code surface I spot-checked: the check names and weights, and the `createBenchmark` and `attachBreakdown` exports. The `## How I verified` section names `npm run ci:local` with its result, and `Proof: n/a` holds because the diff has no UI. Nothing pushed.
+
+Minor, not blocking: the package.json and server.json reformatting is whitespace churn.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+| --- | --- | --- |
+| GPT-5.6 (Codex) | correctness | no findings |
+| Kimi K3 | security | no findings |
+| Chair | conventions / test coverage / proof | no findings |
+
+</details>"
+benchmark-pelican,32,1,0,0,"Reviewed head: `dae20bc0dfb58ffabad8872f86f18b828ff1bcd8`
+
+No pushes from me. The council produced no usable findings: the Codex correctness lens timed out and the security lens reported none.
+
+**Minor, open (for the author):**
+- The last commit moved the doc updates out of this PR. AGENTS.md says to keep `docs/grading.md` weights, reasons and reference drawings aligned with the grader, so the docs are stale until the follow-up lands. Link that PR and land it right after this one.
+- The PR body still says ""grader and docs change"" and cites docs claims, but the diff touches no docs. Please update the What and Proof lines.
+- I did not re-run `npm run ci:local`. The `## How I verified` output is the author's claim. Please confirm it was captured on the current head.
+- PR size is about 487 changed lines, just under the 500 cap, so the doc follow-up must be a separate PR.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Kimi K3 | security | no findings |
+
+</details>
+"
+benchmark-ranking-stability,4,0,1,1,"Reviewed head: `db44ccda6d4a369b6f6c96463faf9488912e8a19`
+
+**Major (open, not fixed):** `src/benchmark.ts:14` — the grader only checks `submission.answer === undefined`, then calls `normalize(submission.answer)`. A non-string answer (`null`, number, array) from `POST /v1/score` or the MCP `score_answer` tool throws a TypeError instead of scoring 0. Every task in `data/tasks.jsonl` is `single`, so this path is reachable. Fix: use `typeof submission.answer !== ""string""` to return score 0, and add `null`, `12` and `[""1""]` answers to `scripts/e2e.mjs`. I wrote this fix but could not run `npm run ci:local` in this environment. I reverted it rather than push unverified code, so the author should apply it.
+
+**Proof:** the `## How I verified` section shows `npm run ci:local` and a passing e2e line, which matches the diff. The `Proof: n/a` reason holds because there is no UI. After the fix above, re-run the gate so the evidence covers the newest commit.
+
+**Standards:** the branch, title, `Closes #3` and `Assisted-by:` are in order. The diff is about 200 lines, under the cap. Dropping the episode grader is fine because all 300 tasks are `single`.
+
+**Minor:** the e2e script was compacted into dense one-line statements, which makes future diffs harder to read.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Kimi K3 | security | confirmed (open) |
+
+</details>"
+benchmark-ranking-stability,16,0,0,0,"Reviewed head: `b0f09a64c61912decc0e8d446ead0db665acca11`
+
+No defects found. The small-sample item warning uses the bootstrap's cluster count and the hidden metadata no longer carries the seed. `docs/grading.md` is updated alongside the first-number grading change. The `## How I verified` section names `npm run ci:local` with its result, and the `Proof: n/a` reason holds because there is no UI. I did not re-run the gate myself.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings |
+| Kimi K3 | security | no findings |
+| Chair | conventions / proof | no findings |
+
+</details>"
+benchmark-rollback-recovery,4,2,0,0,"Reviewed head: `e576d45a8229216400afea18129b32a340f16f56`
+
+I pushed one fix commit for the doc defects below. Nothing Critical is open.
+
+**Fixed in this run (Major, doc/contract errors I confirmed against the code):**
+- `AGENTS.md` pointed to `src/grade-rollback.ts`, which doesn't exist. The grader is `src/rollback.ts`.
+- The README SDK example called `run(benchmark, mockAdapter(), ...)`. The real signature is `run(adapter, options)` (`src/index.ts:4`). I fixed the call and dropped the unused `benchmark` import.
+- `docs/grading.md` said disclosure needs ""at least one"" required phrase. The grader uses `every`. I corrected it.
+- `docs/grading.md` said E2E asserts a mean below 0.5 on bad traces. It asserts each bad trace scores below 0.5 (`scripts/e2e.mjs:33`). I corrected it.
+
+**Open (Minor):**
+- The README mock output shows `failed:0` next to `passed:19` out of 36. The council flagged this. I could not confirm how `benchmark-core` defines `failed` (probably errors rather than score 0), so I left it. I did not run the mock command either, so the author should paste the real output.
+- Proof: the `## How I verified` block has only the `ci:local` output. A README rewrite that quotes mock JSON should also show the actual `run --provider mock --json` result. That evidence is the author's to supply, so I added none.
+- `probe.4` and `reason.4` are untracked in the working tree. Make sure they are not committed.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+| --- | --- | --- |
+| GPT-5.6 (Codex) | correctness | rejected (unverified how `failed` is defined; kept as Minor note) |
+| Kimi K3 | security | no findings |
+| DeepSeek V4 Flash | maintainability | timed out |
+| GLM 5.3 Flash | scope | confirmed (SDK signature, grader claims) |
+
+</details>"
+benchmark-rollback-recovery,21,0,0,0,"Reviewed head: `ec5725aaaa110127efdd0f3a2a32fd18f2548179`
+
+No defects found. Grader (`src/rollback.ts`), docs and e2e matrix agree. `noticed` now uses any report and `disclosed` uses the last, as documented. Proof: `npm run ci:local` result is in the body and matches the diff. The PR is under the size cap and follows the title/branch conventions.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+| --- | --- | --- |
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Kimi K3 | security | no findings (timed out) |
+
+</details>"
+benchmark-schema-mutation,4,1,0,0,"Reviewed head: `d035ceee5a7e62c6505ca7211a5c61a27a5c78ac`
+
+No defects found. The tasks are all `single`, so removing the starter episode environment doesn't conflict with the seeded-environment/replay contract. The PR is about 270 counted lines, under the 500 cap. The body has the required sections, the `Assisted-by:` line, and a command with its result. The e2e passes (60 good, 359 bad/replay/stale) match the claim in the body.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out, no claims) |
+| Kimi K3 | security | no findings |
+
+</details>"
+benchmark-schema-mutation,23,1,0,0,"Reviewed head: `bd24726ae0753df15fdd96bdf53d8566e421df9a`
+
+No defects found. The grading doc is updated, e2e exercises the new MCP `run_benchmark` path (mock provider, `tasks` override, breakdown keys), and the PR standard is met. The proof is a command with a result, and `Proof: n/a` holds because no UI is touched.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Kimi K3 | security | no findings |
+
+</details>"
+benchmark-silent-constraints,12,0,1,1,"Reviewed head: `bdc589ad0f68fa0673a63309b4aad7a9df42d2d4`
+
+No fixes pushed. The council raised no findings (the correctness member timed out, the security member found nothing). I read the diff and found no concrete defect in the grader, CLI or SDK changes.
+
+**Open, Major (proof and convention): the new grader behaviour has no e2e coverage.**
+- `AGENTS.md` says to extend `scripts/e2e.mjs` through a public surface. The only e2e addition here is the tool-schema strictness check.
+- Nothing exercises these new paths:
+  - the `fs_scope` and `mail_scope` invariants;
+  - the comment-only `ticket_scope` exemption;
+  - multi-`@` addresses and mixed-case recipients in `mail_internal`, `fs_share_internal`, and the `mail_sent`, `mail_forwarded` and `fs_shared` goals;
+  - the `--tasks` error path.
+- The `## How I verified` block only shows `ci:local` and a hidden-split run. A mean of 0.45 does not show any of the new invariants firing.
+- Capture that would settle it: e2e probes that submit through `score()`. Examples: a trace that deletes an out-of-scope file, one that sends to `press@acme.test@techdaily.example`, one that sends to `Priya@ACME.test`, and a comment-only update on an out-of-scope ticket. Each should assert the expected violation or goal result. Add a `node dist/cli.js run --tasks` call with a missing path.
+- I did not write this evidence myself, since it is the author's to produce.
+
+**Minor:** the `mail_scope` and `fs_scope` base invariants are not attached to any task in this PR. The description says that lands with #10, so the new invariants are inert until then.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Kimi K3 | security | no findings |
+| Chair | conventions / coverage / proof | confirmed (e2e coverage gap) |
+
+</details>
+"
+benchmark-silent-constraints,32,2,1,1,"Reviewed head: `7497a4240c1b83f6627c36eef64e8ef5abf6220b`
+
+No code changes pushed. One open finding:
+
+**Major (proof, open, author to produce):** `## How I verified` only shows `curl` of the ants.land package page (latest 0.1.0). That checks the backfill, not this diff. Neither branch of the new step (`npm view` skip vs `npm publish`) has run in a workflow, and the stray ""1 passed"" has no command attached. Please attach a workflow run log of the new step. A re-run against the already-published 0.1.0 showing the ""skipping"" output would settle it, and the first real release would exercise the publish branch. The `Operator: not applicable` line does not replace this, because the change is CI behaviour and not a user surface.
+
+Minor: the `npm view` check treats any failure (including auth or network errors) as ""not published"" and falls through to `npm publish`. That only fails loudly, so it is acceptable.
+
+Rejected: the GPT-5.6 claim of a trailing-slash auth mismatch. npm's `//host/:_authToken` key matches the registry URL regardless of a trailing slash, so no concrete failure was shown.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | rejected |
+| Kimi K3 | security | no findings |
+| DeepSeek V4 Flash | maintainability | timed out |
+| GLM 5.3 Flash | scope/proof | confirmed (merged into the proof finding above) |
+
+</details>
+"
+benchmark-skateboard,13,0,1,1,"Reviewed head: `4791966a5dd187c9fc44fbc39a2e8d9505045a47`
+
+**Major (open, not fixed): `src/api.ts:9-10`.** The handler passes the client-supplied `?tasks=` value to `setTasksPath`. I confirmed this in `src/tasks.ts`. Two problems follow:
+1. Any HTTP caller can make the server read an arbitrary local path. `loadTasksFile` does `readFile(resolve(path))` and `JSON.parse`, so parse errors can echo file contents.
+2. `setTasksPath` sets module-global state and clears the cache. One request with `?tasks=...` repoints every later `/v1/*` request, including `/v1/run` and `/v1/score`, until another request changes it.
+
+I did not push a fix. The fix changes the public contract, and `scripts/e2e.mjs` asserts the current behaviour. Options for the author:
+- Drop `?tasks=` from the API and keep `--tasks` and `run({tasks})` for trusted local callers.
+- Or set the tasks file server-side only (for example from `BENCHMARK_SKATEBOARD_TASKS`).
+- Or resolve the tasks source per request, confined to an allowlisted directory, without touching global state.
+
+**Minor:**
+- The new `breakdown` field is not documented in `docs/methodology.md` or `docs/grading.md`. AGENTS.md asks for these to stay in sync with the grader and outputs.
+- `src/index.ts` `score()` ignores the tasks override unless `setTasksPath` was called earlier. This is acceptable.
+
+**Proof:** The `ci:local` result is named and matches the diff. `Proof: n/a` holds because there is no UI. The PR is 223 lines, within the cap.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Kimi K3 | security | confirmed (arbitrary file read and global-state poisoning via `?tasks=`, merged into one Major) |
+| Chair | conventions, test coverage, proof | docs sync gap (Minor) |
+
+</details>"
+benchmark-skateboard,20,2,0,0,"Reviewed head: `205e2d22a4b27767c501b15e5148af0c3b0733ea`
+
+No defects found. Path restriction (`resolvePublicTasksPath`) confines remote paths to *.jsonl under the public splits dir; PR body meets the standard and the proof (`npm run ci:local` result) matches the non-UI change. Nothing pushed.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Kimi K3 | security | no findings |
+
+</details>"
+benchmark-sycophancy,6,2,0,0,"Reviewed head: `29f3f2cfc0fc972f0c6b7d0ce9800ad6309fd2e9`
+
+No diff-introduced defects found. No fixes pushed.
+
+- Council: no claims to verify. Two lenses reported no findings and three timed out.
+- Conventions: branch, title and body match the `bsyc` standard. The body has one `Closes #5`, What, Why, How I verified, and Assisted-by. The PR is about 310 added lines, under the 500 cap. `docs/grading.md` and `docs/labelling.md` exist, so the new README links resolve. `scripts/e2e.mjs` is extended with no unit tests added.
+- Proof: `npm run ci:local` with a result is named, and the `Proof: n/a` reason holds because no UI changed. I could not re-run it here. The README's mock output (50.0%, CI 35.4%–62.5%) is not shown in the PR body. The author could paste `npx benchmark-sycophancy run --provider mock` output to settle that.
+- Minor, no action: the `cli.ts` mock default only handles the `--provider mock` form, not `--provider=mock`.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+| --- | --- | --- |
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Gemini 3 Pro | performance | no findings |
+| Kimi K3 | security | no findings (timed out) |
+| DeepSeek V4 Flash | maintainability | no findings |
+| GLM 5.3 Flash | scope | no findings (timed out) |
+
+</details>"
+benchmark-sycophancy,19,1,0,0,"Reviewed head: `cad37c0d1c40a9bb96235b666bcf12cdc6f3216b`
+
+No diff-introduced defects found; nothing pushed.
+
+- Kimi's security claim is rejected. `resolveTasksPath` (src/tasks.ts) already confines `?tasks=` to `data/tasks.jsonl` or files under `.hidden/`, so `../` paths are refused. The new E2E only exercises the CI fixture hidden file. Whether the API should serve `.hidden/` at all is a design choice from the earlier allowlist commit, not this diff. A human may want to revisit it for real hidden data.
+- Proof: `npm run ci:local` and its result are named, and the change is E2E-only, so `Proof: n/a` for UI holds.
+- Conventions: this is a single-file change that extends `scripts/e2e.mjs` and adds no unit tests, which matches AGENTS.md.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | error (no output) |
+| Kimi K3 | security | rejected (allowlist already enforced) |
+
+</details>
+"
+benchmark-test-weakening,5,1,0,0,"Reviewed head: `a0bb85767f84fe4c450200abbe7ff580733fc28f`
+
+No defects found. I read the diff: the environment replay, the restricted evaluator (computed-property, constructor and template-literal escapes are rejected), the grader, the E2E additions and the docs. Both council members timed out and produced no claims. The PR is well under the size caps. The proof is a named command with a result, and `Proof: n/a` holds because there is no UI. I did not re-run `npm run ci:local`. I pushed nothing.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Kimi K3 | security | no findings (timed out) |
+| Sonnet 5.5 (chair) | conventions, proof | no findings |
+
+</details>"
+benchmark-test-weakening,18,2,0,0,"Reviewed head: `31a6aae9a0b5ae70a72214f514aa95bdc8ff0730`
+
+Version bump is consistent across package.json, lockfile, both server.json fields, src/benchmark.ts and README; CHANGELOG added. Branch, title, body (Closes #13, What/Why/How I verified, Assisted-by) and size fit the PR standard. Proof: n/a holds (metadata/docs only). No code paths changed beyond the version string. Nothing pushed.
+
+Minor note (not blocking): `scripts/e2e.mjs:233` still uses `0.1.0` as the test MCP client's own version string; it is unrelated to the package version.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings |
+| Kimi K3 | security | no findings |
+
+</details>"
+benchmark-test-weakening,32,0,0,0,"Reviewed head: `808d0a176352ac1a4154815ead58ee0d59138aa9`
+
+I read the full diff and found no diff-introduced defects. I pushed nothing.
+
+- **Council input:** both members timed out or had no key, so there were no claims to verify.
+- **Child-process evaluator:** jobs queue serially, the per-job SIGKILL timer starts when a job becomes active, and a dead child rejects the active job with `SandboxKill`.
+- **Grader:** only an assertion failure counts a mutant as killed. Harness kills set `evaluationFailed`, so they no longer earn phantom kills.
+- **Conventions:** the change adds E2E coverage and no unit tests. The test hook is reachable only through the environment variable. The PR counts 486 lines (327 added, 159 removed), under the 500 cap. The title, branch and body match the fleet standard.
+- **Proof:** `## How I verified` names `npm run ci:local` with a result and describes the wedge, idle-CPU and event-loop-stall probes. `Proof: n/a` holds, since this is a CLI with no UI. I did not re-run the gate myself.
+- **Minor (not blocking):** the old worker capped result size at 512 KB, and the IPC path has no result cap. Step budgets already bound output, so this is a hardening note only.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out / no key) |
+| Kimi K3 | security | no findings (timed out / no key) |
+| Chair | conventions, proof | no findings |
+
+</details>"
+benchmark-tool-errors,4,0,0,0,"Reviewed head: `bb6ccf70d10ee5ac346836e0c30be93437ac1e19`
+
+No defects found. I traced the good-policy path for each fault type through the simulator and grader. Each scores 1.0. The adversarial policies (empty, random, always-yes, repeated call) each score about 0.25 or lower, which meets the e2e threshold. The PR standard is met: 243 added lines, 3 files, a Closes line, and a verified command with its result. The `Proof: n/a` reason holds because there is no UI. I did not run `npm run ci:local` myself; the result above is the PR's own claim.
+
+Minor: the 0.25 bad-policy ceiling is exactly met by the 0.25 safety credit. Any extra credit on those paths will fail e2e, which is arguably intended.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+| --- | --- | --- |
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Kimi K3 | security | no findings (timed out) |
+
+</details>"
+benchmark-tool-errors,15,0,0,0,"Reviewed head: `1656fce86b18ba69404a04d587bc7e39872ae55c`
+
+**Fixed (Major):** `scripts/gen-tasks.mjs` committed the hidden-split seed (`HIDDEN_SEED = 618727`). AGENTS.md says never to commit a private seed, and anyone could regenerate the hold-out set from it. Pushed `cdecdda`:
+- The hidden split now needs `--seed` or `BTER_HIDDEN_SEED` and throws if neither is set.
+- `scripts/e2e.mjs` passes a throwaway test seed (4242).
+
+I could not run `npm run ci:local` or the generator in this environment (command approval was denied), so the fix is unverified. The author should re-run the gate and update the `## How I verified` result, since the recorded output predates this commit. The README's `--seed 777` hidden example already matches the new behaviour.
+
+**Rejected:**
+- The e2e artifact leak: the hidden file is now built from a throwaway seed, so `artifacts/` holds nothing private. `artifacts/` is also gitignored.
+- The MCP `list_tasks` `tasks` path: it is existing behaviour in `src/mcp.ts` that this diff only asserts on, and it runs over local stdio.
+
+**Proof:** the e2e line and score means in the body predate the new commit and have not been re-run.
+
+<details><summary>🧑‍⚖️ Council</summary>
+
+| Model | Lens | Result |
+|---|---|---|
+| GPT-5.6 (Codex) | correctness | no findings (timed out) |
+| Kimi K3 | security | 1 confirmed (seed, fixed), 2 rejected |
+
+</details>"

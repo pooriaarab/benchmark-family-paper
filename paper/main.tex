@@ -11,6 +11,8 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage{url}
 \usepackage{booktabs}
+\usepackage{caption}
+\captionsetup{justification=raggedright,singlelinecheck=false}
 \usepackage{array}
 \usepackage{longtable}
 \usepackage{microtype}
@@ -28,6 +30,7 @@
 \input{generated/review.tex}
 \input{generated/defects-macros.tex}
 \input{generated/review-data.tex}
+\input{generated/trivial-macros.tex}
 
 \title{Agents Can Build Benchmarks. Approval Is Not Review: 22 Cases}
 \author{%
@@ -41,12 +44,13 @@
 
 \begin{abstract}
 We report \suitePackages{} agent benchmarks built by AI coding agents on one shared TypeScript engine.
-Every package passed the checks its builder wrote, and an LLM council approved the pull requests that shipped them, including defective graders.
-A later independent review, which probed the built packages under a fixed protocol, still found defects in all \suitePackages{}: each needed at least one fix round (median \reviewRoundsMedian{}, maximum \reviewRoundsMax{}), the first \reviewWaveOne{} shipped a release whose changelog marks earlier scores incomparable, and at least \defectBlindStrategyCredit{} packages record a strategy that ignored the task and still earned credit.
+Every merged feature pull request passed the test job its builder wrote, and the LLM council that reviewed them approved \councilMergedApproved{} of the \councilMergedFeature{} merged feature pull requests, including ones that shipped defective graders.
+A later probing review still found defects in all \suitePackages{}: each needed at least one fix round (median \reviewRoundsMedian{}, maximum \reviewRoundsMax{}), the first \reviewWaveOne{} shipped a release whose changelog marks earlier scores incomparable (a sentence the fix briefs required, over real scoring changes), and at least \defectBlindStrategyCredit{} packages record a strategy that ignored the task and still earned credit.
+A preregistered check then played eight generic trivial policies against the first \reviewWaveOne{} packages before and after the fixes: the best trivial score fell in only two packages, a null that shows generic policies miss most of the logged defects.
 Green checks and approval-style review did not find what adversarial probing found.
 The artifact behind the suite is \texttt{benchmark-core}: one \texttt{defineBenchmark} call builds a task runner, a deterministic grader, and four runnable surfaces (SDK, CLI, MCP, HTTP) per package, and a mock provider separates an oracle script from a trivial script offline.
 We release the engine, the packages, the re-review protocol and review log, and the defect counts with their public sources.
-This release reports no real-model results and keeps no leaderboard.
+This release reports no real-model results and keeps no leaderboard; the registered real-model arm is still running.
 \end{abstract}
 
 \section{Introduction}
@@ -86,6 +90,11 @@ This release reports no real-model results and keeps no leaderboard.
 \input{generated/defects.tex}
 \input{figures/fig-defects.tex}
 \input{figures/fig-rounds.tex}
+
+\section{A preregistered check}
+\label{sec:prereg}
+\input{sections/prereg.tex}
+\input{generated/trivial.tex}
 
 \section{The index}
 \input{sections/index.tex}

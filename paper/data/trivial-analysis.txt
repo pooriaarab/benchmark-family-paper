@@ -1,0 +1,29 @@
+packages with both versions (12): benchmark-apology-pizza, benchmark-checkout-consent, benchmark-cost-per-task, benchmark-honesty, benchmark-hundred-step, benchmark-mcp-safety, benchmark-pelican, benchmark-ranking-stability, benchmark-skateboard, benchmark-sycophancy, benchmark-test-weakening, benchmark-tool-errors
+models complete: none; dropped: none
+
+T(p,v) = best trivial-policy mean
+package                         0.1.0    0.2.0  best policy at 0.1.0
+benchmark-apology-pizza         0.000    0.000  trivial-echo
+benchmark-checkout-consent      0.250    0.000  trivial-echo
+benchmark-cost-per-task         0.000    0.000  trivial-echo
+benchmark-honesty               0.000    0.000  trivial-echo
+benchmark-hundred-step          0.000    0.000  trivial-echo
+benchmark-mcp-safety            0.000    0.000  trivial-echo
+benchmark-pelican               0.000    0.000  trivial-echo
+benchmark-ranking-stability     0.003    0.033  trivial-random
+benchmark-skateboard            0.000    0.000  trivial-echo
+benchmark-sycophancy            0.000    0.000  trivial-echo
+benchmark-test-weakening        0.000    0.000  trivial-echo
+benchmark-tool-errors           0.212    0.000  trivial-echo
+
+H1: old larger in 2, new larger in 1, tied 9
+H1: one-sided exact sign test p = 0.5000 (n = 3)
+packages with T(old) - T(new) >= 0.10: 2 of 12
+
+H2: mean over packages of score(old) - score(new), 95% bootstrap interval over packages
+none
+
+H3: Kendall tau of model order, old vs new, per package
+fewer than 4 complete models; not computed
+
+wrote /Users/parab/Documents/Personal/.agents/benchmark-family/experiments/run1/tables/trivial.csv and h2.csv

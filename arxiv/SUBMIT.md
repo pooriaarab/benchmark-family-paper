@@ -36,7 +36,7 @@ Pooria Arab
 Abstract (plain text, macros expanded by `scripts/submit-md.mjs` from the generated files):
 
 ```text
-We report 22 agent benchmarks built by AI coding agents on one shared TypeScript engine. Every package passed the checks its builder wrote, and an LLM council approved the pull requests that shipped them, including defective graders. A later independent review, which probed the built packages under a fixed protocol, still found defects in all 22: each needed at least one fix round (median 3, maximum 9), the first 12 shipped a release whose changelog marks earlier scores incomparable, and at least 13 packages record a strategy that ignored the task and still earned credit. Green checks and approval-style review did not find what adversarial probing found. The artifact behind the suite is benchmark-core: one defineBenchmark call builds a task runner, a deterministic grader, and four runnable surfaces (SDK, CLI, MCP, HTTP) per package, and a mock provider separates an oracle script from a trivial script offline. We release the engine, the packages, the re-review protocol and review log, and the defect counts with their public sources. This release reports no real-model results and keeps no leaderboard.
+We report 22 agent benchmarks built by AI coding agents on one shared TypeScript engine. Every merged feature pull request passed the test job its builder wrote, and the LLM council that reviewed them approved 94 of the 123 merged feature pull requests, including ones that shipped defective graders. A later probing review still found defects in all 22: each needed at least one fix round (median 3, maximum 9), the first 12 shipped a release whose changelog marks earlier scores incomparable (a sentence the fix briefs required, over real scoring changes), and at least 13 packages record a strategy that ignored the task and still earned credit. A preregistered check then played eight generic trivial policies against the first 12 packages before and after the fixes: the best trivial score fell in only two packages, a null that shows generic policies miss most of the logged defects. Green checks and approval-style review did not find what adversarial probing found. The artifact behind the suite is benchmark-core: one defineBenchmark call builds a task runner, a deterministic grader, and four runnable surfaces (SDK, CLI, MCP, HTTP) per package, and a mock provider separates an oracle script from a trivial script offline. We release the engine, the packages, the re-review protocol and review log, and the defect counts with their public sources. This release reports no real-model results and keeps no leaderboard; the registered real-model arm is still running.
 ```
 
 If `suite.txt` gains a package or the paper text changes, rerun `node scripts/submit-md.mjs`; editing the title or abstract block by hand will drift from `main.tex`.
@@ -44,7 +44,7 @@ If `suite.txt` gains a package or the paper text changes, rerun `node scripts/su
 Comments:
 
 ```text
-Resource and evaluation-infrastructure paper. Mock-provider validation only. No public model leaderboard in this version.
+22 agent-built benchmark packages on one shared engine; council approvals versus probing review, with a preregistered trivial-policy check (H1 null). Mock-provider and trivial-policy validation only; the registered real-model arm is still running. No public model leaderboard in this version.
 ```
 
 Categories:
