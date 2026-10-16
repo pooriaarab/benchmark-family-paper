@@ -39,6 +39,8 @@ const INPUTS = [
   ["sections/related.tex", "related.tex"],
   ["sections/closing.tex", "closing.tex"],
   ["sections/conclusion.tex", "conclusion.tex"],
+  ["sections/validity.tex", "validity.tex"],
+  ["sections/appendix.tex", "appendix.tex"],
   ["figures/fig-system.tex", "fig-system.tex"],
   ["figures/fig-mock.tex", "fig-mock.tex"],
   ["figures/fig-defects.tex", "fig-defects.tex"],
