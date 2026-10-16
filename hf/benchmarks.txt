@@ -1,0 +1,28 @@
+# One benchmark-<id> per line. publish.py clones pooriaarab/<name> at main
+# and stages data/ + scripts/gen-tasks.mjs for upload to pooria/<name>.
+# Ids without an npm release are skipped with a message, so a wave can be
+# listed before every package ships.
+# Wave 1
+benchmark-pelican
+benchmark-skateboard
+benchmark-apology-pizza
+benchmark-tool-errors
+benchmark-cost-per-task
+benchmark-mcp-safety
+benchmark-test-weakening
+benchmark-checkout-consent
+benchmark-honesty
+benchmark-sycophancy
+benchmark-hundred-step
+benchmark-ranking-stability
+# Wave 2
+benchmark-exploit-resistance
+benchmark-latency-budget
+benchmark-crm-truthfulness
+benchmark-instruction-hierarchy
+benchmark-memory-conflict
+benchmark-accessibility-fix
+benchmark-silent-constraints
+benchmark-rollback-recovery
+benchmark-schema-mutation
+benchmark-payment-delegation
