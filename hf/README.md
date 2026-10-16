@@ -24,7 +24,9 @@ collection in sync.
 
 Use `--only <id>` to process a subset; `publish.py` accepts a
 comma-separated or repeated list (`--only pelican,skateboard`), and skips
-any listed id that has no npm release yet. `python3 hf/publish.py
+any listed id that has no npm release yet (`npm view` E404 - a registry
+or network error aborts the run instead of silently skipping). `python3
+hf/publish.py
 --self-test` runs the built-in checks that key/cert/dotfile/hidden/symlinked
 data files are refused and that a symlinked `scripts/` directory in a clone
 is rejected.
