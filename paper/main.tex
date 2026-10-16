@@ -39,8 +39,8 @@
 \maketitle
 
 \begin{abstract}
-More agent benchmarks are now written by the agents that models will later face.
-This paper asks what the record shows when the builder also checks the result.
+Agent benchmarks are increasingly written by AI coding agents.
+This paper asks what the record shows when the builder is also the reviewer.
 We report \suitePackages{} agent benchmarks built mainly by AI coding agents on one shared TypeScript engine; every package passed its own tests.
 Independent review then found defects in all \suitePackages{}: each needed at least one fix round (median \reviewRoundsMedian{}, maximum \reviewRoundsMax{}), the first twelve shipped a release whose changelog marks earlier scores incomparable, and at least \defectBlindStrategyCredit{} packages record a strategy that ignored the task and still earned credit.
 The artifact behind the finding is \texttt{benchmark-core}: one \texttt{defineBenchmark} call builds a task runner, a deterministic grader, and four runnable surfaces (SDK, CLI, MCP, HTTP) per package, and a mock provider separates an oracle script from a trivial script offline.
