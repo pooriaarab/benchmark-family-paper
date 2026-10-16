@@ -55,9 +55,7 @@
   so the estimate is reported as "about".
 - `trivial.csv` is the preregistered study's first result: per first-wave
   package, the best trivial-policy mean at 0.1.0 (`old`) and 0.2.0
-  (`new`) and the winning policy. `PREREGISTRATION.md` and
-  `DEVIATIONS.md` are copies of the registered plan and deviation log
-  (Zenodo DOIs in the paper). `trivial-analysis.txt` is the raw
-  `eval-analyze` output the sign test and counts come from;
+  (`new`) and the winning policy. The registered plan and the deviation
+  log live on Zenodo (DOIs in Section "A preregistered check");
   `scripts/collect.mjs` regenerates Table trivial from the CSV and
   recomputes the one-sided exact sign test.
