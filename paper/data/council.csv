@@ -9,9 +9,16 @@ merged_feature,123,merged PRs whose title is not a chore
 merged_no_council_review,6,merged feature PRs with zero council reviews
 merged_never_approved,23,merged feature PRs reviewed but never APPROVED
 merged_approved,94,merged feature PRs with at least one APPROVED
-merged_council_check_failure,26,merged feature PRs on whose merge head a vibecodereview run concluded failure
+merged_council_check_failure,27,merged feature PRs on whose merge head a vibecodereview run concluded failure
 merged_council_check_last_failure,21,of those; PRs whose latest vibecodereview run still concluded failure
-merged_test_job_failure,0,merged feature PRs on whose merge head a ci `check` run concluded failure
+merged_test_job_failure,0,merged feature PRs on whose merge head the latest ci `check` run concluded failure
+merged_test_job_earlier_failure,6,merged feature PRs where a `check` run failed on an earlier commit of the request
 reviews_flagging_severity,~162,regex estimate: reviews raising an open Critical or Major item
 prs_with_severity,~99,regex estimate: distinct PRs those reviews sit on
+severity_merged_feature_reviews,38,regex-flagged reviews on merged feature PRs
+severity_merged_feature_prs,29,distinct merged feature PRs with a flagged review
+severity_approved_feature_prs,18,approved merged feature PRs with a flagged review
+severity_chore_reviews,63,regex-flagged reviews on merged chore PRs
+reviews_flagging_severity_read,~174,hand-read estimate: regex count minus false positives plus missed reviews
+prs_with_severity_read,~104,distinct PRs after the hand-read corrections
 sample_size,50,deterministic stride sample for the hand check

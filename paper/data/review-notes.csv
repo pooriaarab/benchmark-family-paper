@@ -16,4 +16,4 @@ AccessUndefinedPrompts,9 of 13,benchmark-accessibility-fix:CHANGELOG.md#L55
 SilentFileLeak,13 of 16,benchmark-silent-constraints#17
 SilentMailSpam,12 of 13,benchmark-silent-constraints#17
 HiddenSeedPublished,13,benchmark-hundred-step#9 + benchmark-ranking-stability#15 + benchmark-sycophancy#20 + ten README --split hidden examples
-CrmDocMissRate,125 of 240,benchmark-crm-truthfulness:docs/grading.md#L51
+CrmDocHonestRate,125 of 240,benchmark-crm-truthfulness:docs/grading.md#L51

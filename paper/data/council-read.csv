@@ -1,0 +1,15 @@
+repo,pr,review_index,verdict,note
+benchmark-accessibility-fix,12,0,false_positive,only flagged span is "Fixed (Major; found by chair)"; the open item is Minor
+benchmark-skateboard,26,0,miss,"open Majors written as ""Major - convention"" / ""Major - proof""; no status word inside the bold span"
+benchmark-skateboard,26,1,miss,"open Majors written as ""Major - AGENTS.md"" / ""Major - proof (not fixable by me)"""
+benchmark-tool-errors,14,0,miss,open Major under the "Open (author to resolve)" header; bold span lacks a status word
+benchmark-checkout-consent,15,0,miss,"open Major written as a ""### Major; open"" heading; not a bold span"
+benchmark-checkout-consent,21,0,miss,"open Majors written as ""Major: convention."" / ""Major: proof."""
+benchmark-exploit-resistance,19,1,miss,open Major under the "Open; needs a human" header (.hidden/ reachable over the API)
+benchmark-latency-budget,8,0,miss,open Major under the "Open (not fixed)" header (metadata.candidates unreachable)
+benchmark-instruction-hierarchy,10,0,miss,open Major under the "Open" header (proof; author to produce)
+benchmark-memory-conflict,9,0,miss,open Major under the "Still open" header (PR standard mismatch)
+benchmark-memory-conflict,22,0,miss,"open Majors written as ""Major - hidden templates committed"" / ""Major (proof)"""
+benchmark-accessibility-fix,14,1,miss,open Major under the "Open; not fixed (author to address)" header
+benchmark-rollback-recovery,3,0,miss,"open Majors written as ""Major - size cap."" / ""Major - commit trailer."""
+benchmark-payment-delegation,9,0,miss,open Majors under the "Open; for the author" header
