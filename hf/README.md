@@ -23,9 +23,9 @@ collection in sync.
 4. Verify: `python3 hf/verify.py`. Prints `ok` or the failure per dataset.
 
 Use `--only <id>` to process a subset; `publish.py` accepts a
-comma-separated or repeated list (`--only pelican,skateboard`), and skips
-any listed id that has no npm release yet (`npm view` E404 - a registry
-or network error aborts the run instead of silently skipping). `python3
+comma-separated or repeated list (`--only pelican,skateboard`). Both tools
+skip any listed id that has no npm release yet (`npm view` E404 - a
+registry or network error is reported, never silently skipped). `python3
 hf/publish.py
 --self-test` runs the built-in checks that key/cert/dotfile/hidden/symlinked
 data files are refused and that a symlinked `scripts/` directory in a clone
@@ -57,7 +57,8 @@ is rejected.
   Croissant 1.0 context (`equivalentProperty` included) plus the RAI terms;
   `mlcroissant` warns when any standard key is missing. `dataType` must map
   `@type: @vocab` so `sc:Text` expands to `https://schema.org/Text`, and
-  `license` comes from each package's `package.json` SPDX id.
+  `license` comes from each package's `package.json` SPDX id - a package
+  without a `license` field fails the run rather than defaulting.
   `croissant.json` carries the minimal
   RAI fields (`rai:*`, `prov:wasDerivedFrom`, `prov:wasGeneratedBy`) required
   by the NeurIPS 2026 Evaluations & Datasets hosting guidelines; on re-runs

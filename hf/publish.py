@@ -47,14 +47,19 @@ SECRET_RE = re.compile(
 # matches neither SECRET_RE nor the dotfile rule. .mjs is deliberately absent:
 # generator scripts only ever ship from scripts/.
 DATA_EXT_ALLOWLIST = {".jsonl", ".json", ".md", ".csv", ".txt"}
+# Any environment variable whose name even looks like a credential is kept
+# out of child processes: HF_TOKEN, HUGGING_FACE_HUB_TOKEN, HF_HUB_TOKEN,
+# and everything else matching this pattern.
+SENSITIVE_ENV_RE = re.compile(r"token|secret|key|password", re.IGNORECASE)
 TAG_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
 SIZE_STEPS = [(1_000, "n<1K"), (10_000, "1K<n<10K"), (100_000, "10K<n<100K"),
               (1_000_000, "100K<n<1M"), (10_000_000, "1M<n<10M")]
 
 
 def sh(cmd: list[str], cwd: Path | None = None) -> str:
-    # The HF write token must never reach git or npx child processes.
-    env = {k: v for k, v in os.environ.items() if k != "HF_TOKEN"}
+    # Tokens and other secrets must never reach git or npx child processes.
+    env = {k: v for k, v in os.environ.items()
+           if not SENSITIVE_ENV_RE.search(k)}
     return subprocess.run(cmd, cwd=cwd, check=True, text=True,
                           capture_output=True, env=env).stdout
 
@@ -262,7 +267,9 @@ deterministic grader. See PROVENANCE.md for contamination notes.
 
 def license_url(licence: str) -> str:
     """Croissant wants a URL for the licence; map the package's SPDX id."""
-    spdx = str(licence or "MIT").strip()
+    spdx = str(licence).strip()
+    if not spdx:
+        raise ValueError("missing SPDX license id")
     known = {"mit": "https://choosealicense.com/licenses/mit/"}
     return known.get(spdx.lower(), f"https://spdx.org/licenses/{spdx}")
 
@@ -395,12 +402,13 @@ def build_stage(pkg: str, work_root: Path) -> dict:
     entry.setdefault("task_count", stats["count"])
     provenance = (stage_dir / "data" / "PROVENANCE.md").read_text() \
         if (stage_dir / "data" / "PROVENANCE.md").exists() else "See the repository."
+    licence = pkg_json.get("license")
+    if not licence:
+        raise RuntimeError(f"{pkg}: package.json has no license field")
     card = build_card(pkg, entry, stats, provenance,
-                      pkg_json.get("keywords", []),
-                      pkg_json.get("license", "MIT"))
+                      pkg_json.get("keywords", []), licence)
     (stage_dir / "README.md").write_text(card)
-    croissant = build_croissant(pkg, entry, stats, files, stage_dir,
-                                pkg_json.get("license", "MIT"))
+    croissant = build_croissant(pkg, entry, stats, files, stage_dir, licence)
     cro_path = stage_dir / "croissant.json"
     cro_path.write_text(json.dumps(croissant, indent=2) + "\n")
     check = validate_croissant(cro_path)
