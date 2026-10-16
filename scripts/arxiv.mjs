@@ -23,6 +23,7 @@ const outTar = join(root, "arxiv", "benchmark-family-arxiv.tar.gz");
 const INPUTS = [
   ["generated/macros.tex", "macros.tex"],
   ["generated/review.tex", "review.tex"],
+  ["generated/defects-macros.tex", "defects-macros.tex"],
   ["generated/defects.tex", "defects.tex"],
   ["generated/suite-table.tex", "suite-table.tex"],
   ["generated/graders.tex", "graders.tex"],
@@ -37,6 +38,7 @@ const INPUTS = [
   ["sections/index.tex", "index.tex"],
   ["sections/related.tex", "related.tex"],
   ["sections/closing.tex", "closing.tex"],
+  ["sections/conclusion.tex", "conclusion.tex"],
   ["figures/fig-system.tex", "fig-system.tex"],
   ["figures/fig-mock.tex", "fig-mock.tex"],
   ["figures/fig-defects.tex", "fig-defects.tex"],
