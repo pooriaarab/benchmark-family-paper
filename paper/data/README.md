@@ -33,3 +33,31 @@
 - `review-notes.csv` carries the small sourced numbers the prose quotes
   that do not come from the collector: `key,value,locator`, expanded
   into `\note<Key>` macros in `generated/review-data.tex`.
+- `council.csv` holds the council-review counts behind the approval-style
+  review paragraph, rebuilt read-only by `scripts/council.mjs` from the
+  GitHub API on 2026-10-16. Method: all pull requests in the 22 repos via
+  GraphQL (`author`, `state`, `body` of every review); a merged feature
+  pull request is a merged request whose title does not start with a
+  chore prefix (same rule as `scripts/builders.mjs`); the council account
+  is `claude`. "Merged while the check showed failure" means at least one
+  completed `vibecodereview` check-run on the merge head commit concluded
+  `failure` (the last-run count is in `merged_council_check_last_failure`
+  for comparison); "test job" is the CI `check` job, which runs
+  `npm run ci:local`. `council-prs.csv` is the per-PR detail.
+  `reviews_flagging_severity` and `prs_with_severity` are regex
+  estimates: a review counts as raising a severity item when a bold span
+  in its body names Critical or Major and marks it open, not fixed,
+  remaining, found, or new; negations ("No Critical or Major findings")
+  are excluded, and items the chair labelled "Fixed" inside the same
+  review do not count. `council-reviews.csv` carries every review with
+  its regex flag and `council-sample.csv` a deterministic stride sample
+  of 50 with a hand-checked `manual` column: all 50 matched the regex,
+  so the estimate is reported as "about".
+- `trivial.csv` is the preregistered study's first result: per first-wave
+  package, the best trivial-policy mean at 0.1.0 (`old`) and 0.2.0
+  (`new`) and the winning policy. `PREREGISTRATION.md` and
+  `DEVIATIONS.md` are copies of the registered plan and deviation log
+  (Zenodo DOIs in the paper). `trivial-analysis.txt` is the raw
+  `eval-analyze` output the sign test and counts come from;
+  `scripts/collect.mjs` regenerates Table trivial from the CSV and
+  recomputes the one-sided exact sign test.

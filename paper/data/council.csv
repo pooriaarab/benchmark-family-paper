@@ -1,0 +1,17 @@
+metric,value,note
+prs_total,347,all pull requests in the 22 repos
+council_reviews,595,reviews authored by the claude account
+council_prs_reviewed,325,PRs with at least one council review
+reviews_approved,307,council reviews with state APPROVED
+reviews_commented,285,council reviews with state COMMENTED
+reviews_changes_requested,3,council reviews with state CHANGES_REQUESTED
+merged_feature,123,merged PRs whose title is not a chore
+merged_no_council_review,6,merged feature PRs with zero council reviews
+merged_never_approved,23,merged feature PRs reviewed but never APPROVED
+merged_approved,94,merged feature PRs with at least one APPROVED
+merged_council_check_failure,26,merged feature PRs on whose merge head a vibecodereview run concluded failure
+merged_council_check_last_failure,21,of those; PRs whose latest vibecodereview run still concluded failure
+merged_test_job_failure,0,merged feature PRs on whose merge head a ci `check` run concluded failure
+reviews_flagging_severity,~162,regex estimate: reviews raising an open Critical or Major item
+prs_with_severity,~99,regex estimate: distinct PRs those reviews sit on
+sample_size,50,deterministic stride sample for the hand check

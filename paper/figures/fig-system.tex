@@ -20,7 +20,7 @@
 \node[surf, below=1.5mm of cli] (mcp) {MCP};
 \node[surf, below=1.5mm of mcp] (http) {HTTP};
 \node[artifact, below=16mm of eng] (report) {run report:\\score, reason,\\bootstrap interval};
-\node[rev, below=20mm of builder] (reviewer) {independent reviewer\\(separate session,\\fixed protocol)};
+\node[rev, below=20mm of builder] (reviewer) {probing reviewer\\(separate session)};
 \node[artifact, right=6mm of reviewer] (hidden) {hidden split\\(fresh seed, kept\\out of the package)};
 
 \draw[flow] (builder) -- node[num]{1} (package);
@@ -35,6 +35,6 @@
 \draw[flow] (reviewer.north) -- node[num]{6} (builder.south);
 \draw[flow, dashed] (reviewer.south) to[out=-25,in=215] node[lbl, pos=0.55]{probes} (report.south);
 \end{tikzpicture}
-\caption{The pipeline assigns building and reviewing to different sessions by design. 1: a coding agent writes the task set, grader, and provenance. 2: one \texttt{defineBenchmark} call on the shared engine. 3: the engine builds four runnable surfaces. 4: a run produces a scored report. 5: an independent reviewer in a separate session attacks the package and the hidden split, which the generator writes outside the published package. 6: findings return to the builder as fix work. Within this pipeline the builder is never the session that reviews its own output.}
+\caption{The pipeline assigns building and reviewing to different sessions by design. 1: a coding agent writes the task set, grader, and provenance. 2: one \texttt{defineBenchmark} call on the shared engine. 3: the engine builds four runnable surfaces. 4: a run produces a scored report. 5: a probing reviewer in a separate session attacks the package and the hidden split, which the generator writes outside the published package. 6: findings return to the builder as fix work. Within this pipeline the builder is never the session that reviews its own output.}
 \label{fig:system}
 \end{figure}
