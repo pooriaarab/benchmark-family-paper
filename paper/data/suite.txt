@@ -1,0 +1,12 @@
+benchmark-pelican
+benchmark-skateboard
+benchmark-apology-pizza
+benchmark-tool-errors
+benchmark-cost-per-task
+benchmark-mcp-safety
+benchmark-test-weakening
+benchmark-checkout-consent
+benchmark-honesty
+benchmark-sycophancy
+benchmark-hundred-step
+benchmark-ranking-stability
