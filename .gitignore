@@ -9,5 +9,6 @@ paper/*.blg
 paper/*.out
 paper/*.toc
 paper/*.synctex.gz
+paper/neurips_2026.sty
 arxiv/*.tar.gz
 .tectonic-cache/

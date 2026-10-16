@@ -6,6 +6,8 @@ Do not submit from this machine. arXiv needs the owner's login, and a first-time
 
 Tectonic 0.17.0 must be on `PATH`. The checksum checked on this machine for `tectonic-0.17.0-x86_64-unknown-linux-gnu.tar.gz` is `1a715688baf591e650c8aeb160ae934e181685eecbb38b317de30b269ac5d606`.
 
+The paper uses the official `neurips_2026.sty` with the `preprint` option. The style is fetched, not committed: `make pdf` and `make arxiv` run `node scripts/fetch-style.mjs` first, which downloads `Formatting_Instructions_For_NeurIPS_2026.zip` from media.neurips.cc, verifies it against the SHA-256 pinned in the script, and extracts only `neurips_2026.sty` into `paper/`.
+
 ```bash
 node scripts/collect.mjs
 make pdf
@@ -13,7 +15,9 @@ make arxiv
 make release-assets
 ```
 
-`make arxiv` runs `node scripts/arxiv.mjs`. That script compiles `paper/main.tex` with `--keep-intermediates`, flattens every `\input` to the archive root, writes `main.bbl` beside `refs.bib`, and rejects anything that is not `.tex`, `.bib`, or `.bbl`. It then unpacks `arxiv/benchmark-family-arxiv.tar.gz` in a temp directory and compiles that copy. The tarball is gitignored.
+`make arxiv` runs `node scripts/arxiv.mjs`. That script compiles `paper/main.tex` with `--keep-intermediates`, flattens every `\input` to the archive root, writes `main.bbl` beside `refs.bib`, adds `neurips_2026.sty` (arXiv does not carry the NeurIPS style), and rejects anything that is not `.tex`, `.bib`, `.bbl`, or `.sty`. It then unpacks `arxiv/benchmark-family-arxiv.tar.gz` in a temp directory and compiles that copy. The tarball is gitignored.
+
+A NeurIPS submission would look different: the Evaluations and Datasets track uses `\usepackage[eandd]{neurips_2026}` instead of `[preprint]` and adds `checklist.tex` (the NeurIPS paper checklist) from the same zip. arXiv needs neither, so the checklist is not in this packet.
 
 ## Metadata to paste
 
@@ -59,7 +63,7 @@ arXiv will not accept a new author into `cs.*` without an endorsement, and an in
 ## Checklist
 
 - [ ] `make arxiv` printed `-> arxiv packet, ok` and the proof PDF opened from the unpacked tarball.
-- [ ] The archive root is flat: `main.tex`, the section files, the generated tables, `refs.bib`, `main.bbl`. No PDF, no SVG, no Markdown, no JSON, no log.
+- [ ] The archive root is flat: `main.tex`, the section files, the generated tables, `refs.bib`, `main.bbl`, `neurips_2026.sty`. No PDF, no SVG, no Markdown, no JSON, no log, no `checklist.tex`.
 - [ ] Every `refs.bib` entry has a `url` or `doi` that resolves.
 - [ ] Title, author, and abstract on the form match this file.
 - [ ] Primary category `cs.AI`. Candidates `cs.SE` and `cs.LG` only if the form asks for cross-lists.
