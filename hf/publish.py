@@ -8,18 +8,23 @@ Croissant file (core + minimal RAI fields, per the NeurIPS 2026 Evaluations &
 Datasets hosting guidelines).
 
 ``--dry-run`` builds and validates every staging folder without touching the
-Hub. Upload and collection sync are wired in by the publishing step.
+Hub. Without it, each staging folder is uploaded to
+``huggingface.co/datasets/pooria/<package>`` (created public if missing), the
+Croissant file is merged with what Hugging Face auto-generates, and the
+``AI Benchmark Index`` collection under ``pooria`` is kept in sync.
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
+import urllib.request
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -27,6 +32,8 @@ LIST_FILE = HERE / "benchmarks.txt"
 OUT_DIR = HERE / "out"
 GITHUB_ORG = "pooriaarab"
 HF_OWNER = "pooria"
+COLLECTION_TITLE = "AI Benchmark Index"
+TOKEN_FILE = Path.home() / ".config" / "agents" / "hf-token"
 
 # Anything matching this never leaves the GitHub clone: hidden splits,
 # credentials, env files. The public split is all that ships.
@@ -355,6 +362,74 @@ def build_stage(pkg: str, work_root: Path) -> dict:
             "tasks": stats["count"], "croissant": check}
 
 
+def hf_api():
+    """Authenticated HfApi; token comes from the env or the agent token file."""
+    from huggingface_hub import HfApi
+    token = os.environ.get("HF_TOKEN")
+    if not token and TOKEN_FILE.exists():
+        token = TOKEN_FILE.read_text().strip()
+    if not token:
+        raise RuntimeError("no HF token: set HF_TOKEN or ~/.config/agents/hf-token")
+    api = HfApi(token=token)
+    who = api.whoami()["name"]
+    if who != HF_OWNER:
+        raise RuntimeError(f"token belongs to {who}, expected {HF_OWNER}")
+    return api
+
+
+def hf_croissant(repo_id: str) -> dict:
+    """What Hugging Face auto-generates for this dataset, if anything."""
+    url = f"https://huggingface.co/api/datasets/{repo_id}/croissant"
+    try:
+        return json.loads(urllib.request.urlopen(url, timeout=30).read())
+    except Exception:
+        return {}
+
+
+def merge_croissant(ours: dict, generated: dict) -> tuple[dict, list[str]]:
+    """Adopt core fields HF fills in that we do not set; never duplicate."""
+    skip = {"@context", "@type", "recordSet", "distribution"}
+    added = []
+    for key, val in generated.items():
+        if key not in skip and key not in ours and val not in (None, "", []):
+            ours[key] = val
+            added.append(key)
+    return ours, added
+
+
+def upload_dataset(api, pkg: str, stage_dir: Path) -> str:
+    repo_id = f"{HF_OWNER}/{pkg}"
+    api.create_repo(repo_id, repo_type="dataset", private=False, exist_ok=True)
+    api.upload_folder(repo_id=repo_id, folder_path=str(stage_dir),
+                      repo_type="dataset",
+                      commit_message="Publish benchmark task data")
+    generated = hf_croissant(repo_id)
+    if generated:
+        cro_path = stage_dir / "croissant.json"
+        merged, added = merge_croissant(json.loads(cro_path.read_text()), generated)
+        if added:
+            cro_path.write_text(json.dumps(merged, indent=2) + "\n")
+            api.upload_file(repo_id=repo_id, path_or_fileobj=str(cro_path),
+                            path_in_repo="croissant.json", repo_type="dataset",
+                            commit_message="Merge Hub-generated croissant fields")
+    return f"https://huggingface.co/datasets/{repo_id}"
+
+
+def sync_collection(api, dataset_ids: list[str]) -> str:
+    slug = next((c.slug for c in api.list_collections(owner=HF_OWNER)
+                 if c.title == COLLECTION_TITLE), None)
+    if slug is None:
+        slug = api.create_collection(
+            COLLECTION_TITLE, namespace=HF_OWNER, private=False,
+            description="Task data for the benchmark-* family of AI benchmarks "
+                        "(aibenchmarkindex.com).").slug
+    have = {item.item_id for item in api.get_collection(slug).items}
+    for ds in dataset_ids:
+        if ds not in have:
+            api.add_collection_item(slug, ds, "dataset", exists_ok=True)
+    return f"https://huggingface.co/collections/{slug}"
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--dry-run", action="store_true",
@@ -380,9 +455,11 @@ def main() -> int:
                   f"{rep['tasks']} tasks, croissant: {rep['croissant']}")
     if args.dry_run:
         print("dry run: staging complete, no upload performed")
-    else:
-        print("staging complete; upload is handled by the publish step "
-              "(see hf/README.md)")
+        return 0
+    api = hf_api()
+    for pkg in packages:
+        print(upload_dataset(api, pkg, OUT_DIR / pkg))
+    print(sync_collection(api, [f"{HF_OWNER}/{p}" for p in packages]))
     return 0
 
 
