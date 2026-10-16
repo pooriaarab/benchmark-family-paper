@@ -1,6 +1,6 @@
-The point of view of this paper is narrow: coding agents produce working benchmark code quickly, and the defects that matter are the ones their own tests were never written to find. On this suite, a builder's green checks predicted nothing about whether its grader could be gamed, its tasks solved, or its hidden split kept hidden; an independent pass found defects in all \suitePackages{} packages. That is a claim about builders reviewing their own work. It is not a claim that agents cannot review.
+The finding of this paper is about the depth of review. \suitePackages{} benchmarks built by coding agents passed their builders' own gates and an LLM council's approvals, and adversarial probing still found defects in every one. Approval-style review checks that a change does what its description claims; the memorised-SVG, blind-strategy, and hidden-split defects in Table~\ref{tab:defects} were found by attacking the artifact instead.
 
-The defect classes in Table~\ref{tab:defects} compress into five checks we now require before any benchmark in this family ships, and we offer them to anyone publishing an agent-built benchmark:
+The defect classes compress into five checks we now require before any benchmark in this family ships, and we offer them to anyone publishing an agent-built benchmark:
 
 \begin{enumerate}
 \item \textbf{Solvable from the model's view.} A policy that reads only what a real model sees must pass every task kind. Unsolvable tasks and prompts looser than their grader fail this check.
@@ -10,4 +10,4 @@ The defect classes in Table~\ref{tab:defects} compress into five checks we now r
 \item \textbf{Nothing is taken on trust.} Submitted scores, states, and tool results are re-derived by the grader, documentation claims only checks that exist in code, and model-written text never executes in the grader's own process.
 \end{enumerate}
 
-None of the five needs a new model or a bigger dataset. All five failed somewhere in this suite while the builder was also the reviewer. Results on real models are future work; the engine, the packages, the protocol, and the defect data are public for anyone who wants to run one.
+These checks are cheap and already scripted into the family's re-review protocol. Green checks and approvals were not enough on this suite; a probing pass was. Results on real models are future work; the engine, the packages, the protocol, and the defect data are public for anyone who wants to run one.

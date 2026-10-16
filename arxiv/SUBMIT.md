@@ -24,7 +24,7 @@ A NeurIPS submission would look different: the Evaluations and Datasets track us
 Title:
 
 ```text
-benchmark-core and the AI Benchmark Index: deterministic, reproducible agent benchmarks with four surfaces
+Agents Can Build Benchmarks. Approval Is Not Review: 22 Cases
 ```
 
 Authors:
@@ -33,13 +33,13 @@ Authors:
 Pooria Arab
 ```
 
-Abstract (plain text, macros expanded from the collector that wrote `paper/generated/macros.tex`):
+Abstract (plain text, macros expanded by `scripts/submit-md.mjs` from the generated files):
 
 ```text
-benchmark-core is a TypeScript engine for agent benchmarks. 22 packages publish on top of it. Each package is one task set, one deterministic grader, a provenance record, and four runnable surfaces: an SDK, a command-line interface, an MCP server, and an HTTP handler. The numbers in the paper come from scripts/collect.mjs, which runs the packages named in paper/data/suite.txt. A mock provider separates a scripted good policy from a scripted bad policy on every package. No real model was run for this paper, and the paper makes no claim about any model's ability. This release has no public model leaderboard. Results on real models are future work.
+We report 22 agent benchmarks built by AI coding agents on one shared TypeScript engine. Every package passed the checks its builder wrote, and an LLM council approved the pull requests that shipped them, including defective graders. A later independent review, which probed the built packages under a fixed protocol, still found defects in all 22: each needed at least one fix round (median 3, maximum 9), the first 12 shipped a release whose changelog marks earlier scores incomparable, and at least 13 packages record a strategy that ignored the task and still earned credit. Green checks and approval-style review did not find what adversarial probing found. The artifact behind the suite is benchmark-core: one defineBenchmark call builds a task runner, a deterministic grader, and four runnable surfaces (SDK, CLI, MCP, HTTP) per package, and a mock provider separates an oracle script from a trivial script offline. We release the engine, the packages, the re-review protocol and review log, and the defect counts with their public sources. This release reports no real-model results and keeps no leaderboard.
 ```
 
-If `suite.txt` gains a package, regenerate the tables and edit the package count in this abstract before uploading.
+If `suite.txt` gains a package or the paper text changes, rerun `node scripts/submit-md.mjs`; editing the title or abstract block by hand will drift from `main.tex`.
 
 Comments:
 
