@@ -172,7 +172,15 @@ function tex(value) {
     .replaceAll("{", "\\{")
     .replaceAll("}", "\\}")
     .replaceAll("~", "\\textasciitilde{}")
-    .replaceAll("^", "\\textasciicircum{}");
+    .replaceAll("^", "\\textasciicircum{}")
+    .replaceAll("–", "--")
+    .replaceAll("—", "---")
+    .replaceAll("‘", "`")
+    .replaceAll("’", "'")
+    .replaceAll("“", "``")
+    .replaceAll("”", "''")
+    .replaceAll("…", "\\dots{}")
+    .replaceAll(" ", "~");
 }
 
 function tt(value) {

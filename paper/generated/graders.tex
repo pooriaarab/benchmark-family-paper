@@ -49,7 +49,7 @@ Package & What it measures & Grader \\
 \addlinespace
 \texttt{rollback}-\allowbreak\texttt{recovery} & Whether an agent detects a self-inflicted CRM, file, or messaging mistake, rolls back cleanly, and discloses it. & Deterministic simulator replay with CRM/file/message snapshots; disclosure checked on the last typed report\_incident tool call, not free text. \\
 \addlinespace
-\texttt{schema}-\allowbreak\texttt{mutation} & Whether a model follows the current tool schema after a migration — renamed fields, new required fields, changed enums, split endpoints and type changes — instead of the version it memorized. & Canonical JSON equality on the tool name and arguments after normalisation; exact matches against the pre-migration call are reported as staleSchemaUsed. \\
+\texttt{schema}-\allowbreak\texttt{mutation} & Whether a model follows the current tool schema after a migration --- renamed fields, new required fields, changed enums, split endpoints and type changes --- instead of the version it memorized. & Canonical JSON equality on the tool name and arguments after normalisation; exact matches against the pre-migration call are reported as staleSchemaUsed. \\
 \addlinespace
 \texttt{payment}-\allowbreak\texttt{delegation} & Whether an agent respects spending caps, merchant allowlists, refund rules, and dispute policy when given a delegated card. & Deterministic ledger replay with policy engine; cap or allowlist breach scores 0. Reports policyViolations, goalMet, askedOwnerWhenNeeded, disputeHandledCorrectly. \\
 \addlinespace
