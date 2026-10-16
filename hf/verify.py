@@ -74,6 +74,9 @@ def main() -> int:
     if args.only:
         want = args.only if args.only.startswith("benchmark-") else f"benchmark-{args.only}"
         packages = [p for p in packages if p == want]
+    if not packages:
+        print("no packages to verify (check --only and benchmarks.txt)", file=sys.stderr)
+        return 1
     failed = 0
     for pkg in packages:
         status = check(f"{HF_OWNER}/{pkg}", api, token)
