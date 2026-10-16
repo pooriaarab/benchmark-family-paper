@@ -3,7 +3,8 @@
 
 For each ``pooria/benchmark-<id>`` dataset this fetches the Hub API, checks the
 dataset card parses, the expected files exist and the Croissant endpoint
-answers 200, then prints one line per dataset: ``ok`` or the failure.
+answers 200, then prints one line per dataset: ``ok`` or the failure. Ids whose
+npm package is not published yet are skipped, exactly as ``publish.py`` does.
 """
 from __future__ import annotations
 
@@ -11,6 +12,8 @@ import argparse
 import sys
 import urllib.request
 from pathlib import Path
+
+from publish import on_npm
 
 REQUIRED_FILES = {"data/tasks.jsonl", "data/PROVENANCE.md", "README.md",
                   "croissant.json", "LICENSE"}
@@ -79,6 +82,14 @@ def main() -> int:
         return 1
     failed = 0
     for pkg in packages:
+        try:
+            if not on_npm(pkg):
+                print(f"{pkg}: skipped, not published on npm yet")
+                continue
+        except RuntimeError as exc:
+            print(exc)
+            failed += 1
+            continue
         status = check(f"{HF_OWNER}/{pkg}", api, token)
         print(f"{pkg}: {status}")
         failed += status != "ok"
