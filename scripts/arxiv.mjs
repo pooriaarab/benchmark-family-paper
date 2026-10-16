@@ -37,7 +37,7 @@ const INPUTS = [
   ["sections/closing.tex", "closing.tex"],
 ];
 
-const ALLOWED = new Set([".tex", ".bib", ".bbl"]);
+const ALLOWED = new Set([".tex", ".bib", ".bbl", ".sty"]);
 const TECTONIC = process.env.TECTONIC || "tectonic";
 
 function fail(message) {
@@ -73,6 +73,13 @@ function extensionOf(name) {
 }
 
 function main() {
+  // The NeurIPS style is fetched, not committed; refuse early if absent.
+  const styPath = join(paperDir, "neurips_2026.sty");
+  try {
+    statSync(styPath);
+  } catch {
+    fail("paper/neurips_2026.sty is missing; run `node scripts/fetch-style.mjs` first");
+  }
   const buildDir = mkdtempSync(join(tmpdir(), "bfp-build-"));
   const stage = mkdtempSync(join(tmpdir(), "bfp-arxiv-"));
   const proof = mkdtempSync(join(tmpdir(), "bfp-proof-"));
@@ -89,6 +96,8 @@ function main() {
     }
     writeFileSync(join(stage, "refs.bib"), readFileSync(join(paperDir, "refs.bib")));
     writeFileSync(join(stage, "main.bbl"), bbl);
+    // arXiv does not carry the NeurIPS style; the tarball must ship it.
+    writeFileSync(join(stage, "neurips_2026.sty"), readFileSync(styPath));
 
     const names = readdirSync(stage).sort();
     for (const name of names) {

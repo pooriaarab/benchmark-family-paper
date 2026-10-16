@@ -1,22 +1,28 @@
-\documentclass[10pt]{article}
-\usepackage[margin=0.9in]{geometry}
+\documentclass{article}
+
+% Official NeurIPS 2026 style, preprint (non-anonymous) option for arXiv.
+% Fetched by scripts/fetch-style.mjs; do not commit neurips_2026.sty.
+% neurips_2026 loads natbib itself; pass options to it before loading.
+\PassOptionsToPackage{numbers}{natbib}
+\usepackage[preprint]{neurips_2026}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{longtable}
-\usepackage[T1]{fontenc}
-\usepackage{lmodern}
 \usepackage{microtype}
-\emergencystretch=1.5em
-\usepackage[hidelinks]{hyperref}
-\usepackage{url}
-\usepackage[numbers]{natbib}
 
 \input{generated/macros.tex}
 
-\title{benchmark-core and the AI Benchmark Index:\\[0.35em]
-\large deterministic, reproducible agent benchmarks with four surfaces}
-\author{Pooria Arab}
-\date{16 October 2026}
+\title{benchmark-core and the AI Benchmark Index: deterministic, reproducible agent benchmarks with four surfaces}
+\author{%
+  Pooria Arab\\
+  Independent researcher\\
+  \texttt{papers@aibenchmarkindex.com}\\
+}
 
 \begin{document}
 \maketitle
