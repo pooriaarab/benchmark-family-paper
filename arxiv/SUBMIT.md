@@ -54,7 +54,7 @@ Licence: CC BY 4.0 for the paper text. The code in the benchmark repositories st
 
 ## Endorsement
 
-arXiv will not accept a new author into `cs.*` without an endorsement, and an independent author with no institutional email or prior claimed papers needs a personal endorser: an established arXiv author who knows the work. Ask for it before the first submit; a rejected automatic submit wastes the attempt. Since 1 October 2026, arXiv also caps each submitter at two new submissions per calendar month, so the whole benchmark family goes in this one paper rather than one paper per package. This environment has no logged-in arXiv session in the browser, so stop after the tarball is built.
+arXiv will not accept a new author into `cs.*` without an endorsement, and an independent author with no institutional email or prior claimed papers needs a personal endorser: an established arXiv author who knows the work. Ask for it before the first submit. Since 1 October 2026, arXiv also caps each submitter at two new submissions per calendar month, so the whole benchmark family goes in this one paper rather than one paper per package. This environment has no logged-in arXiv session in the browser, so stop after the tarball is built.
 
 ## Checklist
 
