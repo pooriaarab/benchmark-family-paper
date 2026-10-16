@@ -11,21 +11,25 @@ collection in sync.
 2. Dry run: `python3 hf/publish.py --dry-run`. This clones
    `pooriaarab/<package>` at `main`, builds `hf/out/<package>/` (data split,
    `scripts/gen-tasks.mjs`, dataset card, `croissant.json`) and validates the
-   Croissant file with `mlcroissant` when it is installed. Fix the source repo,
-   not the staging folder, when something looks wrong.
+   Croissant file with `mlcroissant` (required - the run fails without it).
+   Fix the source repo, not the staging folder, when something looks wrong.
 3. Publish: `python3 hf/publish.py`. Creates the public dataset repo under
    `pooria/` if missing, uploads the staging folder, merges the core fields
    Hugging Face auto-generates into `croissant.json`, and adds the dataset to
-   the collection. Re-running is idempotent.
+   the collection. Re-running is idempotent: `upload_folder` passes
+   `delete_patterns="*"`, so files removed from the staging filter are
+   deleted from the Hub on the next run.
 4. Verify: `python3 hf/verify.py`. Prints `ok` or the failure per dataset.
 
 Use `--only <id>` on both scripts to process a single benchmark.
+`python3 hf/publish.py --self-test` runs the built-in check that a symlinked
+`scripts/` directory in a clone is refused.
 
 ## Requirements
 
-- Python 3.10+ with `huggingface_hub` (`pip install --user huggingface_hub`;
-  add `--break-system-packages` on PEP 668 managed systems). `mlcroissant` is
-  optional but recommended.
+- Python 3.10+ with `huggingface_hub` and `mlcroissant`
+  (`pip install --user huggingface_hub mlcroissant`; add
+  `--break-system-packages` on PEP 668 managed systems).
 - `npx` for `<package> index-entry --json`, `git` for cloning.
 - A write token for the `pooria` account in `HF_TOKEN` or
   `~/.config/agents/hf-token`. Never print or commit it.
@@ -33,8 +37,9 @@ Use `--only <id>` on both scripts to process a single benchmark.
 ## Gotchas
 
 - **Hidden splits stay hidden.** Anything matching
-  `hidden|secret|private|token|credential|password|api[_-]key` under `data/`
-  (plus dotfiles) is never staged. Hidden splits use a private seed and live
+  `hidden|secret|private|internal|token|credential|password|apikey|api[_-]?key|holdout`
+  under `data/` (plus dotfiles, symlinks, and any path that resolves outside
+  the clone) is never staged. Hidden splits use a private seed and live
   outside the public repos anyway.
 - **Refresh scripts.** `scripts/gen-tasks.mjs` always ships; extra
   `scripts/*.mjs` files referenced by `data/PROVENANCE.md` (for example
