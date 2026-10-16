@@ -35,6 +35,6 @@
 \draw[flow] (reviewer.north) -- node[num]{6} (builder.south);
 \draw[flow, dashed] (reviewer.south) to[out=-25,in=215] node[lbl, pos=0.55]{probes} (report.south);
 \end{tikzpicture}
-\caption{The pipeline assigns building and reviewing to different sessions by design. 1: a coding agent writes the task set, grader, and provenance. 2: one \texttt{defineBenchmark} call on the shared engine. 3: the engine builds four runnable surfaces. 4: a run produces a scored report. 5: a probing reviewer in a separate session attacks the package and the hidden split, which the generator writes outside the published package. 6: findings return to the builder as fix work. Within this pipeline the builder is never the session that reviews its own output.}
+\caption{The pipeline assigns building and reviewing to different sessions by design. 1: a coding agent writes the task set, grader, and provenance. 2: one \texttt{defineBenchmark} call on the shared engine. 3: the engine builds four runnable surfaces. 4: a run produces a scored report. 5: a probing reviewer in a separate session attacks the package and the hidden split, which the generator writes outside the published package. 6: findings return to the builder as fix work. Builders and reviewers ran as separate sessions; the record does not say which model ran the reviewer sessions.}
 \label{fig:system}
 \end{figure}

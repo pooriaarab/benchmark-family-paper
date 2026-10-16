@@ -247,6 +247,8 @@ function main() {
     ["severity_merged_feature_prs", sevFeaturePrs.size, "distinct merged feature PRs with a flagged review"],
     ["severity_approved_feature_prs", approvedWithSev.length, "approved merged feature PRs with a flagged review"],
     ["severity_chore_reviews", sevOnChore.length, "regex-flagged reviews on merged chore PRs"],
+    ["severity_regex_missed", missed.length, "hand-read corrections: reviews the regex missed (council-read.csv)"],
+    ["severity_regex_false_positives", falsePositives.length, "hand-read corrections: reviews the regex wrongly flagged (council-read.csv)"],
     ["reviews_flagging_severity_read", `~${sevFull}`, "hand-read estimate: regex count minus false positives plus missed reviews"],
     ["prs_with_severity_read", `~${sevFullPrs.size}`, "distinct PRs after the hand-read corrections"],
     ["sample_size", sample.length, "deterministic stride sample for the hand check"],

@@ -19,6 +19,8 @@ severity_merged_feature_reviews,38,regex-flagged reviews on merged feature PRs
 severity_merged_feature_prs,29,distinct merged feature PRs with a flagged review
 severity_approved_feature_prs,18,approved merged feature PRs with a flagged review
 severity_chore_reviews,63,regex-flagged reviews on merged chore PRs
+severity_regex_missed,13,hand-read corrections: reviews the regex missed (council-read.csv)
+severity_regex_false_positives,1,hand-read corrections: reviews the regex wrongly flagged (council-read.csv)
 reviews_flagging_severity_read,~174,hand-read estimate: regex count minus false positives plus missed reviews
 prs_with_severity_read,~104,distinct PRs after the hand-read corrections
 sample_size,50,deterministic stride sample for the hand check
