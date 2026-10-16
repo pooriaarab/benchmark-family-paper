@@ -1,13 +1,14 @@
-class,packages,at_least,source
-unsolvable-tasks,hundred-step;pelican;schema-mutation,3,0.2.0 changelogs
-blind-strategy-credit,pelican;tool-errors;mcp-safety;checkout-consent;honesty;sycophancy;hundred-step;ranking-stability;exploit-resistance;latency-budget;crm-truthfulness;instruction-hierarchy;memory-conflict;accessibility-fix;silent-constraints;rollback-recovery,16,changelogs and PR threads
-honest-answer-rejected,pelican;skateboard;tool-errors;checkout-consent;honesty;ranking-stability;exploit-resistance;schema-mutation,8,changelogs and PR threads
-hidden-split-not-hidden,pelican;skateboard;apology-pizza;tool-errors;cost-per-task;mcp-safety;test-weakening;checkout-consent;honesty;sycophancy;hundred-step;ranking-stability,12,0.2.0 changelogs; sycophancy PR 20
-task-list-cache,mcp-safety;skateboard;payment-delegation,3,changelogs and PR threads
-dropped-breakdowns,pelican;tool-errors,2,changelogs and PR threads
-forged-report-rows,apology-pizza,1,0.2.0 changelog; PR 13
-evaluator-escape,test-weakening,1,0.2.0 changelog; npm deprecation note
-docs-ahead-of-code,sycophancy;pelican;hundred-step,3,changelogs and docs
-generator-bugs,accessibility-fix;ranking-stability;hundred-step,3,changelogs and PR threads
-lexical-detector-miss,crm-truthfulness;honesty,2,changelogs and review issues
-prompt-looser-than-grader,pelican;honesty,2,documented limits and changelog
+class,packages,at_least,source,locators
+unsolvable-tasks,hundred-step;pelican;schema-mutation;silent-constraints,4,0.2.0 changelogs; schema-mutation Unreleased changelog and issue 20; silent-constraints issue 9,benchmark-hundred-step:CHANGELOG.md#L24 + benchmark-hundred-step#16;benchmark-pelican:CHANGELOG.md#L14;benchmark-schema-mutation:CHANGELOG.md#L10 + benchmark-schema-mutation#20;benchmark-silent-constraints#9
+violation-not-penalised,silent-constraints,1,review issues 9 and 17,benchmark-silent-constraints#9 + benchmark-silent-constraints#17
+blind-strategy-credit,pelican;tool-errors;mcp-safety;checkout-consent;honesty;sycophancy;ranking-stability;latency-budget;crm-truthfulness;instruction-hierarchy;memory-conflict;accessibility-fix;rollback-recovery,13,issues and changelogs (per-package locators),benchmark-pelican#8;benchmark-tool-errors#8;benchmark-mcp-safety#8;benchmark-checkout-consent#9;benchmark-honesty:CHANGELOG.md#L7;benchmark-sycophancy#11;benchmark-ranking-stability#7;benchmark-latency-budget#7;benchmark-crm-truthfulness#9;benchmark-instruction-hierarchy#8;benchmark-memory-conflict#16 + benchmark-memory-conflict#23;benchmark-accessibility-fix#7;benchmark-rollback-recovery#15
+honest-answer-rejected,pelican;skateboard;tool-errors;checkout-consent;honesty;ranking-stability;exploit-resistance;schema-mutation,8,review issues and PRs (per-package locators),benchmark-pelican#12;benchmark-skateboard#15;benchmark-tool-errors#8;benchmark-checkout-consent#8;benchmark-honesty#7;benchmark-ranking-stability#7;benchmark-exploit-resistance#27 + benchmark-exploit-resistance#30;benchmark-schema-mutation#9
+hidden-split-not-hidden,pelican;skateboard;apology-pizza;tool-errors;cost-per-task;mcp-safety;test-weakening;checkout-consent;honesty;sycophancy;hundred-step;ranking-stability,12,review issues and PRs (per-package locators); 0.2.0 changelogs,benchmark-pelican#11;benchmark-skateboard#5 + benchmark-skateboard#21;benchmark-apology-pizza#7;benchmark-tool-errors#7;benchmark-cost-per-task#22;benchmark-mcp-safety#7;benchmark-test-weakening#9;benchmark-checkout-consent#7;benchmark-honesty#7;benchmark-sycophancy#11 + benchmark-sycophancy#20;benchmark-hundred-step#9;benchmark-ranking-stability#7 + benchmark-ranking-stability#15
+task-list-cache,mcp-safety;skateboard;payment-delegation,3,changelogs and issues (payment-delegation under 0.1.0/Unreleased),benchmark-mcp-safety:CHANGELOG.md#L18;benchmark-skateboard:CHANGELOG.md#L11 + benchmark-skateboard#17;benchmark-payment-delegation:CHANGELOG.md#L21 + benchmark-payment-delegation#40
+dropped-breakdowns,pelican;tool-errors,2,review issues and PRs (per-package locators),benchmark-pelican#21 + benchmark-pelican#23;benchmark-tool-errors#19 + benchmark-tool-errors#9
+forged-report-rows,apology-pizza,1,0.2.0 changelog; pull request 13,benchmark-apology-pizza#13
+evaluator-escape,test-weakening,1,0.2.0 changelog; npm deprecation note,benchmark-test-weakening:CHANGELOG.md#L7
+docs-ahead-of-code,sycophancy;pelican;hundred-step,3,review issues and PR review comments,benchmark-sycophancy#20;benchmark-pelican#29;benchmark-hundred-step#11
+generator-bugs,accessibility-fix;ranking-stability,2,accessibility-fix changelog; ranking-stability issue 7,benchmark-accessibility-fix:CHANGELOG.md#L55;benchmark-ranking-stability#7
+lexical-detector-miss,crm-truthfulness;honesty,2,review issues,benchmark-crm-truthfulness#19;benchmark-honesty#15
+prompt-looser-than-grader,pelican;honesty,2,documented limits; issue and changelog,benchmark-pelican#22;benchmark-honesty#7 + benchmark-honesty:CHANGELOG.md#L11

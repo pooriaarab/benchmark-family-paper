@@ -6,18 +6,19 @@
 \toprule
 Class & Packages & At least & Source \\
 \midrule
-unsolvable tasks & \texttt{hundred-step};\ \texttt{pelican};\ \texttt{schema-mutation} & 3 & 0.2.0 changelogs \\
-blind strategy credit & \texttt{pelican};\ \texttt{tool-errors};\ \texttt{mcp-safety};\ \texttt{checkout-consent};\ \texttt{honesty};\ \texttt{sycophancy};\ \texttt{hundred-step};\ \texttt{ranking-stability};\ \texttt{exploit-resistance};\ \texttt{latency-budget};\ \texttt{crm-truthfulness};\ \texttt{instruction-hierarchy};\ \texttt{memory-conflict};\ \texttt{accessibility-fix};\ \texttt{silent-constraints};\ \texttt{rollback-recovery} & 16 & changelogs and PR threads \\
-honest answer rejected & \texttt{pelican};\ \texttt{skateboard};\ \texttt{tool-errors};\ \texttt{checkout-consent};\ \texttt{honesty};\ \texttt{ranking-stability};\ \texttt{exploit-resistance};\ \texttt{schema-mutation} & 8 & changelogs and PR threads \\
-hidden split not hidden & \texttt{pelican};\ \texttt{skateboard};\ \texttt{apology-pizza};\ \texttt{tool-errors};\ \texttt{cost-per-task};\ \texttt{mcp-safety};\ \texttt{test-weakening};\ \texttt{checkout-consent};\ \texttt{honesty};\ \texttt{sycophancy};\ \texttt{hundred-step};\ \texttt{ranking-stability} & 12 & 0.2.0 changelogs; sycophancy PR 20 \\
-task list cache & \texttt{mcp-safety};\ \texttt{skateboard};\ \texttt{payment-delegation} & 3 & changelogs and PR threads \\
-dropped breakdowns & \texttt{pelican};\ \texttt{tool-errors} & 2 & changelogs and PR threads \\
-forged report rows & \texttt{apology-pizza} & 1 & 0.2.0 changelog; PR 13 \\
+unsolvable tasks & \texttt{hundred-step};\ \texttt{pelican};\ \texttt{schema-mutation};\ \texttt{silent-constraints} & 4 & 0.2.0 changelogs; schema-mutation Unreleased changelog and issue 20; silent-constraints issue 9 \\
+violation not penalised & \texttt{silent-constraints} & 1 & review issues 9 and 17 \\
+blind strategy credit & \texttt{pelican};\ \texttt{tool-errors};\ \texttt{mcp-safety};\ \texttt{checkout-consent};\ \texttt{honesty};\ \texttt{sycophancy};\ \texttt{ranking-stability};\ \texttt{latency-budget};\ \texttt{crm-truthfulness};\ \texttt{instruction-hierarchy};\ \texttt{memory-conflict};\ \texttt{accessibility-fix};\ \texttt{rollback-recovery} & 13 & issues and changelogs (per-package locators) \\
+honest answer rejected & \texttt{pelican};\ \texttt{skateboard};\ \texttt{tool-errors};\ \texttt{checkout-consent};\ \texttt{honesty};\ \texttt{ranking-stability};\ \texttt{exploit-resistance};\ \texttt{schema-mutation} & 8 & review issues and PRs (per-package locators) \\
+hidden split not hidden & \texttt{pelican};\ \texttt{skateboard};\ \texttt{apology-pizza};\ \texttt{tool-errors};\ \texttt{cost-per-task};\ \texttt{mcp-safety};\ \texttt{test-weakening};\ \texttt{checkout-consent};\ \texttt{honesty};\ \texttt{sycophancy};\ \texttt{hundred-step};\ \texttt{ranking-stability} & 12 & review issues and PRs (per-package locators); 0.2.0 changelogs \\
+task list cache & \texttt{mcp-safety};\ \texttt{skateboard};\ \texttt{payment-delegation} & 3 & changelogs and issues (payment-delegation under 0.1.0/Unreleased) \\
+dropped breakdowns & \texttt{pelican};\ \texttt{tool-errors} & 2 & review issues and PRs (per-package locators) \\
+forged report rows & \texttt{apology-pizza} & 1 & 0.2.0 changelog; pull request 13 \\
 evaluator escape & \texttt{test-weakening} & 1 & 0.2.0 changelog; npm deprecation note \\
-docs ahead of code & \texttt{sycophancy};\ \texttt{pelican};\ \texttt{hundred-step} & 3 & changelogs and docs \\
-generator bugs & \texttt{accessibility-fix};\ \texttt{ranking-stability};\ \texttt{hundred-step} & 3 & changelogs and PR threads \\
-lexical detector miss & \texttt{crm-truthfulness};\ \texttt{honesty} & 2 & changelogs and review issues \\
-prompt looser than grader & \texttt{pelican};\ \texttt{honesty} & 2 & documented limits and changelog \\
+docs ahead of code & \texttt{sycophancy};\ \texttt{pelican};\ \texttt{hundred-step} & 3 & review issues and PR review comments \\
+generator bugs & \texttt{accessibility-fix};\ \texttt{ranking-stability} & 2 & accessibility-fix changelog; ranking-stability issue 7 \\
+lexical detector miss & \texttt{crm-truthfulness};\ \texttt{honesty} & 2 & review issues \\
+prompt looser than grader & \texttt{pelican};\ \texttt{honesty} & 2 & documented limits; issue and changelog \\
 \bottomrule
 \end{tabular}
 \caption{Defect classes recorded by the independent review, generated from \texttt{paper/data/defects.csv}. Each count is a sourced minimum: the public record can hold more.}
