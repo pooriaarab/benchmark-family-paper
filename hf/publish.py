@@ -31,7 +31,7 @@ HF_OWNER = "pooria"
 # Anything matching this never leaves the GitHub clone: hidden splits,
 # credentials, env files. The public split is all that ships.
 SECRET_RE = re.compile(
-    r"(^|[._\-/])(hidden|secret|private|internal|token|credential|password|apikey|api[_-]key)([._\-/]|$)",
+    r"(hidden|secret|private|internal|token|credential|password|apikey|api[_-]?key|holdout)",
     re.IGNORECASE,
 )
 TAG_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
@@ -96,7 +96,7 @@ def stage_data(clone_dir: Path, stage_dir: Path) -> list[str]:
     src_data = clone_dir / "data"
     for src in sorted(src_data.rglob("*")):
         rel = src.relative_to(clone_dir)
-        if src.is_dir() or SECRET_RE.search(str(rel)) or any(
+        if src.is_symlink() or src.is_dir() or SECRET_RE.search(str(rel)) or any(
                 p.startswith(".") for p in rel.parts):
             continue
         dest = stage_dir / rel
