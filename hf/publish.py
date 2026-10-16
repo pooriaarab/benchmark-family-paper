@@ -94,6 +94,8 @@ def stage_data(clone_dir: Path, stage_dir: Path) -> list[str]:
     """Copy data/ (minus hidden splits and secrets) and the refresh scripts."""
     copied = []
     src_data = clone_dir / "data"
+    if src_data.is_symlink():
+        raise SystemExit(f"refusing symlinked data/ in {clone_dir}")
     for src in sorted(src_data.rglob("*")):
         rel = src.relative_to(clone_dir)
         if src.is_symlink() or src.is_dir() or SECRET_RE.search(str(rel)) or any(
