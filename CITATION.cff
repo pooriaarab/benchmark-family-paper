@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it using the metadata below."
+title: "benchmark-family-paper"
+type: software
+authors:
+  - family-names: Arab
+    given-names: Pooria
+license: MIT
+repository-code: https://github.com/pooriaarab/benchmark-family-paper
+url: "https://aibenchmarkindex.com"
+abstract: "Paper, Hugging Face publishing tools and arXiv packet for the benchmark-* family of AI benchmarks."
+keywords:
+  - ai-benchmark
+  - llm-evaluation
+  - agent-evaluation
+  - deterministic-grader
