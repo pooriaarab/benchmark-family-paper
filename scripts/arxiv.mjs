@@ -91,9 +91,12 @@ function flattenMain() {
   return main;
 }
 
+// Only braced load paths are rewritten; prose mentions like
+// \texttt{paper/data/review-rounds.csv} name the repository path and
+// must survive verbatim.
 function flattenCsvs(text) {
   let out = text;
-  for (const [from, to] of CSVS) out = out.replaceAll(from, to);
+  for (const [from, to] of CSVS) out = out.replaceAll(`{${from}}`, `{${to}}`);
   return out;
 }
 

@@ -59,11 +59,18 @@
   its regex flag and `council-sample.csv` a deterministic stride sample
   of 50 (every k-th review in the sorted list) with a hand-checked
   `manual` column: all 50 matched the regex,
-  so the estimate is reported as "about". `council-read.csv` is the full
-  hand check: after reading the unflagged review bodies, it records the
-  13 reviews the regex missed and the 1 it wrongly counted, and
-  `reviews_flagging_severity_read` and `prs_with_severity_read` apply
-  those corrections (about 174 reviews on about 104 pull requests).
+  so the estimate is reported as "about". `council-read.csv` is the hand
+  check: every unflagged review body was read, and it records the 13
+  reviews the regex missed. A false positive can only be found among
+  flagged reviews, and those were not all re-read, so the 1 it records
+  is a lower bound; `reviews_flagging_severity_read` and
+  `prs_with_severity_read` apply the corrections (about 174 reviews on
+  about 104 pull requests).
+- `approval-defects.csv` lists the documented cases of a council
+  approval standing behind a defect a later review found: one row per
+  case with the pull request, the approved commit and time, the defect,
+  who found it, the fix commit, and the merged head. `collect.mjs`
+  counts the rows into `\approvalDefectCases`.
 - `trivial.csv` is the preregistered study's first result: per first-wave
   package, the best trivial-policy mean at 0.1.0 (`old`) and 0.2.0
   (`new`) and the winning policy. The registered plan and the deviation
