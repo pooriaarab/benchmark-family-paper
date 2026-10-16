@@ -13,7 +13,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outBuilders = join(root, "paper/data/builders.csv");
 const outReviewers = join(root, "paper/data/reviewers.csv");
 const CHORE = /^Add (CITATION|the Zenodo DOI)|^Publish to ants\.land/;
-const TRAILER = /^Assisted-by:\s*(\S+)\s*$/gm;
+const TRAILER = /^Assisted-by:\s*([A-Za-z0-9][A-Za-z0-9._:\/@+-]*)\s*$/gm;
 
 function run(cmd, args) {
   const r = spawnSync(cmd, args, { cwd: root, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
