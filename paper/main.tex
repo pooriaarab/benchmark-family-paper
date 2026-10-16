@@ -1,13 +1,15 @@
-\documentclass[11pt]{article}
-\usepackage[margin=1in]{geometry}
+\documentclass[10pt]{article}
+\usepackage[margin=0.9in]{geometry}
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{longtable}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage{microtype}
+\emergencystretch=1.5em
 \usepackage[hidelinks]{hyperref}
 \usepackage{url}
+\usepackage[numbers]{natbib}
 
 \input{generated/macros.tex}
 
@@ -25,6 +27,7 @@
 Each package is one task set, one deterministic grader, a provenance record, and four runnable surfaces: an SDK, a command-line interface, an MCP server, and an HTTP handler.
 The numbers below come from \texttt{scripts/collect.mjs}, which runs the packages named in \texttt{paper/data/suite.txt}.
 A mock provider separates a scripted good policy from a scripted bad policy on every package.
+No real model was run for this paper, and the paper makes no claim about any model's ability.
 This release has no public model leaderboard.
 Results on real models are future work.
 \end{abstract}
@@ -53,6 +56,10 @@ Results on real models are future work.
 \input{generated/mock-table.tex}
 \input{generated/summary.tex}
 
+\section{Independent adversarial review}
+\label{sec:review}
+\input{sections/adversarial.tex}
+
 \section{The index}
 \input{sections/index.tex}
 
@@ -62,7 +69,7 @@ Results on real models are future work.
 \section{Limitations, ethics, and availability}
 \input{sections/closing.tex}
 
-\bibliographystyle{plain}
+\bibliographystyle{plainnat}
 \bibliography{refs}
 
 \end{document}

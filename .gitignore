@@ -1,3 +1,13 @@
 .venv/
 hf/out/
 __pycache__/
+paper/main.pdf
+paper/*.aux
+paper/*.log
+paper/*.bbl
+paper/*.blg
+paper/*.out
+paper/*.toc
+paper/*.synctex.gz
+arxiv/*.tar.gz
+.tectonic-cache/

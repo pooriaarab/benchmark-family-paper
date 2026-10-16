@@ -3,22 +3,32 @@
 \centering
 \small
 \setlength{\tabcolsep}{3pt}
-\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.15\textwidth}>{\raggedright\arraybackslash}p{0.10\textwidth}r>{\raggedright\arraybackslash}p{0.15\textwidth}>{\raggedright\arraybackslash}p{0.24\textwidth}>{\raggedright\arraybackslash}p{0.20\textwidth}@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.13\textwidth}l>{\raggedright\arraybackslash}p{0.08\textwidth}r>{\raggedright\arraybackslash}p{0.14\textwidth}>{\raggedright\arraybackslash}p{0.23\textwidth}>{\raggedright\arraybackslash}p{0.18\textwidth}@{}}
 \toprule
-Package & Kind & Tasks & Category & Data & Licence \\
+Package & Ver. & Kind & Tasks & Category & Data & Licence \\
 \midrule
-\texttt{pelican} & single & 30 & multimodal & human-written, synthetic & CC0-1.0, MIT \\
-\texttt{skateboard} & single & 36 & physical-reasoning & human-written, synthetic & CC-BY-4.0, CC0-1.0, MIT \\
-\texttt{apology}-\allowbreak\texttt{pizza} & episode & 40 & agents & human-written, synthetic & MIT \\
-\texttt{tool}-\allowbreak\texttt{errors} & episode & 40 & tools & synthetic & MIT \\
-\texttt{cost}-\allowbreak\texttt{per}-\allowbreak\texttt{task} & episode & 30 & agents & live-feed, synthetic & MIT, NOASSERTION \\
-\texttt{mcp}-\allowbreak\texttt{safety} & episode & 40 & safety & synthetic & MIT \\
-\texttt{test}-\allowbreak\texttt{weakening} & episode & 30 & coding & synthetic & MIT \\
-\texttt{checkout}-\allowbreak\texttt{consent} & episode & 40 & commerce & synthetic & MIT \\
-\texttt{honesty} & episode & 60 & safety & synthetic & MIT \\
-\texttt{sycophancy} & episode & 48 & safety & human-written & MIT \\
-\texttt{hundred}-\allowbreak\texttt{step} & episode & 24 & long-horizon & synthetic & MIT \\
-\texttt{ranking}-\allowbreak\texttt{stability} & single & 300 & model-evaluation & synthetic & MIT \\
+\texttt{pelican} & \texttt{0.2.0} & single & 30 & multimodal & human-written, synthetic & CC0-1.0, MIT \\
+\texttt{skateboard} & \texttt{0.2.0} & single & 72 & physical-reasoning & human-written, synthetic & CC-BY-4.0, CC0-1.0, MIT \\
+\texttt{apology}-\allowbreak\texttt{pizza} & \texttt{0.2.0} & episode & 40 & agents & human-written, synthetic & MIT \\
+\texttt{tool}-\allowbreak\texttt{errors} & \texttt{0.2.0} & episode & 40 & tools & synthetic & MIT \\
+\texttt{cost}-\allowbreak\texttt{per}-\allowbreak\texttt{task} & \texttt{0.2.0} & episode & 30 & agents & live-feed, synthetic & MIT, NOASSERTION \\
+\texttt{mcp}-\allowbreak\texttt{safety} & \texttt{0.2.0} & episode & 40 & safety & synthetic & MIT \\
+\texttt{test}-\allowbreak\texttt{weakening} & \texttt{0.2.0} & episode & 30 & coding & synthetic & MIT \\
+\texttt{checkout}-\allowbreak\texttt{consent} & \texttt{0.2.0} & episode & 40 & commerce & synthetic & MIT \\
+\texttt{honesty} & \texttt{0.2.0} & episode & 60 & safety & synthetic & MIT \\
+\texttt{sycophancy} & \texttt{0.2.0} & episode & 48 & safety & human-written & MIT \\
+\texttt{hundred}-\allowbreak\texttt{step} & \texttt{0.2.0} & episode & 24 & long-horizon & synthetic & MIT \\
+\texttt{ranking}-\allowbreak\texttt{stability} & \texttt{0.2.0} & single & 300 & model-evaluation & synthetic & MIT \\
+\texttt{exploit}-\allowbreak\texttt{resistance} & \texttt{0.1.0} & episode & 46 & safety & human-written, synthetic & MIT \\
+\texttt{latency}-\allowbreak\texttt{budget} & \texttt{0.1.0} & episode & 36 & agents & synthetic & MIT \\
+\texttt{crm}-\allowbreak\texttt{truthfulness} & \texttt{0.1.0} & episode & 40 & commerce, safety & synthetic & MIT \\
+\texttt{instruction}-\allowbreak\texttt{hierarchy} & \texttt{0.1.0} & single & 60 & safety & human-written, synthetic & MIT \\
+\texttt{memory}-\allowbreak\texttt{conflict} & \texttt{0.1.0} & episode & 40 & agents & human-written, synthetic & MIT \\
+\texttt{accessibility}-\allowbreak\texttt{fix} & \texttt{0.1.0} & single & 40 & coding & synthetic & MIT \\
+\texttt{silent}-\allowbreak\texttt{constraints} & \texttt{0.1.0} & episode & 40 & safety & synthetic & MIT \\
+\texttt{rollback}-\allowbreak\texttt{recovery} & \texttt{0.1.0} & episode & 48 & agents & synthetic & MIT \\
+\texttt{schema}-\allowbreak\texttt{mutation} & \texttt{0.1.0} & single & 60 & tools & synthetic & MIT \\
+\texttt{payment}-\allowbreak\texttt{delegation} & \texttt{0.1.0} & episode & 40 & commerce & human-written, synthetic & CC0-1.0, MIT \\
 \bottomrule
 \end{tabular}
 \caption{Suite measured from \texttt{index-entry} and a mock run. Package names omit the \texttt{benchmark-} prefix. Data and licence list the distinct provenance fields.}
