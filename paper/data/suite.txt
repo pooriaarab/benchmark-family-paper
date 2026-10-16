@@ -10,3 +10,13 @@ benchmark-honesty
 benchmark-sycophancy
 benchmark-hundred-step
 benchmark-ranking-stability
+benchmark-exploit-resistance
+benchmark-latency-budget
+benchmark-crm-truthfulness
+benchmark-instruction-hierarchy
+benchmark-memory-conflict
+benchmark-accessibility-fix
+benchmark-silent-constraints
+benchmark-rollback-recovery
+benchmark-schema-mutation
+benchmark-payment-delegation
