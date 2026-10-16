@@ -11,6 +11,7 @@ Work lands through pull requests. The PDF is not committed.
 ```bash
 node scripts/collect.mjs
 make pdf
+make arxiv
 ```
 
-`make pdf` needs [Tectonic](https://github.com/tectonic-typesetting/tectonic) 0.17.0 on `PATH`. `make release-assets` prints the paths a GitHub release should attach.
+`make pdf` needs [Tectonic](https://github.com/tectonic-typesetting/tectonic) 0.17.0 on `PATH`. `make arxiv` writes `arxiv/benchmark-family-arxiv.tar.gz` and recompiles that packet. `make release-assets` prints the two paths a GitHub release should attach: the PDF and the tarball. Submission steps are in `arxiv/SUBMIT.md`.
