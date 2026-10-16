@@ -24,7 +24,10 @@ const INPUTS = [
   ["generated/macros.tex", "macros.tex"],
   ["generated/review.tex", "review.tex"],
   ["generated/defects-macros.tex", "defects-macros.tex"],
+  ["generated/review-data.tex", "review-data.tex"],
   ["generated/defects.tex", "defects.tex"],
+  ["generated/defect-locators.tex", "defect-locators.tex"],
+  ["generated/builders.tex", "builders.tex"],
   ["generated/suite-table.tex", "suite-table.tex"],
   ["generated/graders.tex", "graders.tex"],
   ["generated/mock-table.tex", "mock-table.tex"],
@@ -49,8 +52,8 @@ const INPUTS = [
 
 // Figure data ships as flat CSVs; paths inside .tex files are rewritten.
 const CSVS = [
-  ["data/defects.csv", "defects.csv"],
   ["data/review-rounds.csv", "review-rounds.csv"],
+  ["generated/defects-plot.csv", "defects-plot.csv"],
   ["generated/mock-scores.csv", "mock-scores.csv"],
 ];
 

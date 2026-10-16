@@ -27,8 +27,9 @@
 \input{generated/macros.tex}
 \input{generated/review.tex}
 \input{generated/defects-macros.tex}
+\input{generated/review-data.tex}
 
-\title{Agents Can Build Benchmarks. They Cannot Review Their Own: 22 Cases}
+\title{Agents Can Build Benchmarks. Approval Is Not Review: 22 Cases}
 \author{%
   Pooria Arab\\
   Independent researcher\\
@@ -39,12 +40,12 @@
 \maketitle
 
 \begin{abstract}
-Agent benchmarks are increasingly written by AI coding agents.
-This paper asks what the record shows when the builder is also the reviewer.
-We report \suitePackages{} agent benchmarks built mainly by AI coding agents on one shared TypeScript engine; every package passed its own tests.
-Independent review then found defects in all \suitePackages{}: each needed at least one fix round (median \reviewRoundsMedian{}, maximum \reviewRoundsMax{}), the first twelve shipped a release whose changelog marks earlier scores incomparable, and at least \defectBlindStrategyCredit{} packages record a strategy that ignored the task and still earned credit.
-The artifact behind the finding is \texttt{benchmark-core}: one \texttt{defineBenchmark} call builds a task runner, a deterministic grader, and four runnable surfaces (SDK, CLI, MCP, HTTP) per package, and a mock provider separates an oracle script from a trivial script offline.
-We release the engine, the packages, the review protocol, and the defect counts with their public sources.
+We report \suitePackages{} agent benchmarks built by AI coding agents on one shared TypeScript engine.
+Every package passed the checks its builder wrote, and an LLM council approved the pull requests that shipped them, including defective graders.
+A later independent review, which probed the built packages under a fixed protocol, still found defects in all \suitePackages{}: each needed at least one fix round (median \reviewRoundsMedian{}, maximum \reviewRoundsMax{}), the first \reviewWaveOne{} shipped a release whose changelog marks earlier scores incomparable, and at least \defectBlindStrategyCredit{} packages record a strategy that ignored the task and still earned credit.
+Green checks and approval-style review did not find what adversarial probing found.
+The artifact behind the suite is \texttt{benchmark-core}: one \texttt{defineBenchmark} call builds a task runner, a deterministic grader, and four runnable surfaces (SDK, CLI, MCP, HTTP) per package, and a mock provider separates an oracle script from a trivial script offline.
+We release the engine, the packages, the re-review protocol and review log, and the defect counts with their public sources.
 This release reports no real-model results and keeps no leaderboard.
 \end{abstract}
 
@@ -81,6 +82,7 @@ This release reports no real-model results and keeps no leaderboard.
 \section{Independent adversarial review}
 \label{sec:review}
 \input{sections/adversarial.tex}
+\input{generated/builders.tex}
 \input{generated/defects.tex}
 \input{figures/fig-defects.tex}
 \input{figures/fig-rounds.tex}
@@ -98,9 +100,10 @@ This release reports no real-model results and keeps no leaderboard.
 \label{sec:conclusion}
 \input{sections/conclusion.tex}
 
-\input{sections/appendix.tex}
-
 \bibliographystyle{plainnat}
 \bibliography{refs}
+
+\input{sections/appendix.tex}
+\input{generated/defect-locators.tex}
 
 \end{document}

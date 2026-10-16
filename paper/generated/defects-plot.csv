@@ -1,0 +1,14 @@
+class,at_least
+unsolvable-tasks,4
+violation-not-penalised,1
+blind-strategy-credit,13
+honest-answer-rejected,8
+hidden-split-not-hidden,12
+task-list-cache,3
+dropped-breakdowns,2
+forged-report-rows,1
+evaluator-escape,1
+docs-ahead-of-code,3
+generator-bugs,2
+lexical-detector-miss,2
+prompt-looser-than-grader,2
