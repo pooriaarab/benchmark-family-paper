@@ -201,14 +201,13 @@ function main() {
   const missed = corrections.filter((c) => c.verdict === "miss");
   const falsePositives = corrections.filter((c) => c.verdict === "false_positive");
   const sevFull = severityReviews.length - falsePositives.length + missed.length;
-  const sevFullPrs = new Set(severityPrs);
-  for (const c of missed) sevFullPrs.add(`${c.repo}#${c.pr}`);
-  for (const c of falsePositives) {
-    if (!severityReviews.some((r) => r.repo === c.repo && r.pr === c.pr
-      && !(r.index === c.index))) {
-      sevFullPrs.delete(`${c.repo}#${c.pr}`);
-    }
-  }
+  const correctedPrs = new Set(
+    severityReviews
+      .filter((r) => !falsePositives.some((c) =>
+        c.repo === r.repo && c.pr === r.pr && c.index === r.index))
+      .map((r) => `${r.repo}#${r.pr}`));
+  for (const c of missed) correctedPrs.add(`${c.repo}#${c.pr}`);
+  const sevFullPrs = correctedPrs;
 
   // Keep any manual verdicts already written for the sample.
   const manual = new Map();
