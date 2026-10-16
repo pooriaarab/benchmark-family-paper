@@ -258,6 +258,7 @@ function summary(doc) {
 function suiteTable(doc) {
   const rows = doc.packages.map((pkg) => [
     ttId(pkg.id),
+    tt(pkg.version),
     tex(pkg.kind),
     String(pkg.taskCount),
     tex(pkg.category),
@@ -270,9 +271,9 @@ function suiteTable(doc) {
     "\\centering",
     "\\small",
     "\\setlength{\\tabcolsep}{3pt}",
-    `\\begin{tabular}{@{}${RAG}p{0.15\\textwidth}${RAG}p{0.10\\textwidth}r${RAG}p{0.15\\textwidth}${RAG}p{0.24\\textwidth}${RAG}p{0.20\\textwidth}@{}}`,
+    `\\begin{tabular}{@{}${RAG}p{0.13\\textwidth}l${RAG}p{0.08\\textwidth}r${RAG}p{0.14\\textwidth}${RAG}p{0.23\\textwidth}${RAG}p{0.18\\textwidth}@{}}`,
     "\\toprule",
-    "Package & Kind & Tasks & Category & Data & Licence \\\\",
+    "Package & Ver. & Kind & Tasks & Category & Data & Licence \\\\",
     "\\midrule",
     ...rows,
     "\\bottomrule",
