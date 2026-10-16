@@ -3,13 +3,16 @@
 
 TECTONIC ?= tectonic
 
-.PHONY: collect pdf release-assets clean
+.PHONY: collect pdf arxiv release-assets clean
 
 collect:
 	node scripts/collect.mjs
 
 pdf:
 	cd paper && $(TECTONIC) main.tex
+
+arxiv:
+	node scripts/arxiv.mjs
 
 release-assets:
 	@echo "$(CURDIR)/paper/main.pdf"
