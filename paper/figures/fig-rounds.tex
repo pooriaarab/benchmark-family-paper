@@ -15,7 +15,7 @@
   axis y line*=left, axis x line*=bottom,
 ]
 \addplot[fill=okorange, draw=black] table[x expr=\coordindex,y=fix_rounds,col sep=comma] {data/review-rounds.csv};
-\addplot[okverm, dashed, thick, domain=-0.7:21.7, samples=2] {\reviewRoundsMedian};
+\draw[okverm, dashed, thick] (axis cs:-0.7,\reviewRoundsMedian) -- (axis cs:21.7,\reviewRoundsMedian);
 \node[anchor=west, font=\scriptsize, fill=white, inner sep=1pt] at (axis cs:0.6,3.6) {median \reviewRoundsMedian{} rounds};
 \end{axis}
 \end{tikzpicture}

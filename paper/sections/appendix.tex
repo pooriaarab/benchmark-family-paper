@@ -1,7 +1,7 @@
 \appendix
-\section{Review protocol}
+\section{Re-review protocol}
 \label{app:protocol}
-The independent review sessions ran under the protocol below, shortened to fit one page. The full text lives with the project notes; the commands are real and the order is the one the reviewers followed.
+This is the re-review protocol: the one the independent sessions followed when they re-checked a package after its fixes landed. It is shortened to fit one page. The full text ships in the review log (release \texttt{review-log-v1}, \texttt{review-log.tar.gz}~\cite{benchmarkfamily2026reviewlog}); the commands are real and the order is the one the reviewers followed. The protocol the first-round defect-finding sessions used is not released.
 
 \begin{enumerate}\small
 \item Read every fix brief for the package (later rounds list what earlier rounds already fixed), the package's charter, and the family spec. Judge the final state against all findings from all rounds, and say which commit was reviewed.
@@ -12,4 +12,4 @@ The independent review sessions ran under the protocol below, shortened to fit o
 \item Report in under 300 words: per finding FIXED or NOT FIXED with evidence; any new critical or major defect with file and line plus a concrete fix; a merge-or-fix verdict; and what the reviewer ran but could not verify.
 \end{enumerate}
 
-Two properties of the protocol matter for reading this paper. The reviewer works against running code and writes its own attack policies, so a clean pull-request description earns nothing. And the reviewer is a separate session from the builder: the same agent never inspects its own work. What the record cannot show is whether the protocol is complete; a defect class nobody thought to check would not appear in it.
+Two properties of the protocol matter for reading this paper. The reviewer works against running code and writes its own attack policies, so a clean pull-request description earns nothing. And the reviewer is a separate session from the builder, so by design the same agent never inspects its own work in this pipeline. What the record cannot show is whether the protocol is complete; a defect class nobody thought to check would not appear in it.
