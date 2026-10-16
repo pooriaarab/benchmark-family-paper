@@ -14,8 +14,18 @@
 \usepackage{array}
 \usepackage{longtable}
 \usepackage{microtype}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+\usetikzlibrary{arrows.meta, patterns, positioning}
+
+\definecolor{okblue}{HTML}{0072B2}
+\definecolor{okverm}{HTML}{D55E00}
+\definecolor{okgreen}{HTML}{009E73}
+\definecolor{okorange}{HTML}{E69F00}
+\definecolor{oksky}{HTML}{56B4E9}
 
 \input{generated/macros.tex}
+\input{generated/review.tex}
 
 \title{benchmark-core and the AI Benchmark Index: deterministic, reproducible agent benchmarks with four surfaces}
 \author{%
@@ -40,6 +50,7 @@ Results on real models are future work.
 
 \section{Introduction}
 \input{sections/intro.tex}
+\input{figures/fig-system.tex}
 
 \section{Design principles}
 \input{sections/principles.tex}
@@ -61,10 +72,14 @@ Results on real models are future work.
 
 \input{generated/mock-table.tex}
 \input{generated/summary.tex}
+\input{figures/fig-mock.tex}
 
 \section{Independent adversarial review}
 \label{sec:review}
 \input{sections/adversarial.tex}
+\input{generated/defects.tex}
+\input{figures/fig-defects.tex}
+\input{figures/fig-rounds.tex}
 
 \section{The index}
 \input{sections/index.tex}
