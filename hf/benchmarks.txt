@@ -1,0 +1,14 @@
+# One benchmark-<id> per line. publish.py clones pooriaarab/<name> at main
+# and stages data/ + scripts/gen-tasks.mjs for upload to pooria/<name>.
+benchmark-pelican
+benchmark-skateboard
+benchmark-apology-pizza
+benchmark-tool-errors
+benchmark-cost-per-task
+benchmark-mcp-safety
+benchmark-test-weakening
+benchmark-checkout-consent
+benchmark-honesty
+benchmark-sycophancy
+benchmark-hundred-step
+benchmark-ranking-stability
