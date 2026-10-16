@@ -17,6 +17,7 @@ const buildersPath = join(root, "paper/data/builders.csv");
 const reviewersPath = join(root, "paper/data/reviewers.csv");
 const notesPath = join(root, "paper/data/review-notes.csv");
 const councilPath = join(root, "paper/data/council.csv");
+const approvalDefectsPath = join(root, "paper/data/approval-defects.csv");
 const trivialPath = join(root, "paper/data/trivial.csv");
 const genDir = join(root, "paper/generated");
 
@@ -568,6 +569,8 @@ function reviewDataMacrosTex() {
   const t = builderTotals();
   const council = readCsv(reviewersPath).find((row) => row.account === "claude");
   if (!council) fail("reviewers.csv has no claude row");
+  const approvalCases = readCsv(approvalDefectsPath).length;
+  if (!approvalCases) fail("approval-defects.csv is empty");
   const c = councilMetrics();
   const need = (key) => {
     if (!c.has(key)) fail(`council.csv is missing ${key}; run scripts/council.mjs`);
@@ -605,6 +608,7 @@ function reviewDataMacrosTex() {
     `\\newcommand{\\councilSeverityReviewsRead}{${need("reviews_flagging_severity_read")}}`,
     `\\newcommand{\\councilSeverityPrsRead}{${need("prs_with_severity_read")}}`,
     `\\newcommand{\\councilSampleSize}{${need("sample_size")}}`,
+    `\\newcommand{\\approvalDefectCases}{${approvalCases}}`,
   ];
   for (const row of readCsv(notesPath)) {
     lines.push(`\\newcommand{\\note${row.key}}{${tex(row.value)}}`);

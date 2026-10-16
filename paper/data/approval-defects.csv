@@ -1,0 +1,3 @@
+repo,pr,approved_commit,approved_at,defect,found_by,fix_commit,merged_head,url
+benchmark-pelican,4,b5181fd,2026-10-15T08:19Z,memorised SVG scored 1.0 on every public and hidden task (issue 8),probing review,,b5181fd,https://github.com/pooriaarab/benchmark-pelican/pull/4
+benchmark-sycophancy,20,4ffa15c,2026-10-16T02:31Z,hidden plans defaulted into data/plans.hidden.json inside the npm files list and grading notes claimed a courtesy check the pattern did not contain,probing review (fix-briefs/sycophancy-fix2.md),7a60894,25c8d27,https://github.com/pooriaarab/benchmark-sycophancy/pull/20
