@@ -111,13 +111,13 @@ def stage_data(clone_dir: Path, stage_dir: Path) -> list[str]:
         for m in re.findall(r"scripts/[A-Za-z0-9._-]+\.mjs", prov.read_text()):
             scripts.add(clone_dir / m)
     for src in sorted(scripts):
-        if src.exists():
+        if src.exists() and not src.is_symlink():
             dest = stage_dir / src.relative_to(clone_dir)
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, dest)
             copied.append(str(src.relative_to(clone_dir)))
     lic = clone_dir / "LICENSE"
-    if lic.exists():
+    if lic.exists() and not lic.is_symlink():
         shutil.copy2(lic, stage_dir / "LICENSE")
         copied.append("LICENSE")
     return copied
@@ -142,7 +142,7 @@ def build_card(pkg: str, entry: dict, stats: dict, provenance: str,
     fields = "\n".join(f"| `{k}` | {v} |" for k, v in stats["fields"].items())
     kinds = ", ".join(f"{v} {k}" for k, v in sorted(stats["kinds"].items()))
     srcs = ", ".join(sorted({s.get("kind", "?") for s in entry.get("data_sources", [])}))
-    fm = ["---", f"license: {licence.lower()}", "language:", "- en",
+    fm = ["---", f"license: {yaml_str(str(licence).lower())}", "language:", "- en",
           f"pretty_name: {yaml_str(name)}", "tags:"]
     fm += [f"- {t}" for t in tags]
     fm += ["task_categories:", "- text-generation", "size_categories:",
