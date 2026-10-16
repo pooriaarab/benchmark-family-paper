@@ -153,7 +153,7 @@ function main() {
     // A failed `check` run on an earlier commit of the request does not
     // show on the merge head; count those separately.
     const commits = run("gh", [
-      "api", `repos/pooriaarab/${pr.repo}/pulls/${pr.number}/commits?per_page=100`,
+      "api", "--paginate", `repos/pooriaarab/${pr.repo}/pulls/${pr.number}/commits?per_page=100`,
       "--jq", ".[].sha",
     ]).trim().split("\n").filter(Boolean);
     let earlierCheckFail = 0;
