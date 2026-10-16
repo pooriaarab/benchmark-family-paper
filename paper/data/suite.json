@@ -1,5 +1,5 @@
 {
-  "collectedAt": "2026-10-16T16:57:57.806Z",
+  "collectedAt": "2026-10-16T17:36:00.168Z",
   "mock": {"provider":"mock","model":"offline","seeds":[1,2]},
   "packages": [
     {"id":"benchmark-pelican","name":"Pelican Bicycle SVG","version":"0.2.0","status":"alpha","saturation":"unknown","category":"multimodal","tags":["viral","silly"],"taskCount":30,"kinds":{"single":30},"kind":"single","whatItMeasures":"Structural SVG drawing: safe markup, bicycle geometry, bird anatomy, spatial arrangement, and useful canvas coverage.","grader":"Dependency-free structural SVG scan that extracts the single SVG block, applies safety rules, then weights per-part geometry checks from each task's metadata.requiredParts.","npm":"benchmark-pelican","repo":"https://github.com/pooriaarab/benchmark-pelican","docs":"https://private-repo-337e.com/benchmarks/benchmark-pelican","dataSources":[{"name":"Canonical pelican prompt","kind":"human-written","licence":"CC0-1.0"},{"name":"Seeded animal and bicycle grid","kind":"synthetic","licence":"MIT"}],"publicSeeds":[20261015],"seed1":{"mean":0.4333,"ciLow":0.2667,"ciHigh":0.6,"passed":13,"tasks":30,"costUsd":0},"goodMean":1,"badMean":0,"goodMin":1,"badMax":0},

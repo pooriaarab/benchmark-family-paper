@@ -290,7 +290,7 @@ function suiteTable(doc) {
     "\\centering",
     "\\small",
     "\\setlength{\\tabcolsep}{3pt}",
-    `\\begin{tabular}{@{}${RAG}p{0.13\\textwidth}l${RAG}p{0.08\\textwidth}r${RAG}p{0.14\\textwidth}${RAG}p{0.23\\textwidth}${RAG}p{0.18\\textwidth}@{}}`,
+    `\\begin{tabular}{@{}${RAG}p{0.17\\textwidth}l${RAG}p{0.08\\textwidth}r${RAG}p{0.14\\textwidth}${RAG}p{0.20\\textwidth}${RAG}p{0.17\\textwidth}@{}}`,
     "\\toprule",
     "Package & Ver. & Kind & Tasks & Category & Data & Licence \\\\",
     "\\midrule",
