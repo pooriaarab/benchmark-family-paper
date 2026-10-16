@@ -11,7 +11,7 @@ Every source has a name, a kind, a URL, an SPDX licence, the steps to obtain it,
 The public split is the one in the npm package. Generators take a seed and can write a hidden split that stays out of git and out of the tarball. Publishing the generator reveals the task families. A hidden split is a held-out draw from a known family. The provenance notes say so, and serious comparisons should use one.
 
 \paragraph{Episodes are traces.}
-A seeded environment exposes tools, accepts calls, and can be reset. The grader replays the tool log. It does not trust a final state the model attached, and it does not trust tool results the model wrote into the log. Single-answer tasks stay first-class. Pelican, skateboard, and ranking-stability are single-answer packages. The other \suiteEpisode{} are episodes.
+A seeded environment exposes tools, accepts calls, and can be reset. The grader replays the tool log. It does not trust a final state the model attached, and it does not trust tool results the model wrote into the log. Single-answer tasks stay first-class: \suiteSingle{} of the \suitePackages{} packages are single-answer and the other \suiteEpisode{} are episodes.
 
 \paragraph{Cost stays missing when the provider omits it.}
 The report stores token and dollar totals when the adapter sends them. The mock provider reports zero. We do not invent a price for a run that had none.

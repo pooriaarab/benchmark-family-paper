@@ -5,7 +5,8 @@ type: software
 authors:
   - family-names: Arab
     given-names: Pooria
-license: MIT
+# The paper text is CC BY 4.0; the tooling under hf/ and scripts/ is MIT.
+license: CC-BY-4.0
 repository-code: https://github.com/pooriaarab/benchmark-family-paper
 url: "https://aibenchmarkindex.com"
 abstract: "Paper, Hugging Face publishing tools and arXiv packet for the benchmark-* family of AI benchmarks."

@@ -31,12 +31,14 @@ const INPUTS = [
   ["sections/engine.tex", "engine.tex"],
   ["sections/suite.tex", "suite.tex"],
   ["sections/validation.tex", "validation.tex"],
+  ["sections/adversarial.tex", "adversarial.tex"],
   ["sections/index.tex", "index.tex"],
   ["sections/related.tex", "related.tex"],
   ["sections/closing.tex", "closing.tex"],
 ];
 
 const ALLOWED = new Set([".tex", ".bib", ".bbl"]);
+const TECTONIC = process.env.TECTONIC || "tectonic";
 
 function fail(message) {
   console.error(message);
@@ -75,7 +77,7 @@ function main() {
   const stage = mkdtempSync(join(tmpdir(), "bfp-arxiv-"));
   const proof = mkdtempSync(join(tmpdir(), "bfp-proof-"));
   try {
-    run("tectonic", ["--keep-intermediates", "--outdir", buildDir, "main.tex"], paperDir);
+    run(TECTONIC, ["--keep-intermediates", "--outdir", buildDir, "main.tex"], paperDir);
     const bblPath = join(buildDir, "main.bbl");
     const bbl = readFileSync(bblPath, "utf8");
     if (!bbl.includes("\\bibitem")) fail("main.bbl has no bibitems");
@@ -105,7 +107,7 @@ function main() {
     for (const name of unpacked) {
       if (statSync(join(proof, name)).isDirectory()) fail("tarball is not flat");
     }
-    run("tectonic", ["main.tex"], proof);
+    run(TECTONIC, ["main.tex"], proof);
     const pdf = statSync(join(proof, "main.pdf"));
     if (pdf.size < 10000) fail(`proof pdf is only ${pdf.size} bytes`);
     console.log(
