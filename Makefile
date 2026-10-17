@@ -118,6 +118,14 @@ reasons-test:
 probe-heatmap-test:
 	bash scripts/exp/probe-heatmap.test.sh
 
+.PHONY: baselines-test
+
+# C5 baseline section (preregistered H1 null, E1 battery, F5, F6):
+# rebuild both PDFs twice, fail on undefined references or a "??",
+# check float wiring and a hand-typed numeral, print artifact hashes.
+baselines-test:
+	bash scripts/baselines.test.sh
+
 .PHONY: layers-test
 
 # C3 verification-layers section and F1 redraw: rebuild both PDFs, fail
