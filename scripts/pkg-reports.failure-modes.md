@@ -252,7 +252,11 @@ Written before the generator: every way it can fail, and the response.
     (exploit-resistance, latency-budget, pelican). The noun now
     comes from the count at generation time, and the committed
     report the fix changes is regenerated in the same change.
-53. **A table column runs past the measure.** A fixed `l` column
+53. **A grader summary trips the slogan rule instead.** The same
+    sentence fails the `, not ` slogan check when the summary itself
+    carries that shape (rollback-recovery: "tool call, not free
+    text"). The drop applies to either wording rule.
+54. **A table column runs past the measure.** A fixed `l` column
     cannot wrap, so a long `\url` address, a long source name or an
     unbreakable locator made whole tables overfull (18.5 pt on the
     facts table, 4.9 pt on a defect locator). Wide cells now sit in

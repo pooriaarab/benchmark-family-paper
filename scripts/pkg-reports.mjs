@@ -53,6 +53,9 @@ function cachedLines(pkg, path) {
 // Quotes keep a source em dash (tex escapes it; the gate skips quote
 // regions); the five-word ban reads whole words, so cancel-first passes.
 const BANNED = /(?<![\w-])(independent\w*|novel|first|robust|comprehensive)(?![\w-])/i;
+// The gate's slogan rule binds authored prose the same way; a summary
+// carrying ", not " (rollback-recovery) is dropped, never rewritten.
+const SLOGAN = /,\s*not\s|\bnot of\b|council-reviewed pull/i;
 function pickLine(lines, test, label) {
   for (let i = 0; i < lines.length; i++) { const t = lines[i].trim();
     if (test(t) && !BANNED.test(t)) return { lines: [t], line: i + 1 }; }
@@ -414,7 +417,7 @@ ${tbl(["Field", "Value"], FACT_SPEC, [
 ${provBlock}
 \\section{Grader and surfaces}
 ${gradBlock}
-${BANNED.test(s.grader)
+${BANNED.test(s.grader) || SLOGAN.test(s.grader)
 ? `The index-entry grader summary trips this report's wording rule, so it is not quoted here (\\texttt{paper/data/suite.json}, \\texttt{${pkg}.grader}).`
 : `The index entry summarises the grader as: \`\`${tex(s.grader)}\'\' (\\texttt{paper/data/suite.json}, \\texttt{${pkg}.grader}).`}
 Table~\\ref{tab:surfaces} lists the runnable surfaces; each row cites the README line that describes it, and the quoted lines follow.
