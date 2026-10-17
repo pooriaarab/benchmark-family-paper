@@ -55,7 +55,7 @@ for pkg in pkgs:
         for n in numbers(re.sub(r"[#\\]?L\d+", "", ln)):
             if n not in union_nums: bad.append(f"{pkg}: unsourced number {n}: {ln.strip()[:70]}")
     qfiles = [m.group(1) for m in (re.match(r"% quote: [\w-]+/(\S+)#L\d+", l) for l in lines) if m]
-    regs = regions(lines)
+    regs = regions(lines); srclines = None
     if len(regs) != len(qfiles): bad.append(f"{pkg}: {len(regs)} quote blocks vs {len(qfiles)} locators")
     for (mono, reg), f in zip(regs, qfiles):
         try: srctext = open(os.path.join(tmp, "reports/.cache", pkg, f), errors="replace").read()
