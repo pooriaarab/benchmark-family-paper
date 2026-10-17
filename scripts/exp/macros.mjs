@@ -23,6 +23,7 @@ const CLASSES = join(ROOT, "scripts/exp/reason-classes.json");
 const OUT = join(ROOT, "paper/generated/exp-macros.tex");
 const PAPER = join(ROOT, "paper");
 const REASON_CLASSES = ["format-gate", "contract-violation", "wrong-answer", "abort", "unclassified"];
+const NAME_RE = /^[a-z0-9][a-z0-9-]*$/;
 
 const SOURCES = [
   { key: "versions", path: VERSIONS, rel: "scripts/exp/versions.json" },
@@ -30,8 +31,6 @@ const SOURCES = [
   { key: "cells", path: join(ROOT, "paper/data/exp/trivial-battery-cells.csv"), rel: "paper/data/exp/trivial-battery-cells.csv" },
   { key: "headroom", path: join(ROOT, "paper/data/exp/trivial-headroom.csv"), rel: "paper/data/exp/trivial-headroom.csv" },
   { key: "reasons", path: join(ROOT, "paper/data/exp/trivial-reasons.csv"), rel: "paper/data/exp/trivial-reasons.csv" },
-  { key: "oracleDef", path: join(ROOT, "paper/data/exp/oracle-definition.csv"), rel: "paper/data/exp/oracle-definition.csv" },
-  { key: "probeApp", path: join(ROOT, "paper/data/exp/probe-applicability.csv"), rel: "paper/data/exp/probe-applicability.csv" },
 ];
 
 function fail(message) {
@@ -84,31 +83,12 @@ function median(values) {
     : sorted[mid];
 }
 
-function compareVersions(a, b) {
-  const pa = a.split(".").map(Number);
-  const pb = b.split(".").map(Number);
-  for (let i = 0; i < 3; i++) {
-    if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) - (pb[i] || 0);
-  }
-  return 0;
-}
+const compareVersions = (a, b) => a.localeCompare(b, "en", { numeric: true });
 
-function tex(value) {
-  return String(value)
-    .replaceAll("\\", "\\textbackslash{}")
-    .replaceAll("&", "\\&")
-    .replaceAll("%", "\\%")
-    .replaceAll("$", "\\$")
-    .replaceAll("#", "\\#")
-    .replaceAll("_", "\\_")
-    .replaceAll("{", "\\{")
-    .replaceAll("}", "\\}")
-    .replaceAll("~", "\\textasciitilde{}")
-    .replaceAll("^", "\\textasciicircum{}");
-}
-
+// Package ids are NAME_RE-checked on load, so texttt needs no escaping.
 function ttId(id) {
-  return tex(id.replace(/^benchmark-/, ""))
+  return id
+    .replace(/^benchmark-/, "")
     .split("-")
     .map((part) => `\\texttt{${part}}`)
     .join("-\\allowbreak");
@@ -125,6 +105,7 @@ function loadInputs() {
   const waveOf = new Map();
   const released = new Map();
   for (const artifact of versions.artifacts ?? []) {
+    if (!NAME_RE.test(artifact.name)) fail(`versions.json: bad package name ${artifact.name}`);
     if (!pinned.has(artifact.name)) pinned.set(artifact.name, new Set());
     pinned.get(artifact.name).add(artifact.version);
     waveOf.set(artifact.name, artifact.wave);
@@ -144,13 +125,11 @@ function loadInputs() {
   const cells = readCsv(SOURCES[2].path, ["package", "version", "policy", "mean", "rows", "tasks"]);
   const headroom = readCsv(SOURCES[3].path, ["package", "version", "oracle", "best_policy", "best_trivial", "headroom"]);
   const reasons = readCsv(SOURCES[4].path, ["package", "version", "class", "count"]);
-  const oracleDef = readCsv(SOURCES[5].path, ["package", "version", "oracle_fields", "oracle_sends_answer", "graded_carrier", "oracle_description"]);
-  const probeApp = readCsv(SOURCES[6].path, readFileSync(SOURCES[6].path, "utf8").split(/\r?\n/, 1)[0].split(","));
-  return { versions, pinned, waveOf, released, cells, headroom, reasons, oracleDef, probeApp };
+  return { versions, pinned, waveOf, released, cells, headroom, reasons };
 }
 
 function analyse(input) {
-  const { pinned, waveOf, released, cells, headroom, reasons, oracleDef, probeApp } = input;
+  const { pinned, waveOf, released, cells, headroom, reasons } = input;
   const artifacts = new Set();
   const policies = new Set();
   const seenCell = new Set();
@@ -199,13 +178,13 @@ function analyse(input) {
   }
 
   // A pinned artifact the battery never reached must not read as 0.
-  for (const [pkg, versions] of pinned) {
-    for (const ver of versions) {
-      const key = `${pkg}@${ver}`;
-      if (!headByKey.has(key)) fail(`trivial-headroom.csv has no row for pinned ${key}`);
-      if (![...seenCell].some((cell) => cell.startsWith(`${pkg}|${ver}|`))) {
-        fail(`trivial-battery-cells.csv has no cell for pinned ${key}`);
-      }
+  const artifactIds = [...pinned].flatMap(([pkg, versions]) =>
+    [...versions].map((ver) => `${pkg}@${ver}`));
+  for (const key of artifactIds) {
+    const [pkg, ver] = key.split("@");
+    if (!headByKey.has(key)) fail(`trivial-headroom.csv has no row for pinned ${key}`);
+    if (![...seenCell].some((cell) => cell.startsWith(`${pkg}|${ver}|`))) {
+      fail(`trivial-battery-cells.csv has no cell for pinned ${key}`);
     }
   }
 
@@ -249,8 +228,6 @@ function analyse(input) {
     cells: cells.length,
     failedCells,
     batteryRows,
-    oracleDefRows: oracleDef.length,
-    probeAppRows: probeApp.length,
     releasedMax: maxBest,
     releasedMaxPkgs: releasedRows.filter((row) => row.best === maxBest).map((row) => row.pkg),
     releasedZero: releasedRows.filter((row) => row.best === 0).length,
@@ -271,7 +248,7 @@ function analyse(input) {
   };
 }
 
-function generate(input, stats) {
+function generate(stats) {
   const lines = [
     "% Generated by scripts/exp/macros.mjs. Do not edit.",
     "% Sources (sha256, first 12 hex); --check fails when one moves.",
@@ -314,8 +291,6 @@ function generate(input, stats) {
     `\\newcommand{\\expClassUnclassified}{${c.unclassified}}`,
     `\\newcommand{\\expFormatGateZeroPct}{${pct(c["format-gate"], stats.zeroRows)}}`,
     `\\newcommand{\\expFormatGateAllPct}{${pct(c["format-gate"], stats.batteryRows)}}`,
-    `\\newcommand{\\expOracleDefRows}{${stats.oracleDefRows}}`,
-    `\\newcommand{\\expProbeRows}{${stats.probeAppRows}}`,
     "",
   );
   return `${lines.join("\n")}`;
@@ -365,7 +340,7 @@ function check(expected) {
 
 const input = loadInputs();
 const stats = analyse(input);
-const expected = generate(input, stats);
+const expected = generate(stats);
 
 if (process.argv.includes("--check")) {
   const defined = check(expected);
