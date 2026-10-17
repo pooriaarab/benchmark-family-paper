@@ -8,6 +8,7 @@
 \usepackage{url}
 \usepackage{booktabs}
 \usepackage{array}
+\usepackage{float}
 \usepackage{microtype}
 % source: paper/data/suite.json benchmark-pelican.name
 \newcommand{\pkgName}{Pelican Bicycle SVG}
@@ -70,34 +71,40 @@
 \maketitle
 
 \begin{abstract}
-Pelican Bicycle SVG (benchmark-pelican) is a public npm benchmark package in the benchmark-* family, version 0.2.0, status alpha. This report records what the package measures in its own words, its deterministic grader and its SDK, CLI, MCP and HTTP surfaces, and the offline validation the family data holds: a scripted good policy mean of 1 and a scripted bad policy mean of 0 over 30 tasks at seed 20261015. The review record shows 9 fix rounds, 7 defect classes with public locators, and 5 council-reviewed pull requests of which 4 were approved. Its preregistered trivial-policy best moved from 0.0000 at 0.1.0 to 0.0000 at 0.2.0. No real-model scores are reported. Software concept DOI 10.5281/zenodo.23422362, family paper DOI 10.5281/zenodo.23428802.
+Pelican Bicycle SVG (benchmark-pelican) is a public npm benchmark package in the benchmark-* family, version 0.2.0, status alpha. This report records what the package measures in its own words, its deterministic grader and its SDK, CLI, MCP and HTTP surfaces, and the offline validation the family data holds: a scripted good policy mean of 1 and a scripted bad policy mean of 0 over 30 tasks at seed 20261015. The review record shows 9 fix rounds, 7 defect classes with public locators, and 5 council-reviewed pull requests of which 4 were approved. The best trivial policy scored 0.0000 at both versions. No real-model scores are reported. Software concept DOI 10.5281/zenodo.23422362, family paper DOI 10.5281/zenodo.23428802.
 \end{abstract}
 
 \section{What the package asks}
 The package states its question in its own README:
 % quote: benchmark-pelican/README.md#L7
 \begin{quote}
-benchmark-pelican is an open-source AI benchmark for SVG drawing and s\allowbreak patial reasoning. It asks models to draw birds riding bicycles, then c\allowbreak hecks the markup and geometry without a model judge.
+benchmark-pelican is an open-source AI benchmark for SVG drawing and
+spatial reasoning. It asks models to draw birds riding bicycles, then
+checks the markup and geometry without a model judge.
 \end{quote}
 {\footnotesize Source: \href{https://github.com/pooriaarab/benchmark-pelican/blob/main/README.md#L7}{\texttt{benchmark-pelican:README.md\#L7}}.}
 
 Its index entry states the measured construct as: ``Structural SVG drawing: safe markup, bicycle geometry, bird anatomy, spatial arrangement, and useful canvas coverage.'' (\texttt{paper/data/suite.json}, \texttt{benchmark-pelican.whatItMeasures}). Table~\ref{tab:tasks} counts the tasks by family.
 
-\begin{table}[h]
-\centering\small
+\begin{table}[H]
+\centering
+\caption{Task counts per family for \texttt{benchmark-pelican} version \protect\pkgVersion, from \texttt{paper/data/suite.json}.}
+\label{tab:tasks}
+{\small
 \begin{tabular}{ll}
 \toprule
 Task family & Count \\
 \midrule
 \texttt{single} & 30 \\
 \bottomrule
-\end{tabular}
-\caption{Task counts per family for \texttt{benchmark-pelican} version \protect\pkgVersion, from \texttt{paper/data/suite.json}.}
-\label{tab:tasks}
+\end{tabular}}
 \end{table}
 
-\begin{table}[h]
-\centering\small
+\begin{table}[H]
+\centering
+\caption{Index-entry fields for \texttt{benchmark-pelican}, from \texttt{paper/data/suite.json}.}
+\label{tab:facts}
+{\small
 \begin{tabular}{ll}
 \toprule
 Field & Value \\
@@ -113,15 +120,17 @@ Public seed & \pkgPublicSeed{} \\
 Repository & \url{https://github.com/pooriaarab/benchmark-pelican} \\
 Documentation & \url{https://private-repo-337e.com/benchmarks/benchmark-pelican} \\
 \bottomrule
-\end{tabular}
-\caption{Index-entry fields for \texttt{benchmark-pelican}, from \texttt{paper/data/suite.json}.}
-\label{tab:facts}
+\end{tabular}}
 \end{table}
 
 The README records where the task data comes from:
 % quote: benchmark-pelican/README.md#L140
 \begin{quote}
-`data/tasks.jsonl` holds the public set. `node scripts/gen-tasks.mjs -\allowbreak -split hidden` writes to `hidden/`, which stays out of the package. `d\allowbreak ata/PROVENANCE.md` records source kinds, licences, the cutoff, regener\allowbreak ation steps, and the hidden split plan.
+\texttt{data/tasks.jsonl} holds the public set. \texttt{node
+scripts/gen-tasks.mjs -{}-split hidden} writes to \texttt{hidden/},
+which stays out of the package. \texttt{data/PROVENANCE.md} records
+source kinds, licences, the cutoff, regeneration steps, and the hidden
+split plan.
 \end{quote}
 {\footnotesize Source: \href{https://github.com/pooriaarab/benchmark-pelican/blob/main/README.md#L140}{\texttt{benchmark-pelican:README.md\#L140}}.}
 
@@ -130,14 +139,20 @@ The README records where the task data comes from:
 The grading document states the mechanism in its own words:
 % quote: benchmark-pelican/docs/grading.md#L3
 \begin{quote}
-The grader reads SVG text without a browser, renderer, network call, o\allowbreak r model judge. Each task carries its own `metadata.requiredParts` list\allowbreak , so a memorised drawing cannot ace every task. Labels, element IDs, a\allowbreak nd prose do not earn credit.
+The grader reads SVG text without a browser, renderer, network call,
+or model judge. Each task carries its own
+\texttt{metadata.requiredParts} list, so a memorised drawing cannot
+ace every task. Labels, element IDs, and prose do not earn credit.
 \end{quote}
 {\footnotesize Source: \href{https://github.com/pooriaarab/benchmark-pelican/blob/main/docs/grading.md#L3}{\texttt{benchmark-pelican:docs/grading.md\#L3}}.}
 
 The index entry summarises the grader as: ``Dependency-free structural SVG scan that extracts the single SVG block, applies safety rules, then weights per-part geometry checks from each task's metadata.requiredParts.'' (\texttt{paper/data/suite.json}, \texttt{benchmark-pelican.grader}). Table~\ref{tab:surfaces} lists the runnable surfaces; each row cites the README line that describes it, and the quoted lines follow.
 
-\begin{table}[h]
-\centering\small
+\begin{table}[H]
+\centering
+\caption{Runnable surfaces of \texttt{benchmark-pelican}, each linked to the README line that names it.}
+\label{tab:surfaces}
+{\small
 \begin{tabular}{ll}
 \toprule
 Surface & README line \\
@@ -147,40 +162,48 @@ Command-line interface & \href{https://github.com/pooriaarab/benchmark-pelican/b
 Model Context Protocol server & \href{https://github.com/pooriaarab/benchmark-pelican/blob/main/README.md#L129}{\texttt{README.md\#L129}} \\
 Fetch-style HTTP API & \href{https://github.com/pooriaarab/benchmark-pelican/blob/main/README.md#L136}{\texttt{README.md\#L136}} \\
 \bottomrule
-\end{tabular}
-\caption{Runnable surfaces of \texttt{benchmark-pelican}, each linked to the README line that names it.}
-\label{tab:surfaces}
+\end{tabular}}
 \end{table}
 
 % quote: benchmark-pelican/README.md#L108
-\begin{quote}
-import \{ benchmark, run, score \} from "benchmark-pelican";
-npx benchmark-pelican run --provider mock
-npx benchmark-pelican mcp
-Import `handler` from `benchmark-pelican/api`, or run `npx benchmark-p\allowbreak elican serve`. Routes are `GET /health`, `GET /v1/tasks`, `GET /v1/tas\allowbreak ks/:id`, `POST /v1/score`, `GET /v1/provenance`, and `GET /v1/index-en\allowbreak try`.
+\begin{quote}\ttfamily
+import \{ benchmark, run, score \} from "benchmark-pelican";\\
+npx benchmark-pelican run -{}-provider mock\\
+npx benchmark-pelican mcp\\
+Import \textasciigrave{}handler\textasciigrave{} from
+\textasciigrave{}benchmark-pelican/api\textasciigrave{}, or run
+\textasciigrave{}npx benchmark-pelican serve\textasciigrave{}. Routes
+are \textasciigrave{}GET /health\textasciigrave{},
+\textasciigrave{}GET /v1/tasks\textasciigrave{}, \textasciigrave{}GET
+/v1/tasks/:id\textasciigrave{}, \textasciigrave{}POST
+/v1/score\textasciigrave{}, \textasciigrave{}GET
+/v1/provenance\textasciigrave{}, and \textasciigrave{}GET
+/v1/index-entry\textasciigrave{}.\\
 \end{quote}
 {\footnotesize Source: \texttt{benchmark-pelican:README.md\#L108,\allowbreak L10,\allowbreak L129,\allowbreak L136}.}
 
 \section{Offline validation}
 No real model was run. The family data records an offline mock run at seed \pkgPublicSeed{} on version \pkgVersion: the scripted good policy reaches a mean of \pkgGoodMean{} (weakest task \pkgGoodMin{}), the scripted bad policy a mean of \pkgBadMean{} (best task \pkgBadMax{}), and the seed-1 mock mix scores \pkgMockMean{} over \pkgTaskCount{} tasks with a bootstrap interval of \pkgMockCiLow{} to \pkgMockCiHigh{} (\pkgMockPassed{} tasks passed; cost \$\pkgMockCost{}). Source: \texttt{paper/data/suite.json}, collected by \texttt{scripts/collect.mjs}.
 The README prints a sample run:
-% quote: benchmark-pelican/README.md#L34
-\begin{quote}
-
-The command prints 30 task rows, a mean score, and a bootstrap 95\% co\allowbreak nfidence interval. A score of 1 means every structural check passed. P\allowbreak artial credit identifies missing geometry in the reason field.
-
-Run a real model through OpenRouter:
-
+% quote: benchmark-pelican/README.md#L14
+\begin{quote}\ttfamily
+\{"model":"mock:1","mean":0.43333333333333335,"confidenceInterval95":\allowbreak 
+\{"low":0.26666666666666666,"high":0.6\},"totals":\{"tasks":30,"passed\allowbreak 
+":13,"failed":0\},"checkSummary":[\{"check":"beak","passRate":1,"meanC\allowbreak 
+ontribution":1\}]\}\\
 \end{quote}
-{\footnotesize Source: \href{https://github.com/pooriaarab/benchmark-pelican/blob/main/README.md#L34}{\texttt{benchmark-pelican:README.md\#L34}}.}
+{\footnotesize Source: \href{https://github.com/pooriaarab/benchmark-pelican/blob/main/README.md#L14}{\texttt{benchmark-pelican:README.md\#L14}}.}
 
 
 \section{Review record}
 The package went through \pkgFixRounds{} fix rounds recorded in \texttt{paper/data/review-rounds.csv}, counted from release \texttt{review-log-v1} of this repository.
 Table~\ref{tab:defects} lists the defect classes that touched this package, each cell linked to its public record in \texttt{paper/data/defects.csv}.
 
-\begin{table}[h]
-\centering\small
+\begin{table}[H]
+\centering
+\caption{Defect classes touching \texttt{benchmark-pelican}, from \texttt{paper/data/defects.csv}.}
+\label{tab:defects}
+{\small
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.26\textwidth}>{\raggedright\arraybackslash}p{0.3\textwidth}>{\raggedright\arraybackslash}p{0.38\textwidth}@{}}
 \toprule
 Defect class & Record kind & Locators \\
@@ -193,9 +216,7 @@ Defect class & Record kind & Locators \\
 \texttt{docs-\allowbreak ahead-\allowbreak of-\allowbreak code} & {\footnotesize review issues and PR review comments} & \href{https://github.com/pooriaarab/benchmark-pelican/issues/29}{\texttt{benchmark-pelican\#29}} \\
 \texttt{prompt-\allowbreak looser-\allowbreak than-\allowbreak grader} & {\footnotesize documented limits; issue and changelog} & \href{https://github.com/pooriaarab/benchmark-pelican/blob/main/docs/grading.md#L102}{\texttt{benchmark-pelican:\allowbreak docs/grading.md\#L102}} \\
 \bottomrule
-\end{tabular}
-\caption{Defect classes touching \texttt{benchmark-pelican}, from \texttt{paper/data/defects.csv}.}
-\label{tab:defects}
+\end{tabular}}
 \end{table}
 The package changelog for this version states:
 % quote: benchmark-pelican/CHANGELOG.md#L5
@@ -206,8 +227,11 @@ Scoring changes in this release make 0.1.0 results not comparable with 0.2.0 res
 
 The council-reviewed pull requests for this package are listed in Table~\ref{tab:council}: \pkgCouncilPrs{} merged feature pull requests, \pkgCouncilReviews{} council reviews, \pkgCouncilApproved{} approvals, and \pkgCouncilFailed{} requests that ever showed a failing \texttt{vibecodereview} run (\texttt{paper/data/council-prs.csv}).
 
-\begin{table}[h]
-\centering\small
+\begin{table}[H]
+\centering
+\caption{Council record for \texttt{benchmark-pelican}, from \texttt{paper/data/council-prs.csv}.}
+\label{tab:council}
+{\small
 \begin{tabular}{lllll}
 \toprule
 Pull request & Council reviews & Approved & Council run & CI check \\
@@ -218,9 +242,7 @@ Pull request & Council reviews & Approved & Council run & CI check \\
 \href{https://github.com/pooriaarab/benchmark-pelican/pull/11}{\#11} & 3 & no & failure & success \\
 \href{https://github.com/pooriaarab/benchmark-pelican/pull/36}{\#36} & 2 & yes & success & success \\
 \bottomrule
-\end{tabular}
-\caption{Council record for \texttt{benchmark-pelican}, from \texttt{paper/data/council-prs.csv}.}
-\label{tab:council}
+\end{tabular}}
 \end{table}
 \texttt{paper/data/approval-defects.csv} records pull request \href{https://github.com/pooriaarab/benchmark-pelican/pull/4}{\#4} approved at commit \texttt{b5181fd} (2026-10-15T08:19Z): the request was approved while a defect a later review found was still in the tree. The record describes it as: memorised SVG scored 1.0 on every public and hidden task (issue 8). Found by: probing review. The fix landed in a later pull request; merged head \texttt{b5181fd}.
 
@@ -232,7 +254,12 @@ The preregistered check ran eight generic trivial policies against this package 
 The package documents its own limit:
 % quote: benchmark-pelican/README.md#L151
 \begin{quote}
-The grader checks structure, not visual truth. It verifies that the pa\allowbreak rts each prompt names are present and shaped plausibly; it cannot prov\allowbreak e species, posture, occlusion, or artistic quality. The "does it look \allowbreak like a pelican" question belongs to the optional vision judge, which s\allowbreak tays off by default and unscored. Carefully chosen abstract geometry c\allowbreak an pass.
+The grader checks structure, not visual truth. It verifies that the
+parts each prompt names are present and shaped plausibly; it cannot
+prove species, posture, occlusion, or artistic quality. The "does it
+look like a pelican" question belongs to the optional vision judge,
+which stays off by default and unscored. Carefully chosen abstract
+geometry can pass.
 \end{quote}
 {\footnotesize Source: \href{https://github.com/pooriaarab/benchmark-pelican/blob/main/README.md#L151}{\texttt{benchmark-pelican:README.md\#L151}}.}
 
@@ -241,25 +268,28 @@ This report claims no model capability: it records no real-model run, no leaderb
 \section{Reproduce}
 The README gives the install and the offline run:
 % quote: benchmark-pelican/README.md#L10
-\begin{quote}
-npx benchmark-pelican run --provider mock
+\begin{quote}\ttfamily
+npx benchmark-pelican run -{}-provider mock\\
 \end{quote}
 {\footnotesize Source: \href{https://github.com/pooriaarab/benchmark-pelican/blob/main/README.md#L10}{\texttt{benchmark-pelican:README.md\#L10}}.}
 % quote: benchmark-pelican/README.md#L24
-\begin{quote}
-npm install benchmark-pelican
+\begin{quote}\ttfamily
+npm install benchmark-pelican\\
 \end{quote}
 {\footnotesize Source: \href{https://github.com/pooriaarab/benchmark-pelican/blob/main/README.md#L24}{\texttt{benchmark-pelican:README.md\#L24}}.}
 % quote: benchmark-pelican/README.md#L41
-\begin{quote}
-npx benchmark-pelican run --provider openrouter --model openai/gpt-5
+\begin{quote}\ttfamily
+npx benchmark-pelican run -{}-provider openrouter -{}-model openai/gpt-5\\
 \end{quote}
 {\footnotesize Source: \href{https://github.com/pooriaarab/benchmark-pelican/blob/main/README.md#L41}{\texttt{benchmark-pelican:README.md\#L41}}.}
 
 \texttt{npm install benchmark-pelican@\pkgVersion{}} installs the measured version. Table~\ref{tab:sources} lists the declared data sources from the index entry (\texttt{paper/data/suite.json}).
 
-\begin{table}[h]
-\centering\small
+\begin{table}[H]
+\centering
+\caption{Declared data sources of \texttt{benchmark-pelican} from its index entry.}
+\label{tab:sources}
+{\small
 \begin{tabular}{lll}
 \toprule
 Source & Kind & Licence \\
@@ -267,9 +297,7 @@ Source & Kind & Licence \\
 Canonical pelican prompt & human-written & CC0-1.0 \\
 Seeded animal and bicycle grid & synthetic & MIT \\
 \bottomrule
-\end{tabular}
-\caption{Declared data sources of \texttt{benchmark-pelican} from its index entry.}
-\label{tab:sources}
+\end{tabular}}
 \end{table}
 
 \section{Cite}
