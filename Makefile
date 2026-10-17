@@ -64,6 +64,13 @@ dmlr-test:
 heatmap-test:
 	bash scripts/heatmap.test.sh
 
+.PHONY: scatter-test
+
+# Figure F5 (trivial score 0.1.0 vs 0.2.0): regenerate the figure CSVs,
+# rebuild both PDFs, and render the figure pages for review.
+scatter-test:
+	bash scripts/exp/trivial-scatter.test.sh
+
 .PHONY: reasons-test
 
 # Figure F6 (why blind-policy rows score 0): regenerate the figure CSV,
