@@ -24,8 +24,9 @@ function fail(msg) {
 }
 
 function tex(s) {
+  const map = { "\\": "\\textbackslash{}", "~": "\\textasciitilde{}", "^": "\\textasciicircum{}" };
   return String(s)
-    .replace(/[&%$#_]/g, (c) => `\\${c}`)
+    .replace(/[\\~^&%$#_{}]/g, (c) => map[c] ?? `\\${c}`)
     .replace(/NOASSERTION/g, "\\mbox{NOASSERTION}");
 }
 

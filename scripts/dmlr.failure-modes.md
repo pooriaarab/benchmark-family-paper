@@ -36,3 +36,13 @@ is the end-to-end check; each row says which check catches it.
   so uncommitted files are invisible to it; commit before running.
 - NeurIPS build regression: `make pdf` and `make arxiv` must still pass;
   `node scripts/collect.mjs` must produce no diff except `collectedAt`.
+- LaTeX escaping: a README sentence or licence string with `{`, `}`, `\`, `~` or `^`
+  changed the output text (braces vanished, a backslash became a command). `tex()` in
+  `gen-dmlr-supplement.mjs` escapes all of them in one pass. `dmlr.test.sh` checks it.
+- Placeholder packaged: `make dmlr-source` would ship an `OWNER TO CONFIRM` line.
+  The target now fails while one is left in `main-dmlr.tex` or `supplement-dmlr.tex`.
+  `dmlr.test.sh` checks that it fails.
+- Unsupported claim: the supplement said each README documents misuse limits. The
+  READMEs list limits of what the benchmark measures; the main paper states misuse
+  limits. The sentence now says that, and `CITATION.cff` is described as naming the
+  concept DOI, not both DOIs.

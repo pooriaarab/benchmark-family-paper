@@ -33,6 +33,15 @@ while IFS= read -r pkg; do
     || { echo "missing suite row: $pkg"; exit 1; }
 done < "$TMP/paper/data/suite.txt"
 
+# escaping: one pass, no lost braces, no live backslash
+esc=$(node -e '
+const src = require("fs").readFileSync(process.argv[1], "utf8");
+eval(src.match(/function tex\(s\) \{[\s\S]*?\n\}\n/)[0] + "; console.log(tex(\"a_b {x} c\\\\d ~ ^\"))")' "$ROOT/scripts/gen-dmlr-supplement.mjs")
+[ "$esc" = 'a\_b \{x\} c\textbackslash{}d \textasciitilde{} \textasciicircum{}' ] \
+  || { echo "tex() escaping wrong: $esc"; exit 1; }
+# the source target refuses to package an OWNER TO CONFIRM line
+grep -q "OWNER TO CONFIRM" "$ROOT/Makefile" || { echo "Makefile lacks the placeholder guard"; exit 1; }
+
 sha256sum "$TMP/paper/main-dmlr.tex" "$TMP/paper/supplement-dmlr.tex"
 for p in main-dmlr supplement-dmlr; do
   pages=$(pdfinfo "$TMP/paper/$p.pdf" | awk '/^Pages/ {print $2}')
