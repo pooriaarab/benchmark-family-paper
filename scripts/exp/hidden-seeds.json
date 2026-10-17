@@ -1,0 +1,5 @@
+{
+  "note": "E5 hidden-split seeds. Frozen before any hidden-overlap.mjs run; do not reorder or extend without a new freeze commit. 20261015 is the paper's public task-split seed and is never used here. None of these seeds appear as examples in any shipped README, PROVENANCE.md or AGENTS.md of the 34 pinned artifacts (checked 2026-10-17).",
+  "publicSeed": 20261015,
+  "seeds": [20261017, 5150, 90210, 8675309, 31415926]
+}
