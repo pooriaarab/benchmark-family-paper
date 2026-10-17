@@ -241,3 +241,7 @@ Written before the generator: every way it can fail, and the response.
     (exploit-resistance, latency-budget, pelican). The noun now
     comes from the count at generation time, and the committed
     report the fix changes is regenerated in the same change.
+53. **A grader summary trips the slogan rule instead.** The same
+    sentence fails the `, not ` slogan check when the summary itself
+    carries that shape (rollback-recovery: "tool call, not free
+    text"). The drop applies to either wording rule.
