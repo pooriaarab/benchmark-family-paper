@@ -235,3 +235,9 @@ Written before the generator: every way it can fail, and the response.
     number token"). A summary that matches `BANNED` is dropped: the
     report says so and names the data file in place of the quote,
     and the sentence is never rewritten to hide the rule.
+52. **A count of one prints a plural noun.** The abstract and the
+    council-record sentence fixed their nouns, so a singular count
+    read "1 defect classes", "1 were approved" or "1 requests"
+    (exploit-resistance, latency-budget, pelican). The noun now
+    comes from the count at generation time, and the committed
+    report the fix changes is regenerated in the same change.
