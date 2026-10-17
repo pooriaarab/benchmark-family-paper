@@ -60,6 +60,18 @@ fail; read it before changing anything.
 - `hidden-audit.test.sh` — the E5 end-to-end check: installs the
   four qualifying artifacts into a temp cache, runs both scripts
   twice, diffs the CSV trees, prints their sha256.
+- `exploits-clauses.mjs` — the shared E2 clause parser and CSV reader,
+  used by both `exploits-check.mjs` and the `exploits-run-*` runners so
+  a comparison clause means the same thing in the check and the run.
+- `exploits-run-a.failure-modes.md` — every way the part-a run fails;
+  read first.
+- `exploits-run-a.mjs` — runs the part-a exploit rows
+  (re-measurable-before-and-after for pelican, skateboard,
+  apology-pizza, ranking-stability) against the pinned tarballs
+  through each package's SDK and writes
+  `paper/data/exp/exploit-results-a.csv`; one builder per frozen row.
+- `exploits-run-a.test.sh` — runs the part twice, diffs the two CSVs,
+  prints their sha256.
 - `macros.mjs` — turns the E1 CSVs (`trivial-battery-cells`,
   `trivial-headroom`, `trivial-reasons`), `versions.json` and
   `reason-classes.json` into `paper/generated/exp-macros.tex`;
