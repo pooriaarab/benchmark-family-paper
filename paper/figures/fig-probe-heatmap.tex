@@ -1,0 +1,73 @@
+% Figure F7: grader contract probes, artifact x probe.
+% Cells come from generated/probe-heatmap.csv, produced by
+% scripts/exp/probe-heatmap.mjs out of paper/data/exp/contract-probes.csv
+% (the frozen list in scripts/exp/probes.json). Blue cells held the
+% frozen expected rule, near-black cells failed it, grey cells are
+% exploratory (reported, never counted), diagonal hatching marks probes
+% outside the artifact's contract and crosshatching marks a probe that
+% could not run as written.
+\begin{figure}[!tbp]
+\centering
+\input{generated/probe-heatmap-macros.tex}
+\pgfplotstableset{col sep=comma}
+\begin{tikzpicture}
+\begin{axis}[
+  name=probes,
+  font=\small,
+  scale only axis,
+  width=0.52\textwidth, height=0.82\textwidth,
+  y dir=reverse,
+  xmin=-0.5, xmax=\probesCols-0.5,
+  ymin=-0.5, ymax=\probesRows-0.5,
+  xtick=data, ytick=data,
+  xticklabels from table={generated/probe-heatmap-cols.csv}{label},
+  x tick label style={rotate=60,anchor=east,font=\tiny},
+  yticklabels from table={generated/probe-heatmap-rows.csv}{label},
+  y tick label style={font=\tiny},
+  axis x line*=bottom, axis y line*=left,
+  colormap={probecells}{rgb255(0)=(255,255,255) rgb255(1)=(217,217,217) rgb255(2)=(0,114,178) rgb255(3)=(38,38,38)},
+  point meta min=0, point meta max=3,
+]
+\addplot[matrix plot*, mesh/cols=\probesCols, point meta=explicit]
+  table[x=x,y=y,meta=state] {generated/probe-heatmap.csv};
+\input{generated/probe-heatmap-hatch.tex}
+\pgfmathsetmacro{\wavebound}{\probesWaveOneRows-0.5}
+\draw[black!35, dashed] (axis cs:-0.5,\wavebound) -- (axis cs:\probesCols-0.5,\wavebound);
+\pgfmathsetmacro{\hbound}{\probesHonestCols-0.5}
+\draw[black!35, dashed] (axis cs:\hbound,-0.5) -- (axis cs:\hbound,\probesRows-0.5);
+\pgfmathsetmacro{\abound}{\probesNonAttackCols-0.5}
+\draw[black!35, dashed] (axis cs:\abound,-0.5) -- (axis cs:\abound,\probesRows-0.5);
+\node[font=\tiny, anchor=south] at (axis cs:3,-0.5) {honest variants};
+\node[font=\tiny, anchor=south] at (axis cs:12,-0.5) {attacks};
+\end{axis}
+\begin{axis}[
+  at={(probes.east)}, anchor=west, xshift=8pt,
+  font=\small,
+  scale only axis,
+  xbar, bar width=0.5,
+  width=0.10\textwidth, height=0.82\textwidth,
+  y dir=reverse,
+  xmin=0, xmax=\probesFailAxisMax,
+  ymin=-0.5, ymax=\probesRows-0.5,
+  ytick=\empty,
+  xtick/.expanded=\probesFailTicks,
+  xlabel={fails},
+  axis x line*=bottom, axis y line*=left,
+]
+\addplot[fill=black!70, draw=black]
+  table[x=fails,y=y] {generated/probe-heatmap-fails.csv};
+\end{axis}
+\fill[okblue] ([yshift=-3.55cm]probes.south west) rectangle ++(0.16,0.16);
+\node[anchor=west, font=\tiny] at ([yshift=-3.47cm,xshift=0.22cm]probes.south west) {pass};
+\fill[black!85] ([yshift=-3.55cm,xshift=1.0cm]probes.south west) rectangle ++(0.16,0.16);
+\node[anchor=west, font=\tiny] at ([yshift=-3.47cm,xshift=1.22cm]probes.south west) {fail};
+\fill[black!15, draw=black!40] ([yshift=-3.55cm,xshift=2.0cm]probes.south west) rectangle ++(0.16,0.16);
+\node[anchor=west, font=\tiny] at ([yshift=-3.47cm,xshift=2.22cm]probes.south west) {exploratory};
+\fill[pattern=north east lines, pattern color=black!55, draw=black!40] ([yshift=-3.55cm,xshift=4.0cm]probes.south west) rectangle ++(0.16,0.16);
+\node[anchor=west, font=\tiny] at ([yshift=-3.47cm,xshift=4.22cm]probes.south west) {outside contract};
+\fill[pattern=crosshatch, pattern color=black!55, draw=black!40] ([yshift=-3.55cm,xshift=6.5cm]probes.south west) rectangle ++(0.16,0.16);
+\node[anchor=west, font=\tiny] at ([yshift=-3.47cm,xshift=6.72cm]probes.south west) {not runnable};
+\end{tikzpicture}
+\caption{Contract probes on the \expArtifacts{} pinned artifacts, generated from \texttt{paper/data/exp/}\allowbreak\texttt{contract-probes.csv}. Rows are the \expPackages{} packages (wave 1 shows both pinned versions above the dashed rule, wave 2 below it), columns the \expProbes{} frozen probes: the \texttt{hv-} honest variants left of the first dashed rule, the single unpromised exploratory probe between the rules, and the \texttt{atk-} attacks right of it. A cell passes when the artifact's frozen expected rule held, and outside-contract or not-runnable cells are hatched rather than read as pass or fail; margin bars count each row's fails.}
+\label{fig:probes}
+\end{figure}
