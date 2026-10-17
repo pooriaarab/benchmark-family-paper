@@ -119,3 +119,10 @@ reasons-test:
 # pages, and build twice to prove the sha256 repeats.
 layers-test:
 	bash scripts/verification-layers.test.sh
+
+.PHONY: hidden-audit-plot-test
+
+# Figure F8 (tarball leaks + hidden/public overlap): regenerate the
+# figure inputs twice, rebuild both PDFs, and render the figure pages.
+hidden-audit-plot-test:
+	bash scripts/exp/hidden-audit-plot.test.sh
