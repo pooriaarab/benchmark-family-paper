@@ -18,6 +18,7 @@ pdf: style
 	cd paper && $(TECTONIC) main.tex
 
 arxiv: style
+	node scripts/submit-md.mjs
 	node scripts/arxiv.mjs
 
 release-assets:

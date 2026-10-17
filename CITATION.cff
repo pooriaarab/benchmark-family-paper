@@ -15,3 +15,9 @@ keywords:
   - llm-evaluation
   - agent-evaluation
   - deterministic-grader
+preferred-citation:
+  type: article
+  title: "Agents Can Build Benchmarks. Approvals Missed What Probing Found: 22 Cases"
+  authors:
+    - family-names: Arab
+      given-names: Pooria

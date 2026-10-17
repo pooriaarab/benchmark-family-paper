@@ -22,22 +22,45 @@ const outTar = join(root, "arxiv", "benchmark-family-arxiv.tar.gz");
 
 const INPUTS = [
   ["generated/macros.tex", "macros.tex"],
+  ["generated/review.tex", "review.tex"],
+  ["generated/defects-macros.tex", "defects-macros.tex"],
+  ["generated/review-data.tex", "review-data.tex"],
+  ["generated/defects.tex", "defects.tex"],
+  ["generated/defect-locators.tex", "defect-locators.tex"],
+  ["generated/builders.tex", "builders.tex"],
   ["generated/suite-table.tex", "suite-table.tex"],
   ["generated/graders.tex", "graders.tex"],
   ["generated/mock-table.tex", "mock-table.tex"],
   ["generated/summary.tex", "summary.tex"],
+  ["generated/trivial.tex", "trivial.tex"],
+  ["generated/trivial-macros.tex", "trivial-macros.tex"],
   ["sections/intro.tex", "intro.tex"],
   ["sections/principles.tex", "principles.tex"],
   ["sections/engine.tex", "engine.tex"],
   ["sections/suite.tex", "suite.tex"],
   ["sections/validation.tex", "validation.tex"],
   ["sections/adversarial.tex", "adversarial.tex"],
+  ["sections/prereg.tex", "prereg.tex"],
   ["sections/index.tex", "index.tex"],
   ["sections/related.tex", "related.tex"],
   ["sections/closing.tex", "closing.tex"],
+  ["sections/conclusion.tex", "conclusion.tex"],
+  ["sections/validity.tex", "validity.tex"],
+  ["sections/appendix.tex", "appendix.tex"],
+  ["figures/fig-system.tex", "fig-system.tex"],
+  ["figures/fig-mock.tex", "fig-mock.tex"],
+  ["figures/fig-defects.tex", "fig-defects.tex"],
+  ["figures/fig-rounds.tex", "fig-rounds.tex"],
 ];
 
-const ALLOWED = new Set([".tex", ".bib", ".bbl", ".sty"]);
+// Figure data ships as flat CSVs; paths inside .tex files are rewritten.
+const CSVS = [
+  ["data/review-rounds.csv", "review-rounds.csv"],
+  ["generated/defects-plot.csv", "defects-plot.csv"],
+  ["generated/mock-scores.csv", "mock-scores.csv"],
+];
+
+const ALLOWED = new Set([".tex", ".bib", ".bbl", ".sty", ".csv"]);
 const TECTONIC = process.env.TECTONIC || "tectonic";
 
 function fail(message) {
@@ -61,10 +84,25 @@ function flattenMain() {
     if (!main.includes(from)) fail(`main.tex does not input ${from}`);
     main = main.replaceAll(from, to);
   }
-  if (main.includes("sections/") || main.includes("generated/")) {
+  main = flattenCsvs(main);
+  if (main.includes("sections/") || main.includes("generated/") || main.includes("figures/")) {
     fail("flattened main.tex still has a directory input");
   }
   return main;
+}
+
+// Only braced load paths are rewritten; prose mentions like
+// \texttt{paper/data/review-rounds.csv} name the repository path and
+// must survive verbatim.
+function flattenCsvs(text) {
+  let out = text;
+  for (const [from, to] of CSVS) out = out.replaceAll(`{${from}}`, `{${to}}`);
+  return out;
+}
+
+function flattenInput(from) {
+  const text = readFileSync(join(paperDir, from), "utf8");
+  return flattenCsvs(text);
 }
 
 function extensionOf(name) {
@@ -92,6 +130,9 @@ function main() {
 
     writeFileSync(join(stage, "main.tex"), flattenMain());
     for (const [from, to] of INPUTS) {
+      writeFileSync(join(stage, to), flattenInput(from));
+    }
+    for (const [from, to] of CSVS) {
       writeFileSync(join(stage, to), readFileSync(join(paperDir, from)));
     }
     writeFileSync(join(stage, "refs.bib"), readFileSync(join(paperDir, "refs.bib")));

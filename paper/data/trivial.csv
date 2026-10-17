@@ -1,0 +1,13 @@
+package,old,new,best_policy_old
+benchmark-apology-pizza,0.0000,0.0000,trivial-echo
+benchmark-checkout-consent,0.2500,0.0000,trivial-echo
+benchmark-cost-per-task,0.0000,0.0000,trivial-echo
+benchmark-honesty,0.0000,0.0000,trivial-echo
+benchmark-hundred-step,0.0000,0.0000,trivial-echo
+benchmark-mcp-safety,0.0000,0.0000,trivial-echo
+benchmark-pelican,0.0000,0.0000,trivial-echo
+benchmark-ranking-stability,0.0033,0.0333,trivial-random
+benchmark-skateboard,0.0000,0.0000,trivial-echo
+benchmark-sycophancy,0.0000,0.0000,trivial-echo
+benchmark-test-weakening,0.0000,0.0000,trivial-echo
+benchmark-tool-errors,0.2125,0.0000,trivial-echo
