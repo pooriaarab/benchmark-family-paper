@@ -241,7 +241,11 @@ Written before the generator: every way it can fail, and the response.
     (exploit-resistance, latency-budget, pelican). The noun now
     comes from the count at generation time, and the committed
     report the fix changes is regenerated in the same change.
-53. **A wrapped README paragraph prints a mid-sentence fragment.**
+53. **A grader summary trips the slogan rule instead.** The same
+    sentence fails the `, not ` slogan check when the summary itself
+    carries that shape (rollback-recovery: "tool call, not free
+    text"). The drop applies to either wording rule.
+54. **A wrapped README paragraph prints a mid-sentence fragment.**
     `pickLine` and `sectionLine` returned one physical line, so a
     README that wraps its question, provenance or limits paragraph
     at 80 columns was quoted only to the first line break
