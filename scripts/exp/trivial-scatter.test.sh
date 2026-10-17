@@ -42,7 +42,6 @@ MP=$(figpage paper/main.pdf)
 DP=$(figpage paper/main-dmlr.pdf)
 pdftoppm -png -r 80 -f "$MP" -l "$MP" paper/main.pdf "$OUT/f5-main"
 pdftoppm -png -r 80 -f "$DP" -l "$DP" paper/main-dmlr.pdf "$OUT/f5-dmlr"
-cp "$OUT"/f5-*.png "$ROOT/.proof-f5/" 2>/dev/null || { mkdir -p "$ROOT/.proof-f5" && cp "$OUT"/f5-*.png "$ROOT/.proof-f5/"; }
 
 sha256sum \
   paper/generated/trivial-scatter.csv \
