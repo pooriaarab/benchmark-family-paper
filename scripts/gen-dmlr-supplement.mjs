@@ -46,6 +46,9 @@ for (const id of order) {
   const pkg = byId.get(id) || fail(`suite.txt lists ${id} but suite.json has no entry`);
   const doi = dois[id] || fail(`zenodo-dois.json has no entry for ${id}`);
   if (!doi.record || !doi.version_doi) fail(`${id}: missing record or version_doi`);
+  for (const f of ["whatItMeasures", "npm", "repo", "taskCount", "dataSources"]) {
+    if (pkg[f] === undefined || pkg[f] === null) fail(`${id}: suite.json missing ${f}`);
+  }
   const licences = [...new Set(pkg.dataSources.map((d) => d.licence))].join(", ");
   const kinds = [...new Set(pkg.dataSources.map((d) => d.kind))].join(", ");
   suiteRows.push(
