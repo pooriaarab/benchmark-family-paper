@@ -1,4 +1,16 @@
-% TODO(C3): define the L1/L2/L3 verification layers and the policy ladder.
-This section is a placeholder for the verification layers and the policy ladder.
+Verification in this suite splits into three layers, ordered by where they run in the pipeline and what they are allowed to see, plus a ladder that orders attack policies by how much of the package they may read. Figure~\ref{fig:system} shows the build pipeline, the three gates, and the ladder beneath them.
 
-No test job failed on the last commit of any of the \councilMergedFeature{} merged feature pull requests; \councilTestJobEverFail{} of them had failed the shared \texttt{check} job on an earlier commit.
+\paragraph{L1: tests and CI.}
+Each package's own end-to-end script and the shared \texttt{check} job ran on every pull request. The merge record is clean: no test job failed on the last commit of any of the \councilMergedFeature{} merged feature pull requests, and \councilTestJobEverFail{} of them had failed the shared job on an earlier commit. This layer checks the code against the tests the builder wrote, so it can only catch failures the builder thought to test.
+
+\paragraph{L2: LLM diff review.}
+Before merge, an LLM council reviewed the pull requests by reading the diff. It approved \councilMergedApproved{} of the \councilMergedFeature{} merged feature pull requests, and across the suite its reviews raised an open Critical or Major item on about \councilSeverityPrsRead{} pull requests, so the layer was not a rubber stamp. The reviewers read code and prose; they did not run attack policies of their own.
+
+\paragraph{L3: probing the running package.}
+Separate sessions then probed each built package as a running artifact: they wrote their own attack policies, ran them against the package, and logged what earned credit. The author configured the sessions, and the record does not name the model behind them; Appendix~\ref{app:protocol} releases the re-review protocol the re-check sessions followed. Every one of the \reviewPackages{} packages needed at least one fix round, with median \reviewRoundsMedian{} and maximum \reviewRoundsMax{} (Section~\ref{sec:review}). This layer sees behaviour the other two cannot: a grader that pays a strategy the builder never tested and the diff reader never ran.
+
+\paragraph{The policy ladder.}
+An attack policy is a script that answers tasks the way a model would. Policies sort into four rungs by what they may see. A \emph{blind} policy sees only what a model sees at run time: the prompt, the tools, and its own transcript. The \trivialPolicies{} generic policies of Section~\ref{sec:prereg} sit on this rung. A \emph{prompt-reading} policy may also read the package's public text and pick a canned attack matched to the wording, with no code written for the grader; this release measures no cell on that rung. A \emph{task-aware} policy is written against the package's own task shape and scoring path; the per-package attacks behind Section~\ref{sec:review} sit here. The top rung is the \emph{oracle}, the scripted ideal answer each package ships for its mock provider; it is the ceiling the other rungs are measured against (Appendix~\ref{app:validation}).
+
+\paragraph{How the paper uses the layers.}
+Each rung sees more of the package than the one below, so a check can only catch what its rung exposes. The defect record in Section~\ref{sec:review} comes from the task-aware rung, the preregistered battery in Section~\ref{sec:prereg} from the blind rung, and the grader checks in Section~\ref{sec:soundness} probe the released graders along the same ladder. The layers explain the shape of the findings: L1 runs the builder's own checks, L2 reads the diff, and only L3 sends a policy the builder did not write.
