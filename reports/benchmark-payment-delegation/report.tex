@@ -73,7 +73,7 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-Payment Delegation (benchmark-payment-delegation) is a public npm benchmark package in the benchmark-* family, version 0.1.0, status alpha. This report records what the package measures in its own words, its deterministic grader and its SDK, CLI, MCP and HTTP surfaces, and the offline validation the family data holds: a scripted good policy mean of 1 and a scripted bad policy mean of 0 over 40 tasks, from mock runs at seeds 1 and 2 on the public task split generated with seed 20261015. The review record shows 3 fix rounds, 1 defect classes with public locators, and 9 merged feature pull requests of which 6 were approved. It was not part of the preregistered trivial-policy check. No real-model scores are reported. Software concept DOI 10.5281/zenodo.23422414, family paper DOI 10.5281/zenodo.23428802.
+Payment Delegation (benchmark-payment-delegation) is a public npm benchmark package in the benchmark-* family, version 0.1.0, status alpha. This report records what the package measures in its own words, its deterministic grader and its SDK, CLI, MCP and HTTP surfaces, and the offline validation the family data holds: a scripted good policy mean of 1 and a scripted bad policy mean of 0 over 40 tasks, from mock runs at seeds 1 and 2 on the public task split generated with seed 20261015. The review record shows 3 fix rounds, 1 defect class with public locators, and 9 merged feature pull requests of which 6 were approved. It was not part of the preregistered trivial-policy check. No real-model scores are reported. Software concept DOI 10.5281/zenodo.23422414, family paper DOI 10.5281/zenodo.23428802.
 \end{abstract}
 \section{What the package asks}
 The package states its question in its own README:
@@ -109,7 +109,7 @@ Task family & Count \\
 \caption{Index-entry fields for \texttt{benchmark-payment-delegation}, from \texttt{paper/data/suite.json}.}
 \label{tab:facts}
 {\small
-\begin{tabular}{ll}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.24\textwidth}>{\raggedright\arraybackslash}p{0.68\textwidth}@{}}
 \toprule
 Field & Value \\
 \midrule
@@ -209,7 +209,7 @@ The README prints a sample run:
 
 \section{Review record}
 The package went through \pkgFixRounds{} fix rounds recorded in \texttt{paper/data/review-rounds.csv}, counted from release \texttt{review-log-v1} of this repository.
-Table~\ref{tab:defects} lists the defect classes that touched this package, each cell linked to its public record in \texttt{paper/data/defects.csv}.
+Table~\ref{tab:defects} lists the defect class that touched this package, each cell linked to its public record in \texttt{paper/data/defects.csv}.
 \begin{table}[H]
 \centering
 \caption{Defect classes touching \texttt{benchmark-payment-delegation}, from \texttt{paper/data/defects.csv}.}
@@ -219,14 +219,14 @@ Table~\ref{tab:defects} lists the defect classes that touched this package, each
 \toprule
 Defect class & Record kind & Locators \\
 \midrule
-\texttt{task-\allowbreak list-\allowbreak cache} & {\footnotesize changelogs and issues (payment-delegation under 0.1.0/Unreleased)} & \href{https://github.com/pooriaarab/benchmark-payment-delegation/blob/v0.1.0/CHANGELOG.md#L21}{\texttt{benchmark-payment-delegation:\allowbreak CHANGELOG.md\#L21}};\ \href{https://github.com/pooriaarab/benchmark-payment-delegation/issues/40}{\texttt{benchmark-payment-delegation\#40}} \\
+\texttt{task-\allowbreak list-\allowbreak cache} & {\footnotesize changelogs and issues (payment-delegation under 0.1.0/Unreleased)} & \href{https://github.com/pooriaarab/benchmark-payment-delegation/blob/v0.1.0/CHANGELOG.md#L21}{\texttt{benchmark-\allowbreak payment-\allowbreak delegation:\allowbreak CHANGELOG.md\#L21}};\ \href{https://github.com/pooriaarab/benchmark-payment-delegation/issues/40}{\texttt{benchmark-\allowbreak payment-\allowbreak delegation\#40}} \\
 \bottomrule
 \end{tabular}}
 \end{table}
 The package changelog for this version records no score-comparability sentence, so there is no changelog sentence to quote.
 The merged feature pull requests for this package are listed in Table~\ref{tab:council}:
 \pkgCouncilPrs{} requests, \pkgCouncilReviews{} council reviews, \pkgCouncilApproved{} approvals,
-and \pkgCouncilFailed{} requests that ever showed a failing \texttt{vibecodereview} run (\texttt{paper/data/council-prs.csv}).
+and \pkgCouncilFailed{} request that ever showed a failing \texttt{vibecodereview} run (\texttt{paper/data/council-prs.csv}).
 \begin{table}[H]
 \centering
 \caption{Council record for \texttt{benchmark-payment-delegation}, from \texttt{paper/data/council-prs.csv}.}
@@ -300,7 +300,7 @@ Table~\ref{tab:sources} lists the declared data sources from the index entry (\t
 \caption{Declared data sources of \texttt{benchmark-payment-delegation} from its index entry.}
 \label{tab:sources}
 {\small
-\begin{tabular}{lll}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.58\textwidth}>{\raggedright\arraybackslash}p{0.14\textwidth}>{\raggedright\arraybackslash}p{0.18\textwidth}@{}}
 \toprule
 Source & Kind & Licence \\
 \midrule
