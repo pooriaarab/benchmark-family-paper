@@ -1,0 +1,29 @@
+{
+  "generated_by": "scripts/pkg-reports.mjs",
+  "title": "benchmark-hundred-step 0.2.0 package report",
+  "abstract": "Hundred Step (benchmark-hundred-step) is a public npm benchmark package in the benchmark-* family, version 0.2.0, status alpha. This report records what the package measures in its own words, its deterministic grader and its SDK, CLI, MCP and HTTP surfaces, and the offline validation the family data holds: a scripted good policy mean of 1 and a scripted bad policy mean of 0 over 24 tasks, from mock runs at seeds 1 and 2 on the public task split generated with seed 20261015. The review record shows 1 fix round, 3 defect classes with public locators, and 7 merged feature pull requests of which 6 were approved. The best trivial policy scored 0.0000 at both versions. No real-model scores are reported. Software concept DOI 10.5281/zenodo.23422383, family paper DOI 10.5281/zenodo.23428802.",
+  "license": "cc-by-4.0",
+  "subject_class": "cs.AI",
+  "authors": [
+    {
+      "name": "Arab, Pooria",
+      "affiliation": "Independent researcher",
+      "orcid": null
+    }
+  ],
+  "keywords": [
+    "ai-benchmark",
+    "llm-evaluation",
+    "agent-evaluation",
+    "deterministic-grader",
+    "benchmark-hundred-step"
+  ],
+  "comments": "Generated per-package technical report for benchmark-hundred-step 0.2.0; data from pooriaarab/benchmark-family-paper paper/data and cached package sources.",
+  "code_url": "https://github.com/pooriaarab/benchmark-hundred-step",
+  "data_url": "https://huggingface.co/datasets/pooria/benchmark-hundred-step",
+  "data_concept_dois": [
+    "10.5281/zenodo.23422383",
+    "10.5281/zenodo.23428802"
+  ],
+  "venues": []
+}

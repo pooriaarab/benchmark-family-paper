@@ -36,6 +36,10 @@ const SOURCES = [
   { key: "headroom", path: join(ROOT, "paper/data/exp/trivial-headroom.csv"), rel: "paper/data/exp/trivial-headroom.csv" },
   { key: "reasons", path: join(ROOT, "paper/data/exp/trivial-reasons.csv"), rel: "paper/data/exp/trivial-reasons.csv" },
   { key: "contractProbes", path: join(ROOT, "paper/data/exp/contract-probes.csv"), rel: "paper/data/exp/contract-probes.csv" },
+  { key: "seeds", path: join(ROOT, "scripts/exp/hidden-seeds.json"), rel: "scripts/exp/hidden-seeds.json" },
+  { key: "tarballAudit", path: join(ROOT, "paper/data/exp/tarball-audit.csv"), rel: "paper/data/exp/tarball-audit.csv" },
+  { key: "hiddenCensus", path: join(ROOT, "paper/data/exp/hidden-census.csv"), rel: "paper/data/exp/hidden-census.csv" },
+  { key: "hiddenOverlap", path: join(ROOT, "paper/data/exp/hidden-overlap.csv"), rel: "paper/data/exp/hidden-overlap.csv" },
 ];
 
 function fail(message) {
@@ -170,11 +174,28 @@ function loadInputs() {
   const reasons = readCsv(SOURCES[5].path, ["package", "version", "class", "count"]);
   const contract = readQuotedCsv(SOURCES[6].path,
     ["package", "version", "probe", "class", "result", "score", "reason", "outside_contract"]);
-  return { versions, pinned, waveOf, released, cells, headroom, reasons, probeIds, contract };
+  const seeds = JSON.parse(readFileSync(SOURCES[7].path, "utf8")).seeds ?? [];
+  if (seeds.length === 0) fail("hidden-seeds.json lists no seeds");
+  const audit = readCsv(SOURCES[8].path, ["package", "version", "wave", "files", "tasks_file", "public_tasks", "hidden_named_files", "answer_bearing_files", "doc_seeds", "doc_hidden_seed_examples"]);
+  const census = readCsv(SOURCES[9].path, ["package", "version", "wave", "generator", "split_flag", "seed_flag", "output_flag", "hidden_default", "hidden_needs_seed", "tasks_flag", "qualifies"]);
+  const overlap = readCsv(SOURCES[10].path, ["package", "version", "wave", "seed", "generator", "hidden_tasks", "public_tasks", "prompt_pairs", "prompt_exact_overlap", "prompt_norm_overlap", "expected_pairs", "expected_exact_overlap", "expected_norm_overlap", "id_exact_overlap", "id_suffix_overlap"]);
+  return { versions, pinned, waveOf, released, cells, headroom, reasons, probeIds, contract, seeds, audit, census, overlap };
+}
+
+// A `;`-joined list where `none` means empty; an empty entry after a
+// split is a formatting drift, never a count.
+function listLen(rel, row, field) {
+  const value = row[field].trim();
+  if (value === "none") return 0;
+  const parts = value.split(";");
+  if (parts.some((part) => part.trim() === "")) {
+    fail(`${rel}: empty ${field} entry in ${row.package}@${row.version}`);
+  }
+  return parts.length;
 }
 
 function analyse(input) {
-  const { pinned, waveOf, released, cells, headroom, reasons, probeIds, contract } = input;
+  const { pinned, waveOf, released, cells, headroom, reasons, probeIds, contract, seeds, audit, census, overlap } = input;
   const artifacts = new Set();
   const policies = new Set();
   const seenCell = new Set();
@@ -249,6 +270,70 @@ function analyse(input) {
   }
   if (zeroRows === 0) fail("trivial-reasons.csv records no zero rows");
 
+  // Tarball audit and hidden-split overlap (E5): every pinned artifact
+  // appears exactly once in the audit and the census; overlap rows exist
+  // only for census-qualified artifacts, one per frozen seed.
+  const keyOf = (pkg, ver) => `${pkg}@${ver}`;
+  const auditKeys = new Set();
+  const censusKeys = new Set();
+  const qualified = new Set();
+  let leaksFound = 0;
+  let seedExamples = 0;
+  for (const row of audit) {
+    const key = keyOf(row.package, row.version);
+    if (!pinned.get(row.package)?.has(row.version)) fail(`tarball-audit.csv: unpinned artifact ${key}`);
+    if (auditKeys.has(key)) fail(`tarball-audit.csv: duplicate artifact ${key}`);
+    auditKeys.add(key);
+    leaksFound += listLen(SOURCES[8].rel, row, "hidden_named_files")
+      + listLen(SOURCES[8].rel, row, "answer_bearing_files");
+    seedExamples += listLen(SOURCES[8].rel, row, "doc_hidden_seed_examples");
+  }
+  for (const row of census) {
+    const key = keyOf(row.package, row.version);
+    if (!pinned.get(row.package)?.has(row.version)) fail(`hidden-census.csv: unpinned artifact ${key}`);
+    if (censusKeys.has(key)) fail(`hidden-census.csv: duplicate artifact ${key}`);
+    censusKeys.add(key);
+    if (!["yes", "no"].includes(row.qualifies)) fail(`hidden-census.csv: ${key} bad qualifies ${row.qualifies}`);
+    if (row.qualifies === "yes") qualified.add(key);
+  }
+  for (const key of artifactIds) {
+    if (!auditKeys.has(key)) fail(`tarball-audit.csv has no row for pinned ${key}`);
+    if (!censusKeys.has(key)) fail(`hidden-census.csv has no row for pinned ${key}`);
+  }
+  if (qualified.size === 0) fail("hidden-census.csv: no artifact qualifies");
+
+  const seedSet = new Set(seeds.map(String));
+  const overlapCells = new Set();
+  let maxPromptPct = 0;
+  let maxExpectedPct = 0;
+  let maxIdSuffixPct = 0;
+  for (const row of overlap) {
+    const key = keyOf(row.package, row.version);
+    if (!qualified.has(key)) fail(`hidden-overlap.csv: ${key} is not census-qualified`);
+    if (!seedSet.has(row.seed)) fail(`hidden-overlap.csv: ${key} seed ${row.seed} is not frozen`);
+    const cell = `${key}|${row.seed}`;
+    if (overlapCells.has(cell)) fail(`hidden-overlap.csv: duplicate ${cell}`);
+    overlapCells.add(cell);
+    const share = (field, den) => {
+      const n = num(SOURCES[10].rel, row, field);
+      if (!Number.isInteger(n) || n < 0 || n > den || den === 0) {
+        fail(`hidden-overlap.csv: ${cell} ${field} ${row[field]} vs denominator ${den}`);
+      }
+      return (n / den) * 100;
+    };
+    const promptPairs = num(SOURCES[10].rel, row, "prompt_pairs");
+    const expectedPairs = num(SOURCES[10].rel, row, "expected_pairs");
+    const idDen = Math.min(num(SOURCES[10].rel, row, "hidden_tasks"), num(SOURCES[10].rel, row, "public_tasks"));
+    maxPromptPct = Math.max(maxPromptPct, share("prompt_exact_overlap", promptPairs));
+    maxExpectedPct = Math.max(maxExpectedPct, share("expected_exact_overlap", expectedPairs));
+    maxIdSuffixPct = Math.max(maxIdSuffixPct, share("id_suffix_overlap", idDen));
+  }
+  for (const key of qualified) {
+    for (const s of seedSet) {
+      if (!overlapCells.has(`${key}|${s}`)) fail(`hidden-overlap.csv: missing ${key} seed ${s}`);
+    }
+  }
+
   const releasedRows = [];
   for (const [pkg, ver] of released) {
     const row = headByKey.get(`${pkg}@${ver}`);
@@ -272,7 +357,6 @@ function analyse(input) {
   // exploratory and outside-contract cells never count either way.
   const probeSeen = new Set();
   const probeStats = new Map(); // artifact key -> {hvPromised, hvFail, forgedFail}
-  const keyOf = (pkg, ver) => `${pkg}@${ver}`;
   for (const row of contract) {
     const key = keyOf(row.package, row.version);
     if (!pinned.get(row.package)?.has(row.version)) {
@@ -373,6 +457,14 @@ function analyse(input) {
     probesForgedAccepted: forgedAcceptedPkgs.length,
     probesForgedAcceptedPkgs: forgedAcceptedPkgs,
     probesFailedCells,
+    auditArtifacts: auditKeys.size,
+    auditLeaksFound: leaksFound,
+    auditSeedExamples: seedExamples,
+    auditCensusQualified: qualified.size,
+    auditSeeds: seedSet.size,
+    auditMaxPromptOverlapPct: maxPromptPct.toFixed(1),
+    auditMaxExpectedOverlapPct: maxExpectedPct.toFixed(1),
+    auditMaxIdSuffixPct: maxIdSuffixPct.toFixed(1),
   };
 }
 
@@ -428,6 +520,14 @@ function generate(stats) {
     `\\newcommand{\\expProbesForgedAccepted}{${stats.probesForgedAccepted}}`,
     `\\newcommand{\\expProbesForgedAcceptedPkgs}{${pkgList(stats.probesForgedAcceptedPkgs)}}`,
     `\\newcommand{\\expProbesFailedCells}{${stats.probesFailedCells}}`,
+    `\\newcommand{\\expAuditArtifacts}{${stats.auditArtifacts}}`,
+    `\\newcommand{\\expAuditLeaksFound}{${stats.auditLeaksFound}}`,
+    `\\newcommand{\\expAuditSeedExamples}{${stats.auditSeedExamples}}`,
+    `\\newcommand{\\expAuditCensusQualified}{${stats.auditCensusQualified}}`,
+    `\\newcommand{\\expAuditSeeds}{${stats.auditSeeds}}`,
+    `\\newcommand{\\expAuditMaxPromptOverlapPct}{${stats.auditMaxPromptOverlapPct}}`,
+    `\\newcommand{\\expAuditMaxExpectedOverlapPct}{${stats.auditMaxExpectedOverlapPct}}`,
+    `\\newcommand{\\expAuditMaxIdSuffixPct}{${stats.auditMaxIdSuffixPct}}`,
     "",
   );
   return `${lines.join("\n")}`;
