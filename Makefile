@@ -106,7 +106,6 @@ exp-macros-test:
 # rebuild both PDFs, and render the figure pages for review.
 reasons-test:
 	bash scripts/exp/trivial-reasons-plot.test.sh
->>>>>>> origin/main
 
 .PHONY: layers-test
 
