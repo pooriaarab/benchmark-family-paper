@@ -409,7 +409,9 @@ ${tbl(["Field", "Value"], "ll", [
 ${provBlock}
 \\section{Grader and surfaces}
 ${gradBlock}
-The index entry summarises the grader as: \`\`${tex(s.grader)}\'\' (\\texttt{paper/data/suite.json}, \\texttt{${pkg}.grader}).
+${BANNED.test(s.grader)
+? `The index-entry grader summary trips this report's wording rule, so it is not quoted here (\\texttt{paper/data/suite.json}, \\texttt{${pkg}.grader}).`
+: `The index entry summarises the grader as: \`\`${tex(s.grader)}\'\' (\\texttt{paper/data/suite.json}, \\texttt{${pkg}.grader}).`}
 Table~\\ref{tab:surfaces} lists the runnable surfaces; each row cites the README line that describes it, and the quoted lines follow.
 ${surfTbl}
 ${surfaces.map((r) => q("README.md", r.para, isCmd(r.para.lines[0])) + (r.code ? q("README.md", r.code, true) : "")).join("")}

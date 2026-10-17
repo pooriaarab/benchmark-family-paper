@@ -1,0 +1,68 @@
+% Figure F8: hidden-split hygiene audit.
+% Cells come from generated/hidden-audit-*.csv, produced by
+% scripts/exp/hidden-audit-plot.mjs out of paper/data/exp/tarball-audit.csv,
+% hidden-census.csv and hidden-overlap.csv. The left panel shades each
+% artifact x leak-kind cell by count and prints the count inside it;
+% the right panel scatters exact-match overlap shares per frozen seed
+% for the census-qualified artifacts.
+\begin{figure}[!tbp]
+\centering
+\input{generated/hidden-audit-macros.tex}
+\pgfplotstableset{col sep=comma}
+\begin{tikzpicture}
+\begin{axis}[
+  name=audit,
+  font=\small,
+  scale only axis,
+  width=0.30\textwidth, height=0.82\textwidth,
+  y dir=reverse,
+  xmin=-0.5, xmax=\auditCols-0.5,
+  ymin=-0.5, ymax=\auditRows-0.5,
+  xtick=data, ytick=data,
+  xticklabels from table={generated/hidden-audit-cols.csv}{label},
+  x tick label style={rotate=30,anchor=east,font=\tiny},
+  yticklabels from table={generated/hidden-audit-rows.csv}{label},
+  y tick label style={font=\tiny},
+  axis x line*=bottom, axis y line*=left,
+  colormap={leakcells}{rgb255(0)=(255,255,255) rgb255(1)=(248,222,205) rgb255(2)=(240,182,146) rgb255(3)=(233,144,86) rgb255(4)=(224,113,38) rgb255(5)=(213,94,0)},
+  point meta min=0, point meta max=\auditLeakMax,
+]
+\addplot[matrix plot*, mesh/cols=\auditCols, point meta=explicit]
+  table[x=x,y=y,meta=count] {generated/hidden-audit-leaks.csv};
+\addplot[only marks, mark=none, nodes near coords,
+  point meta=explicit symbolic,
+  every node near coord/.append style={font=\tiny, text=black}]
+  table[x=x,y=y,meta=count] {generated/hidden-audit-leaks.csv};
+\pgfmathsetmacro{\wavebound}{\auditWaveRows-0.5}
+\draw[black!35, dashed] (axis cs:-0.5,\wavebound) -- (axis cs:\auditCols-0.5,\wavebound);
+\end{axis}
+\begin{axis}[
+  at={(audit.east)}, anchor=west, xshift=40pt,
+  font=\small,
+  scale only axis,
+  width=0.34\textwidth, height=0.82\textwidth,
+  xmin=-0.5, xmax=\auditQualXMax,
+  ymin=0, ymax=105,
+  xtick={0,...,\auditQualMax},
+  xticklabels from table={generated/hidden-audit-qrows.csv}{label},
+  x tick label style={rotate=30,anchor=east,font=\tiny},
+  ylabel={exact overlap (\%)},
+  y tick label style={font=\tiny},
+  axis x line*=bottom, axis y line*=left,
+  legend style={at={(0.5,-0.30)},anchor=north,font=\tiny,
+    legend columns=-1, draw=none},
+]
+\addplot[only marks, mark=*, mark size=1.4pt, color=okblue]
+  table[x=xj,y=prompt] {generated/hidden-audit-overlap.csv};
+\addlegendentry{prompt}
+\addplot[only marks, mark=square*, mark size=1.3pt, color=black!75]
+  table[x=xj,y=expected] {generated/hidden-audit-overlap.csv};
+\addlegendentry{expected answer}
+\addplot[only marks, mark=triangle*, mark size=1.8pt, color=black!40]
+  table[x=xj,y=idsuffix] {generated/hidden-audit-overlap.csv};
+\addlegendentry{id suffix}
+\end{axis}
+\end{tikzpicture}
+\caption{Hidden-split hygiene on the \expAuditArtifacts{} pinned artifacts, generated from \texttt{paper/data/exp/}\allowbreak\texttt{tarball-audit.csv} and \texttt{hidden-overlap.csv}. Left: counts of shipped hidden-named files, non-public answer-bearing files and documented hidden-seed examples per tarball (wave 1 above the dashed rule, wave 2 below); the seed-examples column is a documentation observation, not a shipped-file leak. Right: exact-match overlap between a regenerated hidden split and the public split for the \expAuditCensusQualified{} census-qualified artifacts at \expAuditSeeds{} frozen seeds, one marker per metric and seed; accessibility-fix is a wave-2 package, so its row is exploratory.}
+\label{fig:hiddenaudit}
+\end{figure}
