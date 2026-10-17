@@ -35,10 +35,10 @@ async function fetchFile(pkg, path, ref) {
   if (res.status !== 200) fail(`GET ${url} returned HTTP ${res.status}`); writeFileSync(file, Buffer.from(await res.arrayBuffer()));
 }
 // Sources pin to the released tag so a blob link shows the measured
-// text after main moves on; a cache under another ref is discarded.
+// text after main moves on; a cache without the ref stamp is dropped.
 async function cachePackage(pkg, ref) {
   const stamp = join(cacheDir(pkg), "_ref");
-  if (existsSync(stamp) && readFileSync(stamp, "utf8").trim() !== ref) rmSync(cacheDir(pkg), { recursive: true, force: true });
+  if (existsSync(cacheDir(pkg)) && (!existsSync(stamp) || readFileSync(stamp, "utf8").trim() !== ref)) rmSync(cacheDir(pkg), { recursive: true, force: true });
   for (const p of ["README.md", "CHANGELOG.md", "package.json"]) await fetchFile(pkg, p, ref);
   const turl = `https://api.github.com/repos/pooriaarab/${pkg}/git/trees/${ref}?recursive=1`;
   const res = await fetch(turl, { headers: ghHeaders() }); if (res.status !== 200) fail(`GET ${turl} returned HTTP ${res.status}`);
@@ -164,7 +164,8 @@ const tex = (v) => String(v)
   .replaceAll("–", "\\textendash{}").replaceAll("—", "\\textemdash{}").replaceAll("…", "\\textellipsis{}")
   .replaceAll("×", "\\texttimes{}").replaceAll("·", "\\textperiodcentered{}").replaceAll("©", "\\textcopyright{}")
   .replaceAll("---", "-{}-{}-").replaceAll("--", "-{}-").replaceAll("\x00", "\\textbackslash{}");
-const atoms = (e) => e.match(/\\hspace\*?\{[\d.]+em\}|\\[a-zA-Z]+\{\}?|\\.|-\{\}-|[\s\S]/g) || [e];
+// \href{URL}{ and \url{URL} stay one atom: a break hint in an address leaks TeX into the PDF /URI and the link 404s.
+const atoms = (e) => e.match(/\\hspace\*?\{[\d.]+em\}|\\href\{[^{}]*\}\{|\\url\{[^{}]*\}|\\[a-zA-Z]+\{\}?|\\.|-\{\}-|[\s\S]/g) || [e];
 // Rendered width: \hspace*{Nem} is N/0.5 glyphs, -{}- is two, else one.
 const atomW = (a) => { const h = /^\\hspace\*?\{([\d.]+)em\}$/.exec(a); return h ? Math.ceil(Number(h[1]) / 0.5) : a === "-{}-" ? 2 : 1; };
 const glyphLen = (e) => atoms(e).reduce((n, a) => n + atomW(a), 0);
@@ -214,9 +215,8 @@ function wrapProse(e) {
   if (cur) parts.push(cur);
   return parts.join("\n");
 }
-// Code lines break with \\ and a hook-arrow continuation; the measure
-// fits 70 typewriter glyphs and width counts rendered glyphs.
-const CONT = "$\\hookrightarrow$\\hspace*{0.5em}", CODEW = 70;
+// Code lines break with \\ and a hook-arrow continuation; the quote measure fits 62 typewriter glyphs, so wrap at 60.
+const CONT = "$\\hookrightarrow$\\hspace*{0.5em}", CODEW = 60;
 function wrapCode(e) {
   if (glyphLen(e) <= CODEW) return [e]; const words = []; let w = "";
   for (const a of atoms(e)) { if (a === " ") { words.push(w, " "); w = ""; } else w += a; }
@@ -225,7 +225,7 @@ function wrapCode(e) {
   for (const t of words) {
     if (t === " ") { if (cur && !cur.endsWith(" ")) { cur += " "; curW += 1; } continue; }
     for (let rest = t, restW = glyphLen(t); rest;) {
-      const room = CODEW - curW;
+      const room = CODEW - curW - (parts.length ? glyphLen(CONT) : 0);
       if (restW <= room) { cur += rest; curW += restW; break; }
       if (cur.trim()) { parts.push(cur.trimEnd()); cur = " "; curW = 1; continue; }
       const at = atoms(rest); let take = 0, acc = 0;
@@ -305,7 +305,7 @@ async function emit(pkg, data, d) {
     ["MockCiHigh", s.seed1.ciHigh, suite("seed1.ciHigh")], ["MockPassed", s.seed1.passed, suite("seed1.passed")],
     ["MockCost", s.seed1.costUsd, suite("seed1.costUsd")], ["GoodMean", s.goodMean, suite("goodMean")],
     ["BadMean", s.badMean, suite("badMean")], ["GoodMin", s.goodMin, suite("goodMin")],
-    ["BadMax", s.badMax, suite("badMax")], ["PublicSeed", s.publicSeeds.join(", ") || "none", suite("publicSeeds")],
+    ["BadMax", s.badMax, suite("badMax")], ["PublicSeed", s.publicSeeds.join(", "), suite("publicSeeds")],
     ["MockSeedA", mockSeeds[0], "scripts/collect.mjs mock-run seeds"], ["MockSeedB", mockSeeds[1], "scripts/collect.mjs mock-run seeds"],
     ["FixRounds", rounds.fix_rounds, `paper/data/review-rounds.csv ${pkg}.fix_rounds`],
     ["CouncilPrs", council.length, `paper/data/council-prs.csv ${pkg} row count`],
@@ -337,11 +337,14 @@ async function emit(pkg, data, d) {
   const trivClause = !triv ? " It was not part of the preregistered trivial-policy check."
     : triv.old === triv.new ? ` The best trivial policy scored ${triv.old} at both versions.`
     : ` The best trivial policy scored ${triv.old} at ${trivVers[1]} and ${triv.new} at ${trivVers[2]}.`;
+  const pubSplit = s.publicSeeds.length ? `over the public task split generated with seed \\pkgPublicSeed{}, on version \\pkgVersion{}:`
+    : `on version \\pkgVersion{}. The package declares no public task-split seed. The recorded numbers:`;
   const abstract = `${s.name} (${pkg}) is a public npm benchmark package in the benchmark-* family, version ${s.version}, status ${s.status}.`
     + ` This report records what the package measures in its own words, its deterministic grader and its SDK, CLI, MCP and HTTP surfaces,`
     + ` and the offline validation the family data holds: a scripted good policy mean of ${s.goodMean} and a scripted bad policy mean`
     + ` of ${s.badMean} over ${s.taskCount} tasks, from mock runs at seeds ${mockSeeds[0]} and ${mockSeeds[1]}`
-    + ` on the public task split generated with seed ${s.publicSeeds[0] ?? "n/a"}. The review record shows ${rounds.fix_rounds}`
+    + (s.publicSeeds.length ? ` on the public task split generated with seed ${s.publicSeeds.join(", ")}` : "; it declares no public task-split seed")
+    + `. The review record shows ${rounds.fix_rounds}`
     + ` fix rounds, ${defectRows.length} defect classes with public locators, and ${council.length} merged feature pull requests`
     + ` of which ${approvedN} were approved.${trivClause} No real-model scores are reported.`
     + ` Software concept DOI ${dois.concept_doi}, family paper DOI ${data.dois.paper.version_doi}.`;
@@ -397,7 +400,7 @@ ${taskTbl}
 ${tbl(["Field", "Value"], "ll", [
   ["Name", "\\pkgName{}"], ["npm package", `\\texttt{${pkg}}`], ["Version", "\\pkgVersion{}"],
   ["Status", "\\texttt{\\pkgStatus{}}"], ["Saturation", "\\texttt{\\pkgSaturation{}}"], ["Category", "\\pkgCategory{}"],
-  ["Tags", s.tags.map((t) => `\\texttt{${tex(t)}}`).join(", ")], ["Public seed", "\\pkgPublicSeed{}"],
+  ["Tags", s.tags.map((t) => `\\texttt{${tex(t)}}`).join(", ")], ["Public seed", s.publicSeeds.length ? "\\pkgPublicSeed{}" : "none declared"],
   ["Repository", `\\url{${s.repo}}`], ["Documentation", `\\url{${s.docs}}`],
 ].map(([a, b]) => `${a} & ${b} \\\\`), `Index-entry fields for \\texttt{${pkg}}, from \\texttt{paper/data/suite.json}.`, "tab:facts")}
 ${provBlock}
@@ -409,7 +412,7 @@ ${surfTbl}
 ${surfaces.map((r) => q("README.md", r.para, isCmd(r.para.lines[0])) + (r.code ? q("README.md", r.code, true) : "")).join("")}
 \\section{Offline validation}
 No real model was run. The family data records mock runs at seeds \\pkgMockSeedA{} and \\pkgMockSeedB{}
-over the public task split generated with seed \\pkgPublicSeed{}, on version \\pkgVersion{}:
+${pubSplit}
 the scripted good policy reaches a mean of \\pkgGoodMean{} (weakest task \\pkgGoodMin{}),
 the scripted bad policy a mean of \\pkgBadMean{} (best task \\pkgBadMax{}),
 and the run at mock seed \\pkgMockSeedA{} scores \\pkgMockMean{} over \\pkgTaskCount{} tasks
