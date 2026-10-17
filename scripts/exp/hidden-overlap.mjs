@@ -75,11 +75,15 @@ function norm(text) {
 }
 
 function normHash(value) {
-  return createHash("sha256").update(norm(canon(value))).digest("hex");
+  const text = typeof value === "string" ? value : canon(value);
+  return createHash("sha256").update(norm(text)).digest("hex");
 }
 
-function loadTasks(file) {
-  if (!existsSync(file)) return [];
+function loadTasks(file, { required = false } = {}) {
+  if (!existsSync(file)) {
+    if (required) fail(`missing ${file}`);
+    return [];
+  }
   return readFileSync(file, "utf8").split(/\r?\n/).filter(Boolean).map((line) => {
     try { return JSON.parse(line); } catch { return null; }
   }).filter(Boolean);
@@ -139,7 +143,7 @@ for (const artifact of wanted) {
   const gen = { path: census[col("generator")], output: census[col("output_flag")] };
   if (!existsSync(join(pkgDir, gen.path))) fail(`${id}: census names ${gen.path} but it is absent from the tarball`);
 
-  const publicTasks = loadTasks(join(pkgDir, "data/tasks.jsonl"));
+  const publicTasks = loadTasks(join(pkgDir, "data/tasks.jsonl"), { required: true });
   const pubPromptExact = new Set(publicTasks.filter((t) => t.prompt !== undefined).map((t) => canon(t.prompt)));
   const pubPromptNorm = new Set(publicTasks.filter((t) => t.prompt !== undefined).map((t) => normHash(t.prompt)));
   const pubExpectedExact = new Set(publicTasks.filter((t) => t.expected !== undefined).map((t) => canon(t.expected)));
