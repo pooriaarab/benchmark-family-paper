@@ -26,6 +26,11 @@ fail; read it before changing anything.
   in `paper/data/exp/oracle-definition.csv`, then prints their sha256.
 - `probes.test.sh` — installs the cited artifacts into a temp cache
   and runs the check twice, diffing the output.
+- `macros.mjs` — turns the `paper/data/exp/*.csv` files into
+  `paper/generated/exp-macros.tex`; `--check` fails on a stale
+  generated file or an `\exp*` macro used in text but not generated.
+- `macros.test.sh` — the end-to-end check: proves both guards fire,
+  regenerates the file, and rebuilds both PDFs.
 
 ## Usage
 
@@ -59,7 +64,7 @@ Every experiment script writes one CSV to `paper/data/exp/<name>.csv`
 and adds a row to the table below. Per-row data, no aggregates only;
 the paper's numbers come from these files through generated macros.
 `scripts/exp/macros.mjs` turns the CSVs into `paper/generated/exp-macros.tex`;
-it is built in PR B1, so no experiment PR edits `main.tex` for numbers.
+no experiment PR edits `main.tex` for numbers.
 
 | File | Experiment | Status |
 |---|---|---|

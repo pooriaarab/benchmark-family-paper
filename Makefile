@@ -63,3 +63,10 @@ dmlr-test:
 # rebuild both PDFs, and render the figure pages for review.
 heatmap-test:
 	bash scripts/heatmap.test.sh
+
+.PHONY: exp-macros-test
+
+# Experiment macros: regenerate paper/generated/exp-macros.tex, prove the
+# stale-output and missing-macro guards fire, rebuild both PDFs.
+exp-macros-test:
+	bash scripts/exp/macros.test.sh
