@@ -7,10 +7,12 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, copyFi
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), ".."), args = process.argv.slice(2);
-const flag = (n) => (args.includes(n) ? args[args.indexOf(n) + 1] : undefined), flagVals = new Set([flag("--out"), flag("--date")]);
+const flag = (n) => (args.includes(n) ? args[args.indexOf(n) + 1] : undefined);
+const flagVals = new Set([flag("--out"), flag("--date")]);
 const target = args.find((a) => !a.startsWith("--") && !flagVals.has(a));
 const OUT = flag("--out") || join(root, "reports");
-const DATE = flag("--date") || process.env.PKG_REPORT_DATE || new Date().toISOString().slice(0, 10), REFRESH = args.includes("--refresh");
+const DATE = flag("--date") || process.env.PKG_REPORT_DATE || new Date().toISOString().slice(0, 10);
+const REFRESH = args.includes("--refresh");
 const fail = (m) => { console.error(`pkg-reports: ${m}`); process.exit(1); };
 function readCsv(path) {
   const rows = [], text = readFileSync(path, "utf8"); let f = "", row = [], q = false;
@@ -31,7 +33,8 @@ async function fetchFile(pkg, path) {
   const file = join(cacheDir(pkg), path);
   mkdirSync(dirname(file), { recursive: true });
   if (!REFRESH && existsSync(file)) return;
-  const url = `https://raw.githubusercontent.com/pooriaarab/${pkg}/main/${path}`, res = await fetch(url, { redirect: "follow", headers: ghHeaders() });
+  const url = `https://raw.githubusercontent.com/pooriaarab/${pkg}/main/${path}`;
+  const res = await fetch(url, { redirect: "follow", headers: ghHeaders() });
   if (res.status !== 200) fail(`GET ${url} returned HTTP ${res.status}`);
   writeFileSync(file, Buffer.from(await res.arrayBuffer()));
 }
@@ -56,28 +59,54 @@ function pickLine(lines, test, label) {
 }
 const questionLine = (ls) => pickLine(ls, (t) => t && !"#[`|".includes(t[0]) && /(\bmeasures\b|\basks\b|\bis an open-source\b)/.test(t), "README has no question line");
 const changelogQuote = (ls) => pickLine(ls, (t) => /not comparable|cannot be compared/i.test(t) && !t.startsWith("#"), "CHANGELOG.md has no score-comparability sentence");
+// A grading paragraph that ends with a colon may introduce a fenced block;
+// return both so the quote does not stop before the example it announces.
 function gradingQuote(lines) {
   for (let i = 1; i < lines.length; i++) {
     const t = lines[i].trim();
     if (!t || t.startsWith("#")) continue;
     const para = [t], start = i + 1;
-    while (i + 1 < lines.length && lines[i + 1].trim()) para.push(lines[++i].trim());
-    if (!BANNED.test(para.join(" "))) return { lines: para, line: start };
+    while (i + 1 < lines.length && lines[i + 1].trim() && !lines[i + 1].trim().startsWith("```")) para.push(lines[++i].trim());
+    if (BANNED.test(para.join(" "))) continue;
+    const out = { para: { lines: para, line: start } };
+    let j = i + 1;
+    while (j < lines.length && !lines[j].trim()) j++;
+    if (para[para.length - 1].endsWith(":") && j < lines.length && lines[j].trim().startsWith("```")) {
+      const code = [], cs = j + 2;
+      for (j = j + 1; j < lines.length && !lines[j].trim().startsWith("```"); j++) code.push(lines[j].trimEnd());
+      out.code = { lines: code, line: cs };
+    }
+    return out;
   }
   fail("docs/grading.md has no usable grading paragraph");
 }
 const SURFACES = (pkg) => [
-  ["TypeScript SDK", (t) => t.startsWith("import") && t.includes(`"${pkg}"`)], ["Command-line interface", (t) => t.includes(`npx ${pkg} run`)],
-  ["Model Context Protocol server", (t) => t.includes(`npx ${pkg} mcp`)], ["Fetch-style HTTP API", (t) => /Routes are|Import `handler`/.test(t)],
+  ["TypeScript SDK", (t) => t.startsWith("import") && t.includes(`"${pkg}"`)],
+  ["Command-line interface", (t) => t.includes(`npx ${pkg} run`)],
+  ["Model Context Protocol server", (t) => t.includes(`npx ${pkg} mcp`)],
+  ["Fetch-style HTTP API", (t) => /Routes are|Import `handler`/.test(t)],
 ];
 const surfaceRows = (pkg, lines) => SURFACES(pkg).map(([name, test]) => ({ name, ...pickLine(lines, test, `README shows no ${name} surface`) }));
+const isCmd = (t) => /^(import|export|npm|npx|node|bunx?|pnpm|yarn|curl|git|GET|POST|PUT|DELETE)\b/.test(t);
+// Offline quotes keep install and mock-run lines only. A fenced block that
+// names --provider openrouter is a paid run and is quoted under its own
+// lead-in that says it is not run here.
 function commandQuotes(lines) {
-  const found = [], seen = new Set();
-  for (let i = 0; i < lines.length; i++) { const t = lines[i].trim();
-    if (/^(npm install |npx \S+ run --provider (mock|openrouter))/.test(t) && !seen.has(t)) { seen.add(t); found.push({ lines: [t], line: i + 1 }); }
+  const off = [], paid = [], seen = new Set(); let fence = null;
+  for (let i = 0; i < lines.length; i++) {
+    const t = lines[i].trim();
+    if (t.startsWith("```")) {
+      if (fence && /--provider\s+openrouter\b/.test(fence.lines.join("\n"))) paid.push(fence);
+      fence = fence ? null : { lines: [], line: i + 2 };
+      continue;
+    }
+    if (fence) fence.lines.push(lines[i].trimEnd());
+    if (/^(npm install |npx \S+ run --provider mock)/.test(t) && !seen.has(t)) {
+      seen.add(t); off.push({ lines: [t], line: i + 1 });
+    }
   }
-  if (!found.length) fail("README has no install/mock command lines");
-  return found;
+  if (!off.length) fail("README has no install/mock command lines");
+  return { off, paid };
 }
 function sampleQuote(lines, pkg) {
   let inFence = false, wantFence = false;
@@ -104,23 +133,36 @@ function sectionLine(lines, headingRe, label) {
   }
   fail(label);
 }
+// \x00 keeps a source backslash apart from the braces the escapes below
+// insert; escaping { } after \ would re-escape \textbackslash{} itself.
 const tex = (v) => String(v)
-  .replaceAll("\\", "\\textbackslash{}").replaceAll("&", "\\&").replaceAll("%", "\\%").replaceAll("$", "\\$")
-  .replaceAll("#", "\\#").replaceAll("_", "\\_").replaceAll("{", "\\{").replaceAll("}", "\\}")
+  .replaceAll("\\", "\x00").replaceAll("&", "\\&").replaceAll("%", "\\%")
+  .replaceAll("$", "\\$").replaceAll("#", "\\#").replaceAll("_", "\\_")
+  .replaceAll("{", "\\{").replaceAll("}", "\\}")
   .replaceAll("~", "\\textasciitilde{}").replaceAll("^", "\\textasciicircum{}")
   .replaceAll("–", "\\textendash{}").replaceAll("—", "\\textemdash{}").replaceAll("…", "\\textellipsis{}")
   .replaceAll("×", "\\texttimes{}").replaceAll("·", "\\textperiodcentered{}").replaceAll("©", "\\textcopyright{}")
-  .replaceAll("---", "-{}-{}-").replaceAll("--", "-{}-");
+  .replaceAll("---", "-{}-{}-").replaceAll("--", "-{}-").replaceAll("\x00", "\\textbackslash{}");
 const atoms = (e) => e.match(/\\[a-zA-Z]+\{\}?|\\.|-\{\}-|[\s\S]/g) || [e];
+// Prose quotes: strip a leading list marker, set `code` spans in \texttt,
+// **bold** in \textbf and [text](url) as \href{url}{text}.
 function mdQuote(l) {
-  const parts = String(l).split("`"), out = [];
+  const parts = String(l).replace(/^\s*(?:[-*+]|\d+[.)])\s+/, "").split("`"), out = [];
   for (let i = 0; i < parts.length; i++) {
     const tail = i === parts.length - 1 && parts.length % 2 === 0;
-    out.push(i % 2 === 1 && !tail ? `\\texttt{${tex(parts[i])}}` : (tail ? "\\textasciigrave{}" : "") + tex(parts[i]));
+    if (i % 2 === 1 && !tail) { out.push(`\\texttt{${tex(parts[i])}}`); continue; }
+    const seg = parts[i]
+      .replace(/\[([^\]]*)\]\(([^)]*)\)/g, "\x03$2\x04$1\x05")
+      .replace(/\*\*([^*]+)\*\*/g, "\x01$1\x02");
+    out.push((tail ? "\\textasciigrave{}" : "") + tex(seg)
+      .replaceAll("\x01", "\\textbf{").replaceAll("\x02", "}")
+      .replaceAll("\x03", "\\href{").replaceAll("\x04", "}{").replaceAll("\x05", "}"));
   }
   return out.join("");
 }
-function wrapLong(e) {
+// Prose wraps at spaces; \allowbreak only opens a mid-token breakpoint when
+// one token would overflow the measure on its own.
+function wrapProse(e) {
   if (e.length <= 95) return e;
   const words = []; let w = "";
   for (const a of atoms(e)) { if (a === " ") { words.push(w, " "); w = ""; } else w += a; }
@@ -141,6 +183,30 @@ function wrapLong(e) {
   if (cur) parts.push(cur);
   return parts.join("\n");
 }
+// Code lines may not wrap silently: break them with \\ and mark each
+// continuation with a hook arrow so one source line never reads as two.
+const CONT = "$\\hookrightarrow$\\hspace*{0.5em}";
+function wrapCode(e) {
+  if (e.length <= 95) return [e];
+  const words = []; let w = "";
+  for (const a of atoms(e)) { if (a === " ") { words.push(w, " "); w = ""; } else w += a; }
+  if (w) words.push(w);
+  const parts = []; let cur = "";
+  for (const t of words) {
+    if (t === " ") { if (cur && !cur.endsWith(" ")) cur += " "; continue; }
+    for (let rest = t; rest;) {
+      const room = 70 - cur.length;
+      if (rest.length <= room) { cur += rest; break; }
+      if (cur.trim()) { parts.push(cur.trimEnd()); cur = " "; continue; }
+      const at = atoms(rest); let take = 0, acc = 0;
+      while (take < at.length && acc + at[take].length <= Math.max(1, room)) acc += at[take++].length;
+      parts.push(cur + at.slice(0, take || 1).join("")); cur = "";
+      rest = at.slice(take || 1).join("");
+    }
+  }
+  if (cur) parts.push(cur);
+  return parts;
+}
 const blob = (pkg, f, l) => `https://github.com/pooriaarab/${pkg}/blob/main/${f}#L${l}`;
 const locatorLink = (loc) => {
   const i = loc.match(/^([\w-]+)#(\d+)$/);
@@ -148,10 +214,13 @@ const locatorLink = (loc) => {
   const f = loc.match(/^([\w-]+):([\w./-]+)#L(\d+(?:-\d+)?)$/);
   return f ? `\\href{${blob(f[1], f[2], f[3])}}{\\texttt{${tex(f[1])}:\\allowbreak ${tex(f[2])}\\#L${f[3]}}}` : `\\texttt{${tex(loc)}}`;
 };
-const mono = (l) => wrapLong(tex(l).replaceAll("`", "\\textasciigrave{}").replace(/^ +/, (m) => "\\ ".repeat(m.length)));
+// Indentation must survive a \\ line start (leading glue is discarded), so
+// leading spaces become \hspace* and the rest become unbreakable ties.
+const mono = (l) => wrapCode(tex(l).replaceAll("`", "\\textasciigrave{}").replace(/^ +/, (m) => `\\hspace*{${m.length / 2}em}`))
+  .map((p) => p.replaceAll(" ", "~")).join(`\\\\\n${CONT}`);
 const quote = (pkg, file, it, code = false) => `% quote: ${pkg}/${file}#L${it.line}
 \\begin{quote}${code ? "\\ttfamily" : ""}
-${code ? it.lines.map((l) => mono(l) + "\\\\").join("\n") : wrapLong(mdQuote(it.lines.join(" ")))}
+${code ? it.lines.map((l) => mono(l) + "\\\\").join("\n") : wrapProse(mdQuote(it.lines.join(" ")))}
 \\end{quote}
 {\\footnotesize Source: \\href{${blob(pkg, file, it.line)}}{\\texttt{${pkg}:${file}\\#L${it.line}}}.}\n`;
 const short = (p) => p.replace(/^benchmark-/, ""), tbl = (cols, spec, rows, caption, label) => `\\begin{table}[H]
@@ -183,33 +252,98 @@ function buildOne(pkg, data) {
   if (sumKinds !== s.taskCount) fail(`${pkg}: taskCount ${s.taskCount} != kinds sum ${sumKinds}`);
   return { s, rounds, council, defectRows, approvals, triv, dois };
 }
+const DEFECT_SPEC = "@{}>{\\raggedright\\arraybackslash}p{0.26\\textwidth}"
+  + ">{\\raggedright\\arraybackslash}p{0.3\\textwidth}>{\\raggedright\\arraybackslash}p{0.38\\textwidth}@{}";
 async function emit(pkg, data, d) {
   const { s, rounds, council, defectRows, approvals, triv, dois } = d;
   const readme = cachedLines(pkg, "README.md"), pkgJson = JSON.parse(readFileSync(join(cacheDir(pkg), "package.json"), "utf8"));
   if (pkgJson.version !== s.version) fail(`${pkg}: package.json ${pkgJson.version} != suite.json ${s.version}`);
-  const docs = readdirSync(join(cacheDir(pkg), "docs")).filter((f) => f.endsWith(".md")), gradingPath = docs.includes("grading.md") ? "docs/grading.md" : `docs/${docs[0]}`, grading = cachedLines(pkg, gradingPath);
+  const docs = readdirSync(join(cacheDir(pkg), "docs")).filter((f) => f.endsWith(".md"));
+  const gradingPath = docs.includes("grading.md") ? "docs/grading.md" : `docs/${docs[0]}`, grading = cachedLines(pkg, gradingPath);
   const limits = (() => { try { return { ...sectionLine(readme, /^## (Limits|Limitations)/, "x"), file: "README.md" }; }
     catch { return { ...sectionLine(grading, /^## (Ways|Failure|Limits)/, "no limits paragraph in README or grading doc"), file: gradingPath }; } })();
-  const prs = council.map((r) => `\\href{https://github.com/pooriaarab/${pkg}/pull/${r.pr}}{\\#${r.pr}} & ${r.council_reviews} & ${r.approved === "1" ? "yes" : "no"} & ${tex(r.vibecodereview_latest)} & ${tex(r.check_latest)} \\\\`);
+  const mockSeeds = [...readFileSync(join(root, "scripts/collect.mjs"), "utf8").matchAll(/--seed",\s*"(\d+)"/g)].map((m) => m[1]);
+  if (mockSeeds.length < 2) fail("scripts/collect.mjs does not name two mock-run seeds");
+  const trivVers = readFileSync(join(root, "paper/data/README.md"), "utf8").match(/at (\d+\.\d+\.\d+) \(`old`\) and (\d+\.\d+\.\d+)\s+\(`new`\)/);
+  if (!trivVers) fail("paper/data/README.md does not pin the trivial-check versions");
+  const trivN = readFileSync(join(root, "paper/generated/trivial-macros.tex"), "utf8").match(/\\trivialPolicies\}\{(\d+)\}/);
+  if (!trivN) fail("paper/generated/trivial-macros.tex lacks \\trivialPolicies");
+  const prs = council.map((r) => `\\href{https://github.com/pooriaarab/${pkg}/pull/${r.pr}}{\\#${r.pr}}`
+    + ` & ${r.council_reviews} & ${r.approved === "1" ? "yes" : "no"}`
+    + ` & ${tex(r.vibecodereview_latest)} & ${tex(r.check_latest)} \\\\`);
   const approvedN = council.filter((r) => r.approved === "1").length, suite = (k) => `paper/data/suite.json ${pkg}.${k}`;
   const macroLines = (l) => l.map(([n, v, src]) => `% source: ${src}\n\\newcommand{\\pkg${n}}{${tex(v)}}`).join("\n");
   const M = macroLines([
     ["Name", s.name, suite("name")], ["Version", s.version, suite("version")],
-    ["Status", s.status, suite("status")], ["Saturation", s.saturation ?? "null", suite("saturation")], ["Category", s.category, suite("category")], ["TaskCount", s.taskCount, suite("taskCount")],
-    ["MockMean", s.seed1.mean, suite("seed1.mean")], ["MockCiLow", s.seed1.ciLow, suite("seed1.ciLow")], ["MockCiHigh", s.seed1.ciHigh, suite("seed1.ciHigh")], ["MockPassed", s.seed1.passed, suite("seed1.passed")],
-    ["MockCost", s.seed1.costUsd, suite("seed1.costUsd")], ["GoodMean", s.goodMean, suite("goodMean")], ["BadMean", s.badMean, suite("badMean")], ["GoodMin", s.goodMin, suite("goodMin")],
-    ["BadMax", s.badMax, suite("badMax")], ["PublicSeed", s.publicSeeds.join(", ") || "none", suite("publicSeeds")], ["FixRounds", rounds.fix_rounds, `paper/data/review-rounds.csv ${pkg}.fix_rounds`],
-    ["CouncilPrs", council.length, `paper/data/council-prs.csv ${pkg} row count`], ["CouncilApproved", approvedN, `paper/data/council-prs.csv ${pkg} approved count`],
+    ["Status", s.status, suite("status")], ["Saturation", s.saturation ?? "null", suite("saturation")],
+    ["Category", s.category, suite("category")], ["TaskCount", s.taskCount, suite("taskCount")],
+    ["MockMean", s.seed1.mean, suite("seed1.mean")], ["MockCiLow", s.seed1.ciLow, suite("seed1.ciLow")],
+    ["MockCiHigh", s.seed1.ciHigh, suite("seed1.ciHigh")], ["MockPassed", s.seed1.passed, suite("seed1.passed")],
+    ["MockCost", s.seed1.costUsd, suite("seed1.costUsd")], ["GoodMean", s.goodMean, suite("goodMean")],
+    ["BadMean", s.badMean, suite("badMean")], ["GoodMin", s.goodMin, suite("goodMin")],
+    ["BadMax", s.badMax, suite("badMax")], ["PublicSeed", s.publicSeeds.join(", ") || "none", suite("publicSeeds")],
+    ["MockSeedA", mockSeeds[0], "scripts/collect.mjs mock-run seeds"], ["MockSeedB", mockSeeds[1], "scripts/collect.mjs mock-run seeds"],
+    ["FixRounds", rounds.fix_rounds, `paper/data/review-rounds.csv ${pkg}.fix_rounds`],
+    ["CouncilPrs", council.length, `paper/data/council-prs.csv ${pkg} row count`],
+    ["CouncilApproved", approvedN, `paper/data/council-prs.csv ${pkg} approved count`],
     ["CouncilReviews", council.reduce((a, r) => a + Number(r.council_reviews), 0), `paper/data/council-prs.csv ${pkg} council_reviews sum`],
     ["CouncilFailed", council.filter((r) => r.vibecodereview_any_failure === "1").length, `paper/data/council-prs.csv ${pkg} vibecodereview_any_failure count`],
-    ["ConceptDoi", dois.concept_doi, `paper/data/zenodo-dois.json ${pkg}.concept_doi`], ["VersionDoi", dois.version_doi, `paper/data/zenodo-dois.json ${pkg}.version_doi`], ["SnapshotDate", DATE, "generator invocation date (not data)"],
-    ...(triv ? [["TrivialOld", triv.old, `paper/data/trivial.csv ${pkg}.old`], ["TrivialNew", triv.new, `paper/data/trivial.csv ${pkg}.new`], ["TrivialPolicy", triv.best_policy_old, `paper/data/trivial.csv ${pkg}.best_policy_old`]] : []),
+    ["ConceptDoi", dois.concept_doi, `paper/data/zenodo-dois.json ${pkg}.concept_doi`],
+    ["VersionDoi", dois.version_doi, `paper/data/zenodo-dois.json ${pkg}.version_doi`],
+    ["SnapshotDate", DATE, "generator invocation date (not data)"],
+    ["TrivialVerOld", trivVers[1], "paper/data/README.md trivial.csv note"],
+    ["TrivialVerNew", trivVers[2], "paper/data/README.md trivial.csv note"],
+    ["TrivialPolicies", trivN[1], "paper/generated/trivial-macros.tex \\trivialPolicies"],
+    ...(triv ? [["TrivialOld", triv.old, `paper/data/trivial.csv ${pkg}.old`],
+      ["TrivialNew", triv.new, `paper/data/trivial.csv ${pkg}.new`],
+      ["TrivialPolicy", triv.best_policy_old, `paper/data/trivial.csv ${pkg}.best_policy_old`]] : []),
   ]);
-  const trivText = triv ? `The preregistered check ran eight generic trivial policies against this package at versions 0.1.0 and 0.2.0. The best trivial score was \\pkgTrivialOld{} at 0.1.0 and \\pkgTrivialNew{} at 0.2.0, won by \\texttt{\\pkgTrivialPolicy{}} (\\texttt{paper/data/trivial.csv}).` : `This package was not part of the preregistered check, so \\texttt{paper/data/trivial.csv} carries no row for it.`;
-  const apprText = approvals.length ? approvals.map((r) => `\\texttt{paper/data/approval-defects.csv} records pull request \\href{https://github.com/pooriaarab/${r.repo}/pull/${r.pr}}{\\#${r.pr}} approved at commit \\texttt{${tex(r.approved_commit)}} (${tex(r.approved_at)}): the request was approved while a defect a later review found was still in the tree. The record describes it as: ${tex(r.defect)}. Found by: ${tex(r.found_by)}. ${r.fix_commit ? `Fixed in commit \\texttt{${tex(r.fix_commit)}};` : "The fix landed in a later pull request;"} merged head \\texttt{${tex(r.merged_head)}}.`).join("\n") : `\\texttt{paper/data/approval-defects.csv} lists no documented case of a council approval standing behind a defect found later for this package.`;
+  const trivText = triv
+    ? `The preregistered check ran \\pkgTrivialPolicies{} generic trivial policies against this package at versions\n`
+      + `\\pkgTrivialVerOld{} and \\pkgTrivialVerNew{}. The best trivial score was \\pkgTrivialOld{} at \\pkgTrivialVerOld{}\n`
+      + `and \\pkgTrivialNew{} at \\pkgTrivialVerNew{}, won by \\texttt{\\pkgTrivialPolicy{}} (\\texttt{paper/data/trivial.csv}).`
+    : `This package was not part of the preregistered check, so \\texttt{paper/data/trivial.csv} carries no row for it.`;
+  const apprOne = (r) => `\\texttt{paper/data/approval-defects.csv} records pull request\n`
+    + `\\href{https://github.com/pooriaarab/${r.repo}/pull/${r.pr}}{\\#${r.pr}} approved at commit \\texttt{${tex(r.approved_commit)}}\n`
+    + `(${tex(r.approved_at)}): the request was approved while a defect a later review found was still in the tree.\n`
+    + `The record describes it as: ${tex(r.defect)}. Found by: ${tex(r.found_by)}.\n`
+    + `${r.fix_commit ? `Fixed in commit \\texttt{${tex(r.fix_commit)}};` : "The fix landed in a later pull request;"} merged head \\texttt{${tex(r.merged_head)}}.`;
+  const apprText = approvals.length ? approvals.map(apprOne).join("\n")
+    : `\\texttt{paper/data/approval-defects.csv} lists no documented case of a council approval standing behind a defect found later for this package.`;
   const title = `${pkg} ${s.version} package report`, surfaces = surfaceRows(pkg, readme);
-  const abstract = `${s.name} (${pkg}) is a public npm benchmark package in the benchmark-* family, version ${s.version}, status ${s.status}. This report records what the package measures in its own words, its deterministic grader and its SDK, CLI, MCP and HTTP surfaces, and the offline validation the family data holds: a scripted good policy mean of ${s.goodMean} and a scripted bad policy mean of ${s.badMean} over ${s.taskCount} tasks at seed ${s.publicSeeds[0] ?? "n/a"}. The review record shows ${rounds.fix_rounds} fix rounds, ${defectRows.length} defect classes with public locators, and ${council.length} council-reviewed pull requests of which ${approvedN} were approved.${triv ? (triv.old === triv.new ? ` The best trivial policy scored ${triv.old} at both versions.` : ` The best trivial policy scored ${triv.old} at 0.1.0 and ${triv.new} at 0.2.0.`) : " It was not part of the preregistered trivial-policy check."} No real-model scores are reported. Software concept DOI ${dois.concept_doi}, family paper DOI ${data.dois.paper.version_doi}.`;
+  const trivClause = !triv ? " It was not part of the preregistered trivial-policy check."
+    : triv.old === triv.new ? ` The best trivial policy scored ${triv.old} at both versions.`
+    : ` The best trivial policy scored ${triv.old} at ${trivVers[1]} and ${triv.new} at ${trivVers[2]}.`;
+  const abstract = `${s.name} (${pkg}) is a public npm benchmark package in the benchmark-* family, version ${s.version}, status ${s.status}.`
+    + ` This report records what the package measures in its own words, its deterministic grader and its SDK, CLI, MCP and HTTP surfaces,`
+    + ` and the offline validation the family data holds: a scripted good policy mean of ${s.goodMean} and a scripted bad policy mean`
+    + ` of ${s.badMean} over ${s.taskCount} tasks, from mock runs at seeds ${mockSeeds[0]} and ${mockSeeds[1]}`
+    + ` on the public task split generated with seed ${s.publicSeeds[0] ?? "n/a"}. The review record shows ${rounds.fix_rounds}`
+    + ` fix rounds, ${defectRows.length} defect classes with public locators, and ${council.length} merged feature pull requests`
+    + ` of which ${approvedN} were approved.${trivClause} No real-model scores are reported.`
+    + ` Software concept DOI ${dois.concept_doi}, family paper DOI ${data.dois.paper.version_doi}.`;
   const q = (file, it, code) => quote(pkg, file, it, code);
+  const gq = gradingQuote(grading), cmds = commandQuotes(readme);
+  const defectBlock = defectRows.length
+    ? `Table~\\ref{tab:defects} lists the defect classes that touched this package, each cell linked to its public record in \\texttt{paper/data/defects.csv}.\n`
+      + tbl(["Defect class", "Record kind", "Locators"], DEFECT_SPEC,
+        defectRows.map((r) => `\\texttt{${tex(r.cls).replaceAll("-", "-\\allowbreak ")}} & {\\footnotesize ${tex(r.source)}} & ${r.locators.map(locatorLink).join(";\\ ")} \\\\`),
+        `Defect classes touching \\texttt{${pkg}}, from \\texttt{paper/data/defects.csv}.`, "tab:defects")
+    : "\\texttt{paper/data/defects.csv} lists no defect class for this package.";
+  const paidBlock = cmds.paid.length
+    ? "The README also gives a run against a paid provider; it needs a paid key, and this report does not run it:\n"
+      + cmds.paid.map((c) => q("README.md", c, true)).join("")
+    : "";
+  const taskTbl = tbl(["Task family", "Count"], "ll",
+    Object.entries(s.kinds).map(([k, n]) => `\\texttt{${tex(k)}} & ${n} \\\\`),
+    `Task counts per family for \\texttt{${pkg}} version \\protect\\pkgVersion, from \\texttt{paper/data/suite.json}.`,
+    "tab:tasks");
+  const surfTbl = tbl(["Surface", "README line"], "ll",
+    surfaces.map((r) => `${tex(r.name)} & \\href{${blob(pkg, "README.md", r.line)}}{\\texttt{README.md\\#L${r.line}}} \\\\`),
+    `Runnable surfaces of \\texttt{${pkg}}, each linked to the README line that names it.`, "tab:surfaces");
+  const srcTbl = tbl(["Source", "Kind", "Licence"], "lll",
+    s.dataSources.map((d2) => `${tex(d2.name)} & ${tex(d2.kind)} & ${tex(d2.licence)} \\\\`),
+    `Declared data sources of \\texttt{${pkg}} from its index entry.`, "tab:sources");
   const body = `% Generated by scripts/pkg-reports.mjs. Do not edit by hand.
 \\documentclass{article}
 \\PassOptionsToPackage{numbers}{natbib}
@@ -233,8 +367,9 @@ ${tex(abstract)}
 \\section{What the package asks}
 The package states its question in its own README:
 ${q("README.md", questionLine(readme))}
-Its index entry states the measured construct as: \`\`${tex(s.whatItMeasures)}\'\' (\\texttt{paper/data/suite.json}, \\texttt{${pkg}.whatItMeasures}). Table~\\ref{tab:tasks} counts the tasks by family.
-${tbl(["Task family", "Count"], "ll", Object.entries(s.kinds).map(([k, n]) => `\\texttt{${tex(k)}} & ${n} \\\\`), `Task counts per family for \\texttt{${pkg}} version \\protect\\pkgVersion, from \\texttt{paper/data/suite.json}.`, "tab:tasks")}
+Its index entry states the measured construct as: \`\`${tex(s.whatItMeasures)}\'\' (\\texttt{paper/data/suite.json}, \\texttt{${pkg}.whatItMeasures}).
+Table~\\ref{tab:tasks} counts the tasks by family.
+${taskTbl}
 ${tbl(["Field", "Value"], "ll", [
   ["Name", "\\pkgName{}"], ["npm package", `\\texttt{${pkg}}`], ["Version", "\\pkgVersion{}"],
   ["Status", "\\texttt{\\pkgStatus{}}"], ["Saturation", "\\texttt{\\pkgSaturation{}}"], ["Category", "\\pkgCategory{}"],
@@ -245,41 +380,53 @@ The README records where the task data comes from:
 ${q("README.md", sectionLine(readme, /^## (Data provenance|Reproduce the data)/, "README has no data-provenance paragraph"))}
 \\section{Grader and surfaces}
 The grading document states the mechanism in its own words:
-${q(gradingPath, gradingQuote(grading))}
-The index entry summarises the grader as: \`\`${tex(s.grader)}\'\' (\\texttt{paper/data/suite.json}, \\texttt{${pkg}.grader}). Table~\\ref{tab:surfaces} lists the runnable surfaces; each row cites the README line that describes it, and the quoted lines follow.
-${tbl(["Surface", "README line"], "ll", surfaces.map((r) => `${tex(r.name)} & \\href{${blob(pkg, "README.md", r.line)}}{\\texttt{README.md\\#L${r.line}}} \\\\`), `Runnable surfaces of \\texttt{${pkg}}, each linked to the README line that names it.`, "tab:surfaces")}
-% quote: ${pkg}/README.md#L${surfaces[0].line}
-\\begin{quote}\\ttfamily
-${surfaces.map((r) => mono(r.lines[0]) + "\\\\").join("\n")}
-\\end{quote}
-{\\footnotesize Source: \\texttt{${pkg}:README.md\\#L${surfaces.map((r) => r.line).join(",\\allowbreak L")}}.}
+${q(gradingPath, gq.para)}${gq.code ? q(gradingPath, gq.code, true) : ""}
+The index entry summarises the grader as: \`\`${tex(s.grader)}\'\' (\\texttt{paper/data/suite.json}, \\texttt{${pkg}.grader}).
+Table~\\ref{tab:surfaces} lists the runnable surfaces; each row cites the README line that describes it, and the quoted lines follow.
+${surfTbl}
+${surfaces.map((r) => q("README.md", r, isCmd(r.lines[0]))).join("")}
 \\section{Offline validation}
-No real model was run. The family data records an offline mock run at seed \\pkgPublicSeed{} on version \\pkgVersion: the scripted good policy reaches a mean of \\pkgGoodMean{} (weakest task \\pkgGoodMin{}), the scripted bad policy a mean of \\pkgBadMean{} (best task \\pkgBadMax{}), and the seed-1 mock mix scores \\pkgMockMean{} over \\pkgTaskCount{} tasks with a bootstrap interval of \\pkgMockCiLow{} to \\pkgMockCiHigh{} (\\pkgMockPassed{} tasks passed; cost \\$\\pkgMockCost{}). Source: \\texttt{paper/data/suite.json}, collected by \\texttt{scripts/collect.mjs}.
+No real model was run. The family data records mock runs at seeds \\pkgMockSeedA{} and \\pkgMockSeedB{}
+over the public task split generated with seed \\pkgPublicSeed{}, on version \\pkgVersion{}:
+the scripted good policy reaches a mean of \\pkgGoodMean{} (weakest task \\pkgGoodMin{}),
+the scripted bad policy a mean of \\pkgBadMean{} (best task \\pkgBadMax{}),
+and the run at mock seed \\pkgMockSeedA{} scores \\pkgMockMean{} over \\pkgTaskCount{} tasks
+with a bootstrap interval of \\pkgMockCiLow{} to \\pkgMockCiHigh{} (\\pkgMockPassed{} tasks passed; cost \\$\\pkgMockCost{}).
+Source: \\texttt{paper/data/suite.json}, collected by \\texttt{scripts/collect.mjs}.
 The README prints a sample run:
 ${q("README.md", sampleQuote(readme, pkg), true)}
 \\section{Review record}
 The package went through \\pkgFixRounds{} fix rounds recorded in \\texttt{paper/data/review-rounds.csv}, counted from release \\texttt{review-log-v1} of this repository.
-${defectRows.length ? `Table~\\ref{tab:defects} lists the defect classes that touched this package, each cell linked to its public record in \\texttt{paper/data/defects.csv}.
-${tbl(["Defect class", "Record kind", "Locators"], "@{}>{\\raggedright\\arraybackslash}p{0.26\\textwidth}>{\\raggedright\\arraybackslash}p{0.3\\textwidth}>{\\raggedright\\arraybackslash}p{0.38\\textwidth}@{}", defectRows.map((r) => `\\texttt{${tex(r.cls).replaceAll("-", "-\\allowbreak ")}} & {\\footnotesize ${tex(r.source)}} & ${r.locators.map(locatorLink).join(";\\ ")} \\\\`), `Defect classes touching \\texttt{${pkg}}, from \\texttt{paper/data/defects.csv}.`, "tab:defects")}` : "\\texttt{paper/data/defects.csv} lists no defect class for this package."}
+${defectBlock}
 The package changelog for this version states:
 ${q("CHANGELOG.md", changelogQuote(cachedLines(pkg, "CHANGELOG.md")))}
-The council-reviewed pull requests for this package are listed in Table~\\ref{tab:council}: \\pkgCouncilPrs{} merged feature pull requests, \\pkgCouncilReviews{} council reviews, \\pkgCouncilApproved{} approvals, and \\pkgCouncilFailed{} requests that ever showed a failing \\texttt{vibecodereview} run (\\texttt{paper/data/council-prs.csv}).
+The merged feature pull requests for this package are listed in Table~\\ref{tab:council}:
+\\pkgCouncilPrs{} requests, \\pkgCouncilReviews{} council reviews, \\pkgCouncilApproved{} approvals,
+and \\pkgCouncilFailed{} requests that ever showed a failing \\texttt{vibecodereview} run (\\texttt{paper/data/council-prs.csv}).
 ${tbl(["Pull request", "Council reviews", "Approved", "Council run", "CI check"], "lllll", prs, `Council record for \\texttt{${pkg}}, from \\texttt{paper/data/council-prs.csv}.`, "tab:council")}
 ${apprText}
 \\section{Preregistered trivial-policy check}
-The check design is described in the family paper: trivial policies ran each package in the registered set at 0.1.0 and 0.2.0 through a local fake model server answering through the package's own OpenAI provider (\\texttt{paper/sections/prereg.tex}).
+The check design is described in the family paper: trivial policies ran each package in the registered set
+at \\pkgTrivialVerOld{} and \\pkgTrivialVerNew{} through a local fake model server answering through
+the package's own OpenAI provider (\\texttt{paper/sections/prereg.tex}).
 ${trivText}
 \\section{Limitations and what is not claimed}
 The package documents its own limit:
 ${q(limits.file, limits)}
-This report claims no model capability: it records no real-model run, no leaderboard, and no comparison between models. The offline numbers are properties of the graders and the scripted policies, not of any hosted model. Package status is \\texttt{\\pkgStatus{}}; saturation is \\texttt{\\pkgSaturation{}} (\\texttt{paper/data/suite.json}). Disclosure: the package was built by AI coding agents in sessions the author configured, the reviews cited here are agent reviews, and this report was generated by \\texttt{scripts/pkg-reports.mjs} on \\pkgSnapshotDate{} from the cached sources named above.
+This report claims no model capability: it records no real-model run, no leaderboard, and no comparison between models.
+These offline numbers describe the graders and the scripted policies. They say nothing about a hosted model.
+Package status is \\texttt{\\pkgStatus{}}; saturation is \\texttt{\\pkgSaturation{}} (\\texttt{paper/data/suite.json}).
+Disclosure: the package was built by AI coding agents in sessions the author configured, the reviews cited here
+are agent reviews, and this report was generated by \\texttt{scripts/pkg-reports.mjs} on \\pkgSnapshotDate{} from the cached sources named above.
 \\section{Reproduce}
 The README gives the install and the offline run:
-${commandQuotes(readme).map((c) => q("README.md", c, true)).join("")}
-\\texttt{npm install ${pkg}@\\pkgVersion{}} installs the measured version. Table~\\ref{tab:sources} lists the declared data sources from the index entry (\\texttt{paper/data/suite.json}).
-${tbl(["Source", "Kind", "Licence"], "lll", s.dataSources.map((d2) => `${tex(d2.name)} & ${tex(d2.kind)} & ${tex(d2.licence)} \\\\`), `Declared data sources of \\texttt{${pkg}} from its index entry.`, "tab:sources")}
+${cmds.off.map((c) => q("README.md", c, true)).join("")}
+${paidBlock}\\noindent\\texttt{npm install ${pkg}@\\pkgVersion{}} installs the measured version.
+Table~\\ref{tab:sources} lists the declared data sources from the index entry (\\texttt{paper/data/suite.json}).
+${srcTbl}
 \\section{Cite}
-Cite the software record \\texttt{\\pkgConceptDoi{}} (all versions; version \\pkgVersion{} is \\texttt{\\pkgVersionDoi{}}) and the family paper record \\texttt{${data.dois.paper.version_doi}} (\\texttt{paper/data/zenodo-dois.json}).
+Cite the software record \\texttt{\\pkgConceptDoi{}} (all versions; version \\pkgVersion{} is \\texttt{\\pkgVersionDoi{}})
+and the family paper record \\texttt{${data.dois.paper.version_doi}} (\\texttt{paper/data/zenodo-dois.json}).
 \\end{document}
 `;
   const dir = join(OUT, pkg);
