@@ -53,7 +53,7 @@ it is built in PR B1, so no experiment PR edits `main.tex` for numbers.
 
 | File | Experiment | Status |
 |---|---|---|
-| exploits.csv | E2 | frozen exploit list: locators, record values, value kinds, measured states, reproducibility classes, comparison rules; no results yet |
+| exploits.csv | E2 | frozen exploit list: locators, record values, value kinds, measured states, reproducibility classes, comparison rules; no results yet. cost-per-task, test-weakening and payment-delegation carry no row because defects.csv has no in-scope locator for them |
 
 The vendored server plays eight policies selected by model id
 (`trivial-empty`, `trivial-yes`, `trivial-ok`, `trivial-refuse`,
