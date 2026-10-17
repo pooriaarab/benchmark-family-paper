@@ -49,6 +49,11 @@ for (const id of order) {
   for (const f of ["whatItMeasures", "npm", "repo", "taskCount", "dataSources"]) {
     if (pkg[f] === undefined || pkg[f] === null) fail(`${id}: suite.json missing ${f}`);
   }
+  for (const d of pkg.dataSources) {
+    for (const f of ["licence", "kind"]) {
+      if (!d[f]) fail(`${id}: dataSources entry missing ${f}`);
+    }
+  }
   const licences = [...new Set(pkg.dataSources.map((d) => d.licence))].join(", ");
   const kinds = [...new Set(pkg.dataSources.map((d) => d.kind))].join(", ");
   suiteRows.push(
