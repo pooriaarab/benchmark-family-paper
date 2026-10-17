@@ -40,6 +40,8 @@ const SOURCES = [
   { key: "tarballAudit", path: join(ROOT, "paper/data/exp/tarball-audit.csv"), rel: "paper/data/exp/tarball-audit.csv" },
   { key: "hiddenCensus", path: join(ROOT, "paper/data/exp/hidden-census.csv"), rel: "paper/data/exp/hidden-census.csv" },
   { key: "hiddenOverlap", path: join(ROOT, "paper/data/exp/hidden-overlap.csv"), rel: "paper/data/exp/hidden-overlap.csv" },
+  { key: "detConfig", path: join(ROOT, "scripts/exp/determinism.json"), rel: "scripts/exp/determinism.json" },
+  { key: "determinism", path: join(ROOT, "paper/data/exp/determinism.csv"), rel: "paper/data/exp/determinism.csv" },
 ];
 
 function fail(message) {
@@ -139,6 +141,13 @@ function pkgList(ids) {
   return sorted.length === 0 ? "\\emph{none}" : sorted.map(ttId).join(", ");
 }
 
+// English list for short numeric grids: "2", "1 and 2", "1, 4 and 16".
+function andList(items) {
+  const list = items.map(String);
+  if (list.length <= 2) return list.join(" and ");
+  return `${list.slice(0, -1).join(", ")} and ${list[list.length - 1]}`;
+}
+
 // benchmark-checkout-consent -> CheckoutConsent, for per-cell macro names.
 function camel(id) {
   return id
@@ -172,9 +181,16 @@ function loadInputs() {
   }
 
   const probeIds = new Map();
+  const probeType = new Map();
   const probesDoc = JSON.parse(readFileSync(PROBES, "utf8"));
   for (const p of probesDoc.probes ?? []) {
     probeIds.set(p.id, p.kind);
+    if (p.kind === "attack") {
+      if (!["A", "B"].includes(p.type)) {
+        fail(`probes.json: attack probe ${p.id} carries no frozen TYPE A/B mark`);
+      }
+      probeType.set(p.id, p.type);
+    }
   }
   if (probeIds.size === 0) fail("probes.json lists no probes");
 
@@ -188,7 +204,10 @@ function loadInputs() {
   const audit = readCsv(SOURCES[8].path, ["package", "version", "wave", "files", "tasks_file", "public_tasks", "hidden_named_files", "answer_bearing_files", "doc_seeds", "doc_hidden_seed_examples"]);
   const census = readCsv(SOURCES[9].path, ["package", "version", "wave", "generator", "split_flag", "seed_flag", "output_flag", "hidden_default", "hidden_needs_seed", "tasks_flag", "qualifies"]);
   const overlap = readCsv(SOURCES[10].path, ["package", "version", "wave", "seed", "generator", "hidden_tasks", "public_tasks", "prompt_pairs", "prompt_exact_overlap", "prompt_norm_overlap", "expected_pairs", "expected_exact_overlap", "expected_norm_overlap", "id_exact_overlap", "id_suffix_overlap"]);
-  return { versions, pinned, waveOf, released, cells, headroom, reasons, probeIds, contract, seeds, audit, census, overlap };
+  const detConfig = JSON.parse(readFileSync(SOURCES[11].path, "utf8"));
+  const determinism = readCsv(SOURCES[12].path,
+    ["package", "version", "path", "seed", "concurrency", "repeat", "rows", "mean", "sha256", "status", "uniform", "node_version"]);
+  return { versions, pinned, waveOf, released, cells, headroom, reasons, probeIds, probeType, contract, seeds, audit, census, overlap, detConfig, determinism };
 }
 
 // A `;`-joined list where `none` means empty; an empty entry after a
@@ -204,7 +223,7 @@ function listLen(rel, row, field) {
 }
 
 function analyse(input) {
-  const { pinned, waveOf, released, cells, headroom, reasons, probeIds, contract, seeds, audit, census, overlap } = input;
+  const { pinned, waveOf, released, cells, headroom, reasons, probeIds, probeType, contract, seeds, audit, census, overlap, detConfig, determinism } = input;
   const artifacts = new Set();
   const policies = new Set();
   const seenCell = new Set();
@@ -302,6 +321,7 @@ function analyse(input) {
   const qualified = new Set();
   let leaksFound = 0;
   let seedExamples = 0;
+  let seedlessQualified = 0;
   for (const row of audit) {
     const key = keyOf(row.package, row.version);
     if (!pinned.get(row.package)?.has(row.version)) fail(`tarball-audit.csv: unpinned artifact ${key}`);
@@ -317,6 +337,7 @@ function analyse(input) {
     if (censusKeys.has(key)) fail(`hidden-census.csv: duplicate artifact ${key}`);
     censusKeys.add(key);
     if (!["yes", "no"].includes(row.qualifies)) fail(`hidden-census.csv: ${key} bad qualifies ${row.qualifies}`);
+    if (row.qualifies === "yes" && row.hidden_needs_seed === "no") seedlessQualified += 1;
     if (row.qualifies === "yes") qualified.add(key);
   }
   for (const key of artifactIds) {
@@ -357,6 +378,94 @@ function analyse(input) {
     }
   }
 
+  // E6 determinism: one row per run of the matrix frozen in
+  // scripts/exp/determinism.json, every artifact at its released pin.
+  // A package counts byte-identical when every mock row reports
+  // uniform=yes; any uniform=no row names a drifter.
+  const detArtifacts = new Set(detConfig.artifacts ?? []);
+  if (detArtifacts.size === 0) fail("determinism.json lists no artifacts");
+  const detMockSeeds = [...new Set((detConfig.mockArm?.seeds ?? []).map(String))].sort(compareVersions);
+  const detMockConc = [...new Set((detConfig.mockArm?.concurrency ?? []).map(String))]
+    .sort((a, b) => Number(a) - Number(b));
+  const detMockRepeats = Number(detConfig.mockArm?.repeats);
+  const detTrivRepeats = Number(detConfig.trivialServerArm?.repeats);
+  if (!detMockSeeds.length || !detMockConc.length) fail("determinism.json: mock arm lost its grid");
+  if (!Number.isInteger(detMockRepeats) || detMockRepeats < 1) fail("determinism.json: bad mock repeats");
+  if (!Number.isInteger(detTrivRepeats) || detTrivRepeats < 1) fail("determinism.json: bad trivial repeats");
+  const detSeen = new Set();
+  const detGroups = new Map(); // pkg -> Map(group -> Set(repeat))
+  const detDrift = new Map(); // pkg -> Set(path)
+  let detMockRuns = 0;
+  let detTrivialRuns = 0;
+  let detFailedRuns = 0;
+  const detSeedsSeen = new Set();
+  const detConcSeen = new Set();
+  for (const row of determinism) {
+    const key = keyOf(row.package, row.version);
+    if (!detArtifacts.has(key)) fail(`determinism.csv: ${key} is not in the frozen matrix`);
+    if (released.get(row.package) !== row.version) {
+      fail(`determinism.csv: ${key} is not the released pin`);
+    }
+    if (!["mock", "trivial-server"].includes(row.path)) {
+      fail(`determinism.csv: ${key} bad path ${row.path}`);
+    }
+    if (!["ok", "ok-after-retry", "timeout", "failed"].includes(row.status)) {
+      fail(`determinism.csv: ${key} bad status ${row.status}`);
+    }
+    if (!["yes", "no"].includes(row.uniform)) fail(`determinism.csv: ${key} bad uniform ${row.uniform}`);
+    const okRun = row.status === "ok" || row.status === "ok-after-retry";
+    if (okRun !== (row.sha256 !== "")) fail(`determinism.csv: ${key} sha256 and status disagree`);
+    if (!okRun) detFailedRuns += 1;
+    const cell = `${key}|${row.path}|${row.seed}|${row.concurrency}|${row.repeat}`;
+    if (detSeen.has(cell)) fail(`determinism.csv: duplicate run ${cell}`);
+    detSeen.add(cell);
+    if (row.path === "mock") {
+      detMockRuns += 1;
+      detSeedsSeen.add(row.seed);
+      detConcSeen.add(row.concurrency);
+    } else {
+      detTrivialRuns += 1;
+    }
+    if (!detGroups.has(row.package)) detGroups.set(row.package, new Map());
+    const groups = detGroups.get(row.package);
+    const group = `${row.path}|${row.seed}|${row.concurrency}`;
+    if (!groups.has(group)) groups.set(group, new Set());
+    groups.get(group).add(row.repeat);
+    if (row.uniform === "no") {
+      if (!detDrift.has(row.package)) detDrift.set(row.package, new Set());
+      detDrift.get(row.package).add(row.path);
+    }
+  }
+  // The measured grid must equal the frozen one: every artifact runs
+  // every (seed, concurrency) mock cell repeats times and one
+  // trivial-server group repeats times.
+  if (detSeedsSeen.size !== detMockSeeds.length || detConcSeen.size !== detMockConc.length) {
+    fail("determinism.csv: measured grid does not match the frozen matrix");
+  }
+  for (const key of detArtifacts) {
+    const [pkg] = key.split("@");
+    const groups = detGroups.get(pkg);
+    if (!groups) fail(`determinism.csv: no runs for ${key}`);
+    for (const s of detMockSeeds) {
+      for (const c of detMockConc) {
+        const reps = groups.get(`mock|${s}|${c}`);
+        if (!reps || reps.size !== detMockRepeats) {
+          fail(`determinism.csv: ${key} mock seed ${s} concurrency ${c} lacks its repeats`);
+        }
+      }
+    }
+    const trivKey = `trivial-server|${detConfig.trivialServerArm?.seed}|${detConfig.trivialServerArm?.concurrency}`;
+    const triv = groups.get(trivKey);
+    if (!triv || triv.size !== detTrivRepeats) {
+      fail(`determinism.csv: ${key} trivial-server group lacks its repeats`);
+    }
+  }
+  if (detGroups.size !== detArtifacts.size) fail("determinism.csv: unpinned package ran");
+  const detDriftPkgs = [...detDrift.keys()].sort();
+  const detIdentical = [...detArtifacts].filter((key) => {
+    return !detDrift.has(key.split("@")[0]);
+  }).length;
+
   const releasedRows = [];
   for (const [pkg, ver] of released) {
     const row = headByKey.get(`${pkg}@${ver}`);
@@ -379,7 +488,10 @@ function analyse(input) {
   // honest variant is class honest-variant with result pass or fail;
   // exploratory and outside-contract cells never count either way.
   const probeSeen = new Set();
-  const probeStats = new Map(); // artifact key -> {hvPromised, hvFail, forgedFail}
+  const probeStats = new Map(); // artifact key -> {hvPromised, hvFail, forgedFail, fails, creditFail, movedFail}
+  let probesOutsideContract = 0;
+  let probesNotRunnable = 0;
+  let probesReleasedCells = 0;
   for (const row of contract) {
     const key = keyOf(row.package, row.version);
     if (!pinned.get(row.package)?.has(row.version)) {
@@ -397,12 +509,23 @@ function analyse(input) {
     if ((row.outside_contract === "yes") !== (row.result === "outside-contract")) {
       fail(`contract-probes.csv: ${key} ${row.probe} outside_contract flag disagrees with result`);
     }
+    if (row.result === "outside-contract") probesOutsideContract += 1;
+    if (row.result === "not-runnable") probesNotRunnable += 1;
+    if (row.version === released.get(row.package)) probesReleasedCells += 1;
     const cellKey = `${key}|${row.probe}`;
     if (probeSeen.has(cellKey)) fail(`contract-probes.csv: duplicate cell ${cellKey}`);
     probeSeen.add(cellKey);
-    if (!probeStats.has(key)) probeStats.set(key, { hvPromised: 0, hvFail: 0, forgedFail: 0, fails: 0 });
+    if (!probeStats.has(key)) {
+      probeStats.set(key, { hvPromised: 0, hvFail: 0, forgedFail: 0, fails: 0, creditFail: 0, movedFail: 0 });
+    }
     const stat = probeStats.get(key);
-    if (row.result === "fail") stat.fails += 1;
+    if (row.result === "fail") {
+      stat.fails += 1;
+      const type = probeType.get(row.probe);
+      if (type === "A") stat.creditFail += 1;
+      else if (type === "B") stat.movedFail += 1;
+      else if (row.class === "attack") fail(`contract-probes.csv: ${cellKey} failed under ${row.probe} which is no frozen attack type`);
+    }
     if (row.class === "honest-variant" && (row.result === "pass" || row.result === "fail")) {
       stat.hvPromised += 1;
       if (row.result === "fail") stat.hvFail += 1;
@@ -428,7 +551,11 @@ function analyse(input) {
   let probesHonestCells = 0;
   let probesHonestHeld = 0;
   let probesFailedCells = 0;
+  let probesCreditFailCells = 0;
+  let probesMovedFailCells = 0;
   const forgedAcceptedPkgs = [];
+  const creditFailPkgs = [];
+  const movedFailPkgs = [];
   for (const [pkg, ver] of released) {
     const stat = probeStats.get(keyOf(pkg, ver));
     if (stat.hvFail === 0) probesHonestAccepted += 1;
@@ -436,7 +563,11 @@ function analyse(input) {
     probesHonestCells += stat.hvPromised;
     probesHonestHeld += stat.hvPromised - stat.hvFail;
     probesFailedCells += stat.fails;
+    probesCreditFailCells += stat.creditFail;
+    probesMovedFailCells += stat.movedFail;
     if (stat.forgedFail > 0) forgedAcceptedPkgs.push(pkg);
+    if (stat.creditFail > 0) creditFailPkgs.push(pkg);
+    if (stat.movedFail > 0) movedFailPkgs.push(pkg);
   }
 
   const releasedBest = releasedRows.map((row) => row.best);
@@ -512,14 +643,32 @@ function analyse(input) {
     probesForgedAccepted: forgedAcceptedPkgs.length,
     probesForgedAcceptedPkgs: forgedAcceptedPkgs,
     probesFailedCells,
+    probesReleasedCells,
+    probesOutsideContract,
+    probesNotRunnable,
+    probesCreditFailCells,
+    probesMovedFailCells,
+    probesCreditFailPkgs: creditFailPkgs,
+    probesMovedFailPkgCount: movedFailPkgs.length,
     auditArtifacts: auditKeys.size,
     auditLeaksFound: leaksFound,
     auditSeedExamples: seedExamples,
     auditCensusQualified: qualified.size,
+    auditSeedlessQualified: seedlessQualified,
     auditSeeds: seedSet.size,
     auditMaxPromptOverlapPct: maxPromptPct.toFixed(1),
     auditMaxExpectedOverlapPct: maxExpectedPct.toFixed(1),
     auditMaxIdSuffixPct: maxIdSuffixPct.toFixed(1),
+    detPackages: detArtifacts.size,
+    detRuns: determinism.length,
+    detMockRuns,
+    detTrivialRuns,
+    detSeedList: andList(detMockSeeds),
+    detConcurrencyList: andList(detMockConc),
+    detRepeats: detMockRepeats,
+    detFailedRuns,
+    detIdentical,
+    detDriftPkgs,
   };
 }
 
@@ -578,14 +727,32 @@ function generate(stats) {
     `\\newcommand{\\expProbesForgedAccepted}{${stats.probesForgedAccepted}}`,
     `\\newcommand{\\expProbesForgedAcceptedPkgs}{${pkgList(stats.probesForgedAcceptedPkgs)}}`,
     `\\newcommand{\\expProbesFailedCells}{${stats.probesFailedCells}}`,
+    `\\newcommand{\\expProbesReleasedCells}{${stats.probesReleasedCells}}`,
+    `\\newcommand{\\expProbesOutsideContract}{${stats.probesOutsideContract}}`,
+    `\\newcommand{\\expProbesNotRunnable}{${stats.probesNotRunnable}}`,
+    `\\newcommand{\\expProbesCreditFailCells}{${stats.probesCreditFailCells}}`,
+    `\\newcommand{\\expProbesMovedFailCells}{${stats.probesMovedFailCells}}`,
+    `\\newcommand{\\expProbesCreditFailPkgs}{${pkgList(stats.probesCreditFailPkgs)}}`,
+    `\\newcommand{\\expProbesMovedFailPkgCount}{${stats.probesMovedFailPkgCount}}`,
     `\\newcommand{\\expAuditArtifacts}{${stats.auditArtifacts}}`,
     `\\newcommand{\\expAuditLeaksFound}{${stats.auditLeaksFound}}`,
     `\\newcommand{\\expAuditSeedExamples}{${stats.auditSeedExamples}}`,
     `\\newcommand{\\expAuditCensusQualified}{${stats.auditCensusQualified}}`,
+    `\\newcommand{\\expAuditSeedlessQual}{${stats.auditSeedlessQualified}}`,
     `\\newcommand{\\expAuditSeeds}{${stats.auditSeeds}}`,
     `\\newcommand{\\expAuditMaxPromptOverlapPct}{${stats.auditMaxPromptOverlapPct}}`,
     `\\newcommand{\\expAuditMaxExpectedOverlapPct}{${stats.auditMaxExpectedOverlapPct}}`,
     `\\newcommand{\\expAuditMaxIdSuffixPct}{${stats.auditMaxIdSuffixPct}}`,
+    `\\newcommand{\\expDetPackages}{${stats.detPackages}}`,
+    `\\newcommand{\\expDetRuns}{${stats.detRuns}}`,
+    `\\newcommand{\\expDetMockRuns}{${stats.detMockRuns}}`,
+    `\\newcommand{\\expDetTrivialRuns}{${stats.detTrivialRuns}}`,
+    `\\newcommand{\\expDetSeedList}{${stats.detSeedList}}`,
+    `\\newcommand{\\expDetConcurrencyList}{${stats.detConcurrencyList}}`,
+    `\\newcommand{\\expDetRepeats}{${stats.detRepeats}}`,
+    `\\newcommand{\\expDetFailedRuns}{${stats.detFailedRuns}}`,
+    `\\newcommand{\\expDetIdentical}{${stats.detIdentical}}`,
+    `\\newcommand{\\expDetDriftPkgs}{${pkgList(stats.detDriftPkgs)}}`,
     "",
   );
   return `${lines.join("\n")}`;
