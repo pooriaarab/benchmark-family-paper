@@ -1,6 +1,7 @@
 .venv/
 hf/out/
 __pycache__/
+.exp-cache/
 paper/main.pdf
 paper/*.aux
 paper/*.log
