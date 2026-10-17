@@ -45,6 +45,21 @@ fail; read it before changing anything.
   `uniform` flag per (package, path, seed) group.
 - `determinism.test.sh` — runs the matrix on three released artifacts
   twice and diffs the two CSVs.
+- `hidden-seeds.json` — the frozen E5 seed list: five fresh seeds
+  used for hidden-split regeneration. Frozen before the run; the
+  paper's public task-split seed 20261015 is never among them.
+- `hidden-audit.failure-modes.md` — every way the E5 audit and
+  overlap scripts can fail; read it first.
+- `tarball-audit.mjs` — E5a. Scans each installed artifact's tree
+  for hidden-named files, answer-bearing files outside the public
+  split, and concrete seeds in shipped docs, and writes the
+  generator census.
+- `hidden-overlap.mjs` — E5b. Regenerates the hidden split for each
+  census-qualified artifact at the five frozen seeds and measures
+  overlap with the public split.
+- `hidden-audit.test.sh` — the E5 end-to-end check: installs the
+  four qualifying artifacts into a temp cache, runs both scripts
+  twice, diffs the CSV trees, prints their sha256.
 - `macros.mjs` — turns the E1 CSVs (`trivial-battery-cells`,
   `trivial-headroom`, `trivial-reasons`), `versions.json` and
   `reason-classes.json` into `paper/generated/exp-macros.tex`;
@@ -62,6 +77,7 @@ node scripts/exp/install.mjs benchmark-pelican@0.1.0   # one artifact
 node scripts/exp/install.mjs --cache /tmp/c ...   # elsewhere
 bash scripts/exp/scaffold.test.sh                 # end-to-end check
 bash scripts/exp/probes.test.sh                   # probe freeze check
+bash scripts/exp/hidden-audit.test.sh             # E5 end-to-end check
 ```
 
 Each artifact lands in `.exp-cache/<name>@<version>/` as a self-
@@ -93,6 +109,7 @@ no experiment PR edits `main.tex` for numbers.
 | `trivial-battery.csv`, `trivial-battery-cells.csv`, `trivial-reasons.csv`, `trivial-headroom.csv` | E1 trivial battery + E1b reason classes | done |
 | `contract-probes.csv` | E4 grader contract probes | done |
 | `determinism.csv` | E6 determinism and repeat runs | done |
+| `tarball-audit.csv`, `hidden-census.csv`, `hidden-overlap.csv` | E5 hidden-split hygiene audit | done |
 
 The vendored server plays eight policies selected by model id
 (`trivial-empty`, `trivial-yes`, `trivial-ok`, `trivial-refuse`,
