@@ -53,12 +53,24 @@ function cachedLines(pkg, path) {
 // Quotes keep a source em dash (tex escapes it; the gate skips quote
 // regions); the five-word ban reads whole words, so cancel-first passes.
 const BANNED = /(?<![\w-])(independent\w*|novel|first|robust|comprehensive)(?![\w-])/i;
+// The gate's slogan rule binds authored prose the same way; a summary
+// carrying ", not " (rollback-recovery) is dropped, never rewritten.
+const SLOGAN = /,\s*not\s|\bnot of\b|council-reviewed pull/i;
 function pickLine(lines, test, label) {
   for (let i = 0; i < lines.length; i++) { const t = lines[i].trim();
     if (test(t) && !BANNED.test(t)) return { lines: [t], line: i + 1 }; }
   fail(label);
 }
-const questionLine = (ls) => pickLine(ls, (t) => t && !"#[`|".includes(t[0]) && /(\bmeasures\b|\basks\b|\bis an open-source\b)/.test(t), "README has no question line");
+// A README wrapped at 80 columns splits one paragraph over many lines;
+// join the continuation lines or the quote ends mid-sentence. The join
+// stops at a blank line, a heading, a fence, a table row, a blockquote
+// or a new list item, so a one-line pick keeps its old output.
+const PARA_STOP = /^\s*(?:#|```|\||>|[-*+]\s|\d+[.)]\s)/;
+function joinPara(lines, it) {
+  for (let i = it.line; i < lines.length && lines[i].trim() && !PARA_STOP.test(lines[i]); i++) it.lines.push(lines[i].trim());
+  return it;
+}
+const questionLine = (ls) => joinPara(ls, pickLine(ls, (t) => t && !"#[`|".includes(t[0]) && /(\bmeasures\b|\basks\b|\bis an open-source\b)/.test(t), "README has no question line"));
 // Join each changelog paragraph and quote the one sentence carrying the
 // comparability phrase; a changelog without one returns null.
 const COMPARE_RE = /not comparable|cannot be compared/i;
@@ -146,7 +158,7 @@ function sectionLine(lines, headingRe) {
     const t = lines[i].trim();
     if (t.startsWith("```")) { fence = !fence; continue; }
     if (t.startsWith("#") && !fence) break;
-    if (t && !fence && !t.startsWith("|") && !BANNED.test(t)) return { lines: [t], line: i + 1 };
+    if (t && !fence && !t.startsWith("|") && !BANNED.test(t)) return joinPara(lines, { lines: [t], line: i + 1 });
   }
   return null;
 }
@@ -238,11 +250,14 @@ function wrapCode(e) {
   return parts;
 }
 const blob = (pkg, ref, f, l) => `https://github.com/pooriaarab/${pkg}/blob/${ref}/${f}#L${l}`;
+// A locator is one \texttt token; break hints after - and / keep a long
+// package name or path from overflowing its table cell.
+const brk = (s) => s.replaceAll("/", "/\\allowbreak ").replaceAll("-", "-\\allowbreak ");
 const locatorLink = (pkg, ref, loc) => {
   const i = loc.match(/^([\w-]+)#(\d+)$/);
-  if (i) return `\\href{https://github.com/pooriaarab/${i[1]}/issues/${i[2]}}{\\texttt{${tex(i[1])}\\#${i[2]}}}`;
+  if (i) return `\\href{https://github.com/pooriaarab/${i[1]}/issues/${i[2]}}{\\texttt{${brk(tex(i[1]))}\\#${i[2]}}}`;
   const f = loc.match(/^([\w-]+):([\w./-]+)#L(\d+(?:-\d+)?)$/);
-  return f ? `\\href{${blob(f[1], ref, f[2], f[3])}}{\\texttt{${tex(f[1])}:\\allowbreak ${tex(f[2])}\\#L${f[3]}}}` : `\\texttt{${tex(loc)}}`;
+  return f ? `\\href{${blob(f[1], ref, f[2], f[3])}}{\\texttt{${brk(tex(f[1]))}:\\allowbreak ${brk(tex(f[2]))}\\#L${f[3]}}}` : `\\texttt{${tex(loc)}}`;
 };
 // Leading spaces become \hspace* (a \\ line start discards glue); the rest tie.
 const mono = (l) => wrapCode(tex(l).replaceAll("`", "\\textasciigrave{}").replace(/^ +/, (m) => `\\hspace*{${m.length / 2}em}`))
@@ -280,6 +295,8 @@ function buildOne(pkg, data) {
   return { s, rounds, council, defectRows, approvals, triv, dois };
 }
 const DEFECT_SPEC = "@{}>{\\raggedright\\arraybackslash}p{0.26\\textwidth}>{\\raggedright\\arraybackslash}p{0.3\\textwidth}>{\\raggedright\\arraybackslash}p{0.38\\textwidth}@{}";
+const FACT_SPEC = "@{}>{\\raggedright\\arraybackslash}p{0.24\\textwidth}>{\\raggedright\\arraybackslash}p{0.68\\textwidth}@{}";
+const SRC_SPEC = "@{}>{\\raggedright\\arraybackslash}p{0.58\\textwidth}>{\\raggedright\\arraybackslash}p{0.14\\textwidth}>{\\raggedright\\arraybackslash}p{0.18\\textwidth}@{}";
 async function emit(pkg, data, d) {
   const { s, rounds, council, defectRows, approvals, triv, dois } = d, ref = `v${s.version}`;
   const readme = cachedLines(pkg, "README.md"), pkgJson = JSON.parse(readFileSync(join(cacheDir(pkg), "package.json"), "utf8"));
@@ -372,7 +389,7 @@ async function emit(pkg, data, d) {
   const surfTbl = tbl(["Surface", "README line"], "ll",
     surfaces.map((r) => `${tex(r.name)} & \\href{${blob(pkg, ref, "README.md", r.para.line)}}{\\texttt{README.md\\#L${r.para.line}}} \\\\`),
     `Runnable surfaces of \\texttt{${pkg}}, each linked to the README line that names it.`, "tab:surfaces");
-  const srcTbl = tbl(["Source", "Kind", "Licence"], "lll", s.dataSources.map((d2) => `${tex(d2.name)} & ${tex(d2.kind)} & ${tex(d2.licence)} \\\\`),
+  const srcTbl = tbl(["Source", "Kind", "Licence"], SRC_SPEC, s.dataSources.map((d2) => `${tex(d2.name)} & ${tex(d2.kind)} & ${tex(d2.licence)} \\\\`),
     `Declared data sources of \\texttt{${pkg}} from its index entry.`, "tab:sources");
   const body = `% Generated by scripts/pkg-reports.mjs. Do not edit by hand.
 \\documentclass{article}
@@ -400,7 +417,7 @@ ${q("README.md", questionLine(readme))}
 Its index entry states the measured construct as: \`\`${tex(s.whatItMeasures)}\'\' (\\texttt{paper/data/suite.json}, \\texttt{${pkg}.whatItMeasures}).
 Table~\\ref{tab:tasks} counts the tasks by family.
 ${taskTbl}
-${tbl(["Field", "Value"], "ll", [
+${tbl(["Field", "Value"], FACT_SPEC, [
   ["Name", "\\pkgName{}"], ["npm package", `\\texttt{${pkg}}`], ["Version", "\\pkgVersion{}"],
   ["Status", "\\texttt{\\pkgStatus{}}"], ["Saturation", "\\texttt{\\pkgSaturation{}}"], ["Category", "\\pkgCategory{}"],
   ["Tags", s.tags.map((t) => `\\texttt{${tex(t)}}`).join(", ")], ["Public seed", s.publicSeeds.length ? "\\pkgPublicSeed{}" : "none declared"],
@@ -409,7 +426,7 @@ ${tbl(["Field", "Value"], "ll", [
 ${provBlock}
 \\section{Grader and surfaces}
 ${gradBlock}
-${BANNED.test(s.grader)
+${BANNED.test(s.grader) || SLOGAN.test(s.grader)
 ? `The index-entry grader summary trips this report's wording rule, so it is not quoted here (\\texttt{paper/data/suite.json}, \\texttt{${pkg}.grader}).`
 : `The index entry summarises the grader as: \`\`${tex(s.grader)}\'\' (\\texttt{paper/data/suite.json}, \\texttt{${pkg}.grader}).`}
 Table~\\ref{tab:surfaces} lists the runnable surfaces; each row cites the README line that describes it, and the quoted lines follow.
