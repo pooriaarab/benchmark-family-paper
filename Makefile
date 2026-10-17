@@ -77,3 +77,10 @@ scatter-test:
 # stale-output and missing-macro guards fire, rebuild both PDFs.
 exp-macros-test:
 	bash scripts/exp/macros.test.sh
+
+.PHONY: probe-heatmap-test
+
+# Figure F7 (contract probes, artifact x probe): regenerate the figure
+# inputs twice, rebuild both PDFs, and render the figure pages.
+probe-heatmap-test:
+	bash scripts/exp/probe-heatmap.test.sh
