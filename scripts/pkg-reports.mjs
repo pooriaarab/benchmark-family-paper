@@ -26,18 +26,22 @@ function readCsv(path) {
   return rows.map((r) => Object.fromEntries(head.map((h, i) => [h, r[i]])));
 }
 const cacheDir = (pkg) => join(OUT, ".cache", pkg);
+const ghHeaders = () => {
+  const t = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+  return t ? { authorization: `Bearer ${t}` } : {};
+};
 async function fetchFile(pkg, path) {
   const file = join(cacheDir(pkg), path);
   mkdirSync(dirname(file), { recursive: true });
   if (!REFRESH && existsSync(file)) return;
   const url = `https://raw.githubusercontent.com/pooriaarab/${pkg}/main/${path}`;
-  const res = await fetch(url, { redirect: "follow" });
+  const res = await fetch(url, { redirect: "follow", headers: ghHeaders() });
   if (res.status !== 200) fail(`GET ${url} returned HTTP ${res.status}`);
   writeFileSync(file, Buffer.from(await res.arrayBuffer()));
 }
 async function cachePackage(pkg) {
   for (const p of ["README.md", "CHANGELOG.md", "package.json"]) await fetchFile(pkg, p);
-  const res = await fetch(`https://api.github.com/repos/pooriaarab/${pkg}/git/trees/main?recursive=1`);
+  const res = await fetch(`https://api.github.com/repos/pooriaarab/${pkg}/git/trees/main?recursive=1`, { headers: ghHeaders() });
   if (res.status === 200) {
     for (const n of JSON.parse(await res.text()).tree || []) {
       if (n.type === "blob" && n.path.startsWith("docs/")) await fetchFile(pkg, n.path);
@@ -95,14 +99,19 @@ function commandQuotes(lines) {
   return found;
 }
 function sampleQuote(lines, pkg) {
-  let sawRun = false;
+  let inFence = false, wantFence = false;
   for (let i = 0; i < lines.length; i++) {
-    const t = lines[i].trim();
-    if (t.includes(`npx ${pkg} run --provider mock`)) sawRun = true;
-    if (!sawRun || !t.startsWith("```")) continue;
-    const block = [], start = i + 2;
-    for (i = i + 1; i < lines.length && !lines[i].startsWith("```"); i++) block.push(lines[i].trimEnd());
-    if (block.some((l) => /mean|Score|score/.test(l))) return { lines: block.slice(0, 12), line: start };
+    const t = lines[i].trimEnd();
+    if (t.startsWith("```")) {
+      if (wantFence && !inFence) {
+        const block = [], start = i + 2;
+        for (i = i + 1; i < lines.length && !lines[i].startsWith("```"); i++) block.push(lines[i].trimEnd());
+        i--;
+        if (block.some((l) => /mean|Score|score/.test(l))) return { lines: block.slice(0, 12), line: start };
+      } else inFence = !inFence;
+      continue;
+    }
+    if (t.includes(`npx ${pkg} run --provider mock`)) wantFence = true;
   }
   fail("README has no sample-run block");
 }
@@ -122,18 +131,45 @@ const tex = (v) => String(v)
   .replaceAll("\\", "\\textbackslash{}").replaceAll("&", "\\&").replaceAll("%", "\\%")
   .replaceAll("$", "\\$").replaceAll("#", "\\#").replaceAll("_", "\\_")
   .replaceAll("{", "\\{").replaceAll("}", "\\}").replaceAll("~", "\\textasciitilde{}")
-  .replaceAll("^", "\\textasciicircum{}");
+  .replaceAll("^", "\\textasciicircum{}")
+  .replaceAll("–", "\\textendash{}").replaceAll("—", "\\textemdash{}")
+  .replaceAll("…", "\\textellipsis{}").replaceAll("×", "\\texttimes{}")
+  .replaceAll("·", "\\textperiodcentered{}").replaceAll("©", "\\textcopyright{}")
+  .replaceAll("---", "-{}-{}-").replaceAll("--", "-{}-");
+function mdQuote(l) {
+  const parts = String(l).split("`"), out = [];
+  for (let i = 0; i < parts.length; i++) {
+    const tail = i === parts.length - 1 && parts.length % 2 === 0;
+    out.push(i % 2 === 1 && !tail ? `\\texttt{${tex(parts[i])}}` : (tail ? "\\textasciigrave{}" : "") + tex(parts[i]));
+  }
+  return out.join("");
+}
 function wrapLong(e) {
   if (e.length <= 95) return e;
-  const atoms = e.match(/\\[a-zA-Z]+|\\.|[\s\S]/g) || [e];
-  const chunks = [];
-  let cur = "";
-  for (const a of atoms) {
-    if (cur.length + a.length > 70 && cur) { chunks.push(cur); cur = ""; }
-    cur += a;
+  const atoms = e.match(/\\[a-zA-Z]+\{\}?|\\.|-\{\}-|[\s\S]/g) || [e];
+  const words = []; let w = "";
+  for (const a of atoms) { if (a === " ") { words.push(w, " "); w = ""; } else w += a; }
+  if (w) words.push(w);
+  const parts = []; let cur = "";
+  for (const t of words) {
+    if (t === " ") { if (cur && !cur.endsWith(" ")) cur += " "; continue; }
+    let rest = t;
+    while (rest) {
+      const room = 70 - cur.length;
+      if (rest.length <= room) { cur += rest; rest = ""; }
+      else if (!cur.trim()) {
+        const at = rest.match(/\\[a-zA-Z]+\{\}?|\\.|-\{\}-|[\s\S]/g) || [rest];
+        let take = 0, acc = 0;
+        while (take < at.length && acc + at[take].length <= Math.max(1, room)) acc += at[take++].length;
+        if (!take) take = 1;
+        parts.push(cur + at.slice(0, take).join("") + "\\allowbreak ");
+        rest = at.slice(take).join("");
+      }
+      else { parts.push(cur.trimEnd()); cur = ""; }
+    }
   }
-  chunks.push(cur);
-  return chunks.join("\\allowbreak ");
+  if (cur) parts.push(cur);
+  return parts.join("\n");
 }
 const blob = (pkg, f, l) => `https://github.com/pooriaarab/${pkg}/blob/main/${f}#L${l}`;
 const locatorLink = (loc) => {
@@ -144,22 +180,25 @@ const locatorLink = (loc) => {
     ? `\\href{${blob(f[1], f[2], f[3])}}{\\texttt{${tex(f[1])}:\\allowbreak ${tex(f[2])}\\#L${f[3]}}}`
     : `\\texttt{${tex(loc)}}`;
 };
-const quote = (pkg, file, it) => `% quote: ${pkg}/${file}#L${it.line}
-\\begin{quote}
-${it.lines.map((l) => wrapLong(tex(l))).join("\n")}
+const mono = (l) => wrapLong(
+  tex(l).replaceAll("`", "\\textasciigrave{}").replace(/^ +/, (m) => "\\ ".repeat(m.length)));
+const quote = (pkg, file, it, code = false) => `% quote: ${pkg}/${file}#L${it.line}
+\\begin{quote}${code ? "\\ttfamily" : ""}
+${code ? it.lines.map((l) => mono(l) + "\\\\").join("\n") : wrapLong(mdQuote(it.lines.join(" ")))}
 \\end{quote}
 {\\footnotesize Source: \\href{${blob(pkg, file, it.line)}}{\\texttt{${pkg}:${file}\\#L${it.line}}}.}\n`;
-const short = (p) => p.replace(/^benchmark-/, ""), tbl = (cols, spec, rows, caption, label) => `\\begin{table}[h]
-\\centering\\small
+const short = (p) => p.replace(/^benchmark-/, ""), tbl = (cols, spec, rows, caption, label) => `\\begin{table}[H]
+\\centering
+\\caption{${caption}}
+\\label{${label}}
+{\\small
 \\begin{tabular}{${spec}}
 \\toprule
 ${cols.join(" & ")} \\\\
 \\midrule
 ${rows.join("\n")}
 \\bottomrule
-\\end{tabular}
-\\caption{${caption}}
-\\label{${label}}
+\\end{tabular}}
 \\end{table}`;
 function buildOne(pkg, data) {
   const s = data.suite.packages.find((p) => p.id === pkg);
@@ -216,9 +255,9 @@ async function emit(pkg, data, d) {
     ? approvals.map((r) => `\\texttt{paper/data/approval-defects.csv} records pull request \\href{https://github.com/pooriaarab/${r.repo}/pull/${r.pr}}{\\#${r.pr}} approved at commit \\texttt{${tex(r.approved_commit)}} (${tex(r.approved_at)}): the request was approved while a defect a later review found was still in the tree. The record describes it as: ${tex(r.defect)}. Found by: ${tex(r.found_by)}. ${r.fix_commit ? `Fixed in commit \\texttt{${tex(r.fix_commit)}};` : "The fix landed in a later pull request;"} merged head \\texttt{${tex(r.merged_head)}}.`).join("\n")
     : `\\texttt{paper/data/approval-defects.csv} lists no documented case of a council approval standing behind a defect found later for this package.`;
   const title = `${pkg} ${s.version} package report`;
-  const abstract = `${s.name} (${pkg}) is a public npm benchmark package in the benchmark-* family, version ${s.version}, status ${s.status}. This report records what the package measures in its own words, its deterministic grader and its SDK, CLI, MCP and HTTP surfaces, and the offline validation the family data holds: a scripted good policy mean of ${s.goodMean} and a scripted bad policy mean of ${s.badMean} over ${s.taskCount} tasks at seed ${s.publicSeeds[0] ?? "n/a"}. The review record shows ${rounds.fix_rounds} fix rounds, ${defectRows.length} defect classes with public locators, and ${council.length} council-reviewed pull requests of which ${approvedN} were approved.${triv ? ` Its preregistered trivial-policy best moved from ${triv.old} at 0.1.0 to ${triv.new} at 0.2.0.` : " It was not part of the preregistered trivial-policy check."} No real-model scores are reported. Software concept DOI ${dois.concept}, family paper DOI 10.5281/zenodo.23428802.`;
+  const abstract = `${s.name} (${pkg}) is a public npm benchmark package in the benchmark-* family, version ${s.version}, status ${s.status}. This report records what the package measures in its own words, its deterministic grader and its SDK, CLI, MCP and HTTP surfaces, and the offline validation the family data holds: a scripted good policy mean of ${s.goodMean} and a scripted bad policy mean of ${s.badMean} over ${s.taskCount} tasks at seed ${s.publicSeeds[0] ?? "n/a"}. The review record shows ${rounds.fix_rounds} fix rounds, ${defectRows.length} defect classes with public locators, and ${council.length} council-reviewed pull requests of which ${approvedN} were approved.${triv ? (triv.old === triv.new ? ` The best trivial policy scored ${triv.old} at both versions.` : ` The best trivial policy scored ${triv.old} at 0.1.0 and ${triv.new} at 0.2.0.`) : " It was not part of the preregistered trivial-policy check."} No real-model scores are reported. Software concept DOI ${dois.concept}, family paper DOI 10.5281/zenodo.23428802.`;
   const surfaces = surfaceRows(pkg, readme);
-  const q = (file, it) => quote(pkg, file, it);
+  const q = (file, it, code) => quote(pkg, file, it, code);
   const body = `% Generated by scripts/pkg-reports.mjs. Do not edit by hand.
 \\documentclass{article}
 \\PassOptionsToPackage{numbers}{natbib}
@@ -229,6 +268,7 @@ async function emit(pkg, data, d) {
 \\usepackage{url}
 \\usepackage{booktabs}
 \\usepackage{array}
+\\usepackage{float}
 \\usepackage{microtype}
 ${M}
 
@@ -266,15 +306,15 @@ The index entry summarises the grader as: \`\`${tex(s.grader)}\'\' (\\texttt{pap
 ${tbl(["Surface", "README line"], "ll", surfaces.map((r) => `${tex(r.name)} & \\href{${blob(pkg, "README.md", r.line)}}{\\texttt{README.md\\#L${r.line}}} \\\\`), `Runnable surfaces of \\texttt{${pkg}}, each linked to the README line that names it.`, "tab:surfaces")}
 
 % quote: ${pkg}/README.md#L${surfaces[0].line}
-\\begin{quote}
-${surfaces.map((r) => wrapLong(tex(r.lines[0]))).join("\n")}
+\\begin{quote}\\ttfamily
+${surfaces.map((r) => mono(r.lines[0]) + "\\\\").join("\n")}
 \\end{quote}
 {\\footnotesize Source: \\texttt{${pkg}:README.md\\#L${surfaces.map((r) => r.line).join(",\\allowbreak L")}}.}
 
 \\section{Offline validation}
 No real model was run. The family data records an offline mock run at seed \\pkgPublicSeed{} on version \\pkgVersion: the scripted good policy reaches a mean of \\pkgGoodMean{} (weakest task \\pkgGoodMin{}), the scripted bad policy a mean of \\pkgBadMean{} (best task \\pkgBadMax{}), and the seed-1 mock mix scores \\pkgMockMean{} over \\pkgTaskCount{} tasks with a bootstrap interval of \\pkgMockCiLow{} to \\pkgMockCiHigh{} (\\pkgMockPassed{} tasks passed; cost \\$\\pkgMockCost{}). Source: \\texttt{paper/data/suite.json}, collected by \\texttt{scripts/collect.mjs}.
 The README prints a sample run:
-${q("README.md", sampleQuote(readme, pkg))}
+${q("README.md", sampleQuote(readme, pkg), true)}
 
 \\section{Review record}
 The package went through \\pkgFixRounds{} fix rounds recorded in \\texttt{paper/data/review-rounds.csv}, counted from release \\texttt{review-log-v1} of this repository.
@@ -299,7 +339,7 @@ This report claims no model capability: it records no real-model run, no leaderb
 
 \\section{Reproduce}
 The README gives the install and the offline run:
-${commandQuotes(readme).map((c) => q("README.md", c)).join("")}
+${commandQuotes(readme).map((c) => q("README.md", c, true)).join("")}
 \\texttt{npm install ${pkg}@\\pkgVersion{}} installs the measured version. Table~\\ref{tab:sources} lists the declared data sources from the index entry (\\texttt{paper/data/suite.json}).
 
 ${tbl(["Source", "Kind", "Licence"], "lll", s.dataSources.map((d2) => `${tex(d2.name)} & ${tex(d2.kind)} & ${tex(d2.licence)} \\\\`), `Declared data sources of \\texttt{${pkg}} from its index entry.`, "tab:sources")}
