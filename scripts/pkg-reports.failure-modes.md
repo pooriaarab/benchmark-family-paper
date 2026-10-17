@@ -235,3 +235,7 @@ Written before the generator: every way it can fail, and the response.
     number token"). A summary that matches `BANNED` is dropped: the
     report says so and names the data file in place of the quote,
     and the sentence is never rewritten to hide the rule.
+52. **A grader summary trips the slogan rule instead.** The same
+    sentence fails the `, not ` slogan check when the summary itself
+    carries that shape (rollback-recovery: "tool call, not free
+    text"). The drop applies to either wording rule.
