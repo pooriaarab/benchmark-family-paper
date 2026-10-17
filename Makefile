@@ -6,7 +6,11 @@
 TECTONIC ?= tectonic
 export TECTONIC
 
-.PHONY: collect pdf arxiv release-assets clean style
+.PHONY: collect pdf arxiv release-assets clean style reports
+
+PKG ?= benchmark-pelican
+reports: style
+	node scripts/pkg-reports.mjs $(PKG)
 
 style:
 	node scripts/fetch-style.mjs
