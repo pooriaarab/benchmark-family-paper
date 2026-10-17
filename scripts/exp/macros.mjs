@@ -503,7 +503,7 @@ function analyse(input) {
       const type = probeType.get(row.probe);
       if (type === "A") stat.creditFail += 1;
       else if (type === "B") stat.movedFail += 1;
-      else fail(`contract-probes.csv: ${cellKey} failed under ${row.probe} which is no frozen attack type`);
+      else if (row.class === "attack") fail(`contract-probes.csv: ${cellKey} failed under ${row.probe} which is no frozen attack type`);
     }
     if (row.class === "honest-variant" && (row.result === "pass" || row.result === "fail")) {
       stat.hvPromised += 1;
