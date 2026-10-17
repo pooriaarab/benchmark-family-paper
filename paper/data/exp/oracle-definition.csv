@@ -1,0 +1,35 @@
+package,version,oracle_fields,oracle_sends_answer,graded_carrier,oracle_description
+benchmark-accessibility-fix,0.1.0,answer,yes,answer-text,good mock submits the complete fixed HTML document as answer text
+benchmark-apology-pizza,0.1.0,toolLog+finalState,no,replayed-toolLog,good mock plays the remedy calls; no answer text
+benchmark-apology-pizza,0.2.0,toolLog+finalState,no,replayed-toolLog,good mock plays the remedy calls; no answer text
+benchmark-checkout-consent,0.1.0,toolLog+finalState,no,replayed-toolLog,good mock runs cart address quote ask_user then pay; no answer text
+benchmark-checkout-consent,0.2.0,toolLog+finalState,no,replayed-toolLog,good mock runs cart address quote ask_user then pay; no answer text
+benchmark-cost-per-task,0.1.0,toolLog+finalState,no,replayed-toolLog,good mock performs the file and CRM writes then finish_task; no answer text
+benchmark-cost-per-task,0.2.0,toolLog+finalState,no,replayed-toolLog,good mock performs the file and CRM writes then finish_task; no answer text
+benchmark-crm-truthfulness,0.1.0,toolLog+finalState,no,replayed-toolLog,good mock looks up facts drafts and sends mail; no answer text
+benchmark-exploit-resistance,0.1.0,toolLog+finalState,no,replayed-file,good mock writes src/impl.expr through write_file then calls submit; no answer text
+benchmark-honesty,0.1.0,answer+toolLog+finalState,yes,replayed-toolLog+json-answer,good mock calls lookup_fact then answers a strict single JSON object
+benchmark-honesty,0.2.0,answer+toolLog+finalState,yes,replayed-toolLog+json-answer,good mock calls lookup_fact then answers a JSON envelope object
+benchmark-hundred-step,0.1.0,toolLog+finalState,no,replayed-toolLog,good mock advances with the issued tokens; no answer text
+benchmark-hundred-step,0.2.0,toolLog+finalState,no,replayed-toolLog,good mock advances with the issued tokens; no answer text
+benchmark-instruction-hierarchy,0.1.0,answer,yes,answer-text,good mock replies with the expected codeword or verdict token
+benchmark-latency-budget,0.1.0,answer+toolLog+finalState,yes,replayed-toolLog+answer+finalState,good mock answers one candidate value grounded in a replayed call; timing reads toolLog plus finalState measured turns
+benchmark-memory-conflict,0.1.0,answer+toolLog+finalState,yes,replayed-toolLog+answer-leak-scan,good mock books through tools and ends with a user message; the answer is scanned only for private-memory leaks
+benchmark-mcp-safety,0.1.0,toolLog+finalState,no,replayed-toolLog,good mock fetches and saves the value without touching forbidden tools; no answer text
+benchmark-mcp-safety,0.2.0,toolLog+finalState,no,replayed-toolLog,good mock fetches and saves the value without touching forbidden tools; no answer text
+benchmark-payment-delegation,0.1.0,answer+toolLog+finalState,yes,replayed-toolLog+decline-answer,good mock plays the ledger calls; the answer communicates a decline only on decline-goal tasks
+benchmark-pelican,0.1.0,answer,yes,answer-text,good mock submits the task reference SVG as answer text
+benchmark-pelican,0.2.0,answer,yes,answer-text,good mock submits the task reference SVG as answer text
+benchmark-ranking-stability,0.1.0,answer,yes,answer-text,good mock answers the bare generated value or option name
+benchmark-ranking-stability,0.2.0,answer,yes,answer-text,good mock answers the bare generated value or option name
+benchmark-rollback-recovery,0.1.0,answer+toolLog+finalState,yes,replayed-toolLog,good mock repairs then calls report_incident; the free-text answer is never scored
+benchmark-schema-mutation,0.1.0,answer,yes,answer-text,good mock answers one name-arguments JSON call under the current schema
+benchmark-silent-constraints,0.1.0,answer+toolLog+finalState,yes,replayed-toolLog,good mock finishes with a short answer that the grader does not read
+benchmark-skateboard,0.1.0,answer,yes,answer-text,good mock answers one strict JSON physics object
+benchmark-skateboard,0.2.0,answer,yes,answer-text,good mock answers one JSON physics object
+benchmark-sycophancy,0.1.0,toolLog+finalState,no,replayed-toolLog,good mock records one decide call; no answer text
+benchmark-sycophancy,0.2.0,toolLog+finalState,no,replayed-toolLog,good mock records one decide call; no answer text
+benchmark-test-weakening,0.1.0,toolLog+finalState,no,replayed-toolLog,good mock writes the implementation and runs tests; no answer text
+benchmark-test-weakening,0.2.0,toolLog+finalState,no,replayed-toolLog,good mock writes the implementation and runs tests; no answer text
+benchmark-tool-errors,0.1.0,toolLog+finalState,no,replayed-toolLog,good mock retries within limits and writes the payload; no answer text
+benchmark-tool-errors,0.2.0,toolLog+finalState,no,replayed-toolLog,good mock retries within limits and writes the payload; no answer text
