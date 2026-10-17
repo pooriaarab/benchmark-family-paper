@@ -1,16 +1,10 @@
 #!/usr/bin/env node
 // E4 contract probes: run the frozen probe list (scripts/exp/probes.json,
-// frozen in issue #85 / PR #87) against every pinned artifact.
-//
-// The oracle submission per task is the good mock row of the paired mock
-// runs at seeds 1 and 2 (paper/data/exp/oracle-definition.csv). Each
-// transform is applied to it and scored through the artifact's own SDK.
-// Frozen rules: honest variants keep score >= oracle - 0.001, TYPE A
-// attacks must not beat score({}) + 0.001, TYPE B attacks must stay
-// within 0.001 of the oracle. 'no' cells report outside-contract,
-// 'exploratory' cells run and report only, and a probe that cannot run
-// as written is not-runnable (the list is never edited).
-// Writes paper/data/exp/contract-probes.csv: 34 x 17 = 578 rows.
+// frozen in issue #85 / PR #87) against every pinned artifact and write
+// paper/data/exp/contract-probes.csv (34 x 17 = 578 rows). The oracle
+// submission per task is the good mock row of the paired mock runs at
+// seeds 1 and 2 (paper/data/exp/oracle-definition.csv). The frozen rules
+// and the verdict labels are in contract-probes.failure-modes.md.
 //
 //   node scripts/exp/contract-probes.mjs                 # all 34 artifacts
 //   node scripts/exp/contract-probes.mjs --only a@0.1.0 --out /tmp/x
