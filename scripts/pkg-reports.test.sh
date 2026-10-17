@@ -4,24 +4,36 @@ cd "$(dirname "$0")/.."
 ROOT=$(pwd); TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
 export PP="${PAPER_PUBLISH:-$(command -v paper-publish || echo "$HOME/Documents/Personal/scripts/paper-publish")}" PKGS="benchmark-pelican benchmark-sycophancy benchmark-honesty"
 export GITHUB_TOKEN="${GITHUB_TOKEN:-$(gh auth token 2>/dev/null || true)}"
+if [ ! -x "$PP" ]; then
+  echo "pkg-reports.test.sh: paper-publish not found at '$PP'" >&2
+  echo "expected an executable at \$HOME/Documents/Personal/scripts/paper-publish or set PAPER_PUBLISH" >&2
+  exit 2
+fi
 for p in $PKGS; do node scripts/pkg-reports.mjs "$p" --out "$TMP/reports" --date 2026-10-17 >/dev/null; done
 
 python3 - "$ROOT" "$TMP" $PKGS <<'PY'
 import json, re, subprocess, sys, os
 root, tmp, pkgs = sys.argv[1], sys.argv[2], sys.argv[3:]
 banned = re.compile(r"\bindependent\w*\b|\b(novel|first|robust|comprehensive)\b|—", re.I)
+slogan = re.compile(r",\s*not\s|\bnot of\b|council-reviewed pull", re.I)
 data_files = "suite.json defects.csv review-rounds.csv council-prs.csv trivial.csv approval-defects.csv review-notes.csv zenodo-dois.json builders.csv".split()
 numbers = lambda t: re.findall(r"\d+(?:\.\d+)*", t); norm = lambda s: re.sub(r"\s+", " ", s).strip()
+suite = json.load(open(f"{root}/paper/data/suite.json"))
+mock_seeds = set(re.findall(r'"--seed",\s*"(\d+)"', open(f"{root}/scripts/collect.mjs").read()))
 def unescape(ln):
-    s = re.sub(r"\\allowbreak\s*", "", ln)          # a break there eats the space
+    s = re.sub(r"\\hspace\*?\{([\d.]+)em\}", lambda m: " " * round(float(m.group(1)) / 0.5), ln)
+    s = re.sub(r"\\allowbreak\s*", "", s)          # a break there eats the space
     s = re.sub(r"\\\\$", "", s).replace("\\ ", " ")  # mono line end, explicit space
+    s = re.sub(r"\\textbf\{((?:\\.|-\{\}-|[^{}])*)\}", r"\1", s)
+    s = re.sub(r"\\href\{[^{}]*\}\{((?:\\.|-\{\}-|[^{}])*)\}", r"\1", s)
     s = re.sub(r"\\texttt\{((?:\\.|-\{\}-|[^{}])*)\}", r"\1", s)
     s = s.replace("-{}-{}-", "---").replace("-{}-", "--").replace("\\textasciigrave{}", "`")
-    s = s.replace("\\textbackslash{}", "\x00")
+    s = s.replace("\\textbackslash{}", "\x00").replace("~", " ")
     s = re.sub(r"\\([&%$#_{}])", r"\1", s)
     s = s.replace("\\textendash{}", "–").replace("\\textemdash{}", "—")
     s = s.replace("\\textellipsis{}", "…").replace("\\texttimes{}", "×").replace("\\textperiodcentered{}", "·").replace("\\textcopyright{}", "©")
     return s.replace("\\textasciitilde{}", "~").replace("\\textasciicircum{}", "^").replace("\x00", "\\")
+unmd = lambda s: re.sub(r"(?m)^\s*(?:[-*+]|\d+[.)])\s+", "", re.sub(r"\[([^\]]*)\]\(([^)]*)\)", r"\1", s.replace("**", "")))
 tt_spans = lambda ln: [unescape(s) for s in re.findall(r"\\texttt\{((?:\\.|-\{\}-|[^{}])*)\}", ln)]
 def regions(lines):
     inside, mono, cur, regs = False, False, [], []
@@ -62,17 +74,20 @@ for pkg in pkgs:
         except OSError: bad.append(f"{pkg}: quote source {f} not cached"); continue
         srclines = set(x.rstrip() for x in srctext.split("\n"))
         if mono:
-            buf = []  # 4. a \\ -terminated run is one rendered line and must be one verbatim source line
+            if any(not l.rstrip().endswith("\\\\") for l in reg):  # 4a. every code row keeps its line break
+                bad.append(f"{pkg}: code line loses its line break in {f}")
+            logical = []  # 4b. a hookarrow-marked row continues the previous rendered line
             for l in reg:
-                buf.append(l)
-                if l.rstrip().endswith("\\\\"):
-                    u = unescape("\n".join(buf)).replace("\n", " ")
-                    if u.strip() and u.rstrip() not in srclines: bad.append(f"{pkg}: code line not verbatim in {f}: {u.rstrip()[:60]}")
-                    buf = []
-            if any(x.strip() for x in buf): bad.append(f"{pkg}: code line loses its line break in {f}")
+                cont = bool(re.match(r"\s*\$\\hookrightarrow\$", l)) and bool(logical)
+                u = unescape(re.sub(r"^\s*\$\\hookrightarrow\$\s*(\\hspace\*?\{[\d.]+em\})?\s*", "", l) if cont else l)
+                if cont: logical[-1] += u
+                else: logical.append(u)
+            for u in logical:  # each reconstructed line must be one verbatim source line
+                u = u.rstrip()
+                if u.strip() and u not in srclines: bad.append(f"{pkg}: code line not verbatim in {f}: {u[:60]}")
         else:
             joined = norm(unescape("\n".join(reg)))
-            if joined and joined not in norm(srctext.replace("`", "")):  # 1a. quote text must match the source
+            if joined and joined not in norm(unmd(srctext.replace("`", ""))):  # 1a. quote text must match the source
                 bad.append(f"{pkg}: quote text not in {f}: {joined[:60]}")
             for l in reg:  # 1b. a break hint beside a real space eats the space
                 if re.search(r"\s\\allowbreak|\\allowbreak  ", l):
@@ -89,14 +104,33 @@ for pkg in pkgs:
         if not skip: rest.append(ln)
     if re.search(r"--|-\{\}-", re.sub(r"\\texttt\{((?:\\.|-\{\}-|[^{}])*)\}", "", "\n".join(rest))):  # 2b. no bare -- in roman text
         bad.append(f"{pkg}: bare -- outside monospace")
+    macrov = {m.group(1): m.group(2) for m in (re.match(r"\\newcommand\{\\pkg(\w+)\}\{(.*)\}", l) for l in lines) if m}
+    pub = {str(x) for p in suite["packages"] if p["id"] == pkg for x in p.get("publicSeeds") or []}
+    def seed_check(text, resolve, where):  # 5. every seed named keeps the role its source gives it
+        for clause in re.split(r"[.;()]", text):
+            for m in re.finditer(r"\bseeds?\s*-?\s*(?:at\s+|of\s+)?((?:\\pkg\w+\{\}|\d+)(?:\s*(?:,|and)\s*(?:\\pkg\w+\{\}|\d+))*)", clause):
+                for mac, num in re.findall(r"\\pkg(\w+)\{\}|(\d+)", m.group(1)):
+                    for n in numbers(num or resolve.get(mac, "")):
+                        if n in pub:
+                            if not re.search(r"split|public|generat", clause, re.I):
+                                bad.append(f"{pkg}: public-split seed {n} outside a split role ({where}): {clause.strip()[:60]}")
+                        elif n in mock_seeds:
+                            if "mock" not in clause.lower():
+                                bad.append(f"{pkg}: mock seed {n} outside a mock role ({where}): {clause.strip()[:60]}")
+                        else: bad.append(f"{pkg}: seed {n} not a collect.mjs mock seed or suite publicSeed ({where}): {clause.strip()[:60]}")
     in_q = False  # 4. banned wording outside quotes ("Independent researcher" is the required affiliation)
     for ln in lines:
         if "\\begin{quote}" in ln: in_q = True; continue
         if "\\end{quote}" in ln: in_q = False; continue
-        if not in_q and banned.search(ln.replace("Independent researcher", "")): bad.append(f"{pkg}: banned wording: {ln.strip()[:70]}")
+        if in_q: continue
+        if banned.search(ln.replace("Independent researcher", "")): bad.append(f"{pkg}: banned wording: {ln.strip()[:70]}")
+        if not ln.lstrip().startswith("%"):
+            if slogan.search(ln): bad.append(f"{pkg}: 'X, not Y' or overclaimed label: {ln.strip()[:70]}")
+            seed_check(ln, macrov, "report.tex")
+    seed_check(meta.get("abstract", ""), {}, "meta.json")
     if not 100 <= len(meta["abstract"]) <= 1920: bad.append(f"{pkg}: abstract {len(meta['abstract'])} chars")
     for k in ("title", "abstract", "comments"):
-        if banned.search(str(meta.get(k, ""))): bad.append(f"{pkg}: banned wording in meta.json {k}")
+        if banned.search(str(meta.get(k, ""))) or slogan.search(str(meta.get(k, ""))): bad.append(f"{pkg}: banned wording in meta.json {k}")
     r = subprocess.run([os.environ["PP"], "check", f"{tmp}/reports/{pkg}/meta.json", "--pdf", f"{tmp}/reports/{pkg}/report.pdf"], capture_output=True, text=True)
     if r.returncode: bad.append(f"{pkg}: paper-publish check: {r.stderr.strip()[-160:]}")
 if bad:
