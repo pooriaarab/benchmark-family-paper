@@ -75,6 +75,14 @@ heatmap-test:
 related-test:
 	bash scripts/related-compress.test.sh
 
+.PHONY: soundness-test
+
+# C6 grader soundness section: fresh macros and collect output, no
+# typed numerals or banned prose in the section, both PDFs built twice
+# with matching sha256, figure pages rendered for review.
+soundness-test:
+	bash scripts/grader-soundness.test.sh
+
 .PHONY: bookkeeping-test
 
 # C2 bookkeeping move: rebuild both PDFs, fail on undefined references
