@@ -85,7 +85,9 @@ Tool Errors (benchmark-tool-errors) is a public npm benchmark package in the ben
 The package states its question in its own README:
 % quote: benchmark-tool-errors/README.md#L7
 \begin{quote}
-benchmark-tool-errors is an open-source AI agent benchmark for API failure
+benchmark-tool-errors is an open-source AI agent benchmark for API
+failure recovery. It checks safe retries, idempotency, and truthful
+final reports.
 \end{quote}
 {\footnotesize Source: \href{https://github.com/pooriaarab/benchmark-tool-errors/blob/v0.2.0/README.md#L7}{\texttt{benchmark-tool-errors:README.md\#L7}}.}
 
@@ -109,7 +111,7 @@ Task family & Count \\
 \caption{Index-entry fields for \texttt{benchmark-tool-errors}, from \texttt{paper/data/suite.json}.}
 \label{tab:facts}
 {\small
-\begin{tabular}{ll}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.24\textwidth}>{\raggedright\arraybackslash}p{0.68\textwidth}@{}}
 \toprule
 Field & Value \\
 \midrule
@@ -129,7 +131,15 @@ Documentation & \url{https://private-repo-337e.com/benchmarks/benchmark-tool-err
 The README records where the task data comes from:
 % quote: benchmark-tool-errors/README.md#L211
 \begin{quote}
-The hidden split needs a private seed passed with \texttt{-{}-seed} or the
+The hidden split needs a private seed passed with \texttt{-{}-seed} or
+the \texttt{BTER\_HIDDEN\_SEED} environment variable; it is never
+committed. Hidden tasks use their own \texttt{hidden-} id prefix,
+\texttt{H}-tagged operation keys, a seeded fault order, and different
+values, so no hidden prompt or expected answer matches a public task.
+Pass \texttt{-{}-out} to change the output path. Keep hidden fixtures
+out of packages and repositories; the SDK (\texttt{run(adapter, \{
+tasksPath \})}), API (\texttt{createApiHandler(\{ tasksPath \})}), and
+\texttt{mcp -{}-tasks} accept the same file.
 \end{quote}
 {\footnotesize Source: \href{https://github.com/pooriaarab/benchmark-tool-errors/blob/v0.2.0/README.md#L211}{\texttt{benchmark-tool-errors:README.md\#L211}}.}
 
@@ -215,10 +225,10 @@ Table~\ref{tab:defects} lists the defect classes that touched this package, each
 \toprule
 Defect class & Record kind & Locators \\
 \midrule
-\texttt{blind-\allowbreak strategy-\allowbreak credit} & {\footnotesize issues and changelogs (per-package locators)} & \href{https://github.com/pooriaarab/benchmark-tool-errors/issues/8}{\texttt{benchmark-tool-errors\#8}} \\
-\texttt{honest-\allowbreak answer-\allowbreak rejected} & {\footnotesize review issues and PRs (per-package locators)} & \href{https://github.com/pooriaarab/benchmark-tool-errors/issues/8}{\texttt{benchmark-tool-errors\#8}} \\
-\texttt{hidden-\allowbreak split-\allowbreak not-\allowbreak hidden} & {\footnotesize review issues and PRs (per-package locators); 0.2.0 changelogs} & \href{https://github.com/pooriaarab/benchmark-tool-errors/issues/7}{\texttt{benchmark-tool-errors\#7}} \\
-\texttt{dropped-\allowbreak breakdowns} & {\footnotesize review issues and PRs (per-package locators)} & \href{https://github.com/pooriaarab/benchmark-tool-errors/issues/19}{\texttt{benchmark-tool-errors\#19}};\ \href{https://github.com/pooriaarab/benchmark-tool-errors/issues/9}{\texttt{benchmark-tool-errors\#9}} \\
+\texttt{blind-\allowbreak strategy-\allowbreak credit} & {\footnotesize issues and changelogs (per-package locators)} & \href{https://github.com/pooriaarab/benchmark-tool-errors/issues/8}{\texttt{benchmark-\allowbreak tool-\allowbreak errors\#8}} \\
+\texttt{honest-\allowbreak answer-\allowbreak rejected} & {\footnotesize review issues and PRs (per-package locators)} & \href{https://github.com/pooriaarab/benchmark-tool-errors/issues/8}{\texttt{benchmark-\allowbreak tool-\allowbreak errors\#8}} \\
+\texttt{hidden-\allowbreak split-\allowbreak not-\allowbreak hidden} & {\footnotesize review issues and PRs (per-package locators); 0.2.0 changelogs} & \href{https://github.com/pooriaarab/benchmark-tool-errors/issues/7}{\texttt{benchmark-\allowbreak tool-\allowbreak errors\#7}} \\
+\texttt{dropped-\allowbreak breakdowns} & {\footnotesize review issues and PRs (per-package locators)} & \href{https://github.com/pooriaarab/benchmark-tool-errors/issues/19}{\texttt{benchmark-\allowbreak tool-\allowbreak errors\#19}};\ \href{https://github.com/pooriaarab/benchmark-tool-errors/issues/9}{\texttt{benchmark-\allowbreak tool-\allowbreak errors\#9}} \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -231,7 +241,7 @@ Scores from 0.1.0 are not comparable with 0.2.0.
 
 The merged feature pull requests for this package are listed in Table~\ref{tab:council}:
 \pkgCouncilPrs{} requests, \pkgCouncilReviews{} council reviews, \pkgCouncilApproved{} approvals,
-and \pkgCouncilFailed{} requests that ever showed a failing \texttt{vibecodereview} run (\texttt{paper/data/council-prs.csv}).
+and \pkgCouncilFailed{} request that ever showed a failing \texttt{vibecodereview} run (\texttt{paper/data/council-prs.csv}).
 \begin{table}[H]
 \centering
 \caption{Council record for \texttt{benchmark-tool-errors}, from \texttt{paper/data/council-prs.csv}.}
@@ -305,7 +315,7 @@ Table~\ref{tab:sources} lists the declared data sources from the index entry (\t
 \caption{Declared data sources of \texttt{benchmark-tool-errors} from its index entry.}
 \label{tab:sources}
 {\small
-\begin{tabular}{lll}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.58\textwidth}>{\raggedright\arraybackslash}p{0.14\textwidth}>{\raggedright\arraybackslash}p{0.18\textwidth}@{}}
 \toprule
 Source & Kind & Licence \\
 \midrule
