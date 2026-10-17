@@ -118,3 +118,11 @@ The vendored server plays eight policies selected by model id
 Point a package at it with `OPENAI_BASE_URL=http://127.0.0.1:PORT/v1`
 and any non-empty `OPENAI_API_KEY`. `trivial-random` is seeded by the
 request count, so only run it at concurrency 1.
+- `exploits-run-c.failure-modes.md` — how the part-c run fails; read
+  first.
+- `exploits-run-c.mjs` — re-measures the frozen exploit list's
+  `needs-source-checkout` rows at their pinned commits (clone, `npm
+  ci`, `npm run build`, score through the built package) and writes
+  `paper/data/exp/exploit-results-c.csv`.
+- `exploits-run-c.test.sh` — runs the runner twice into temp CSVs,
+  diffs them, prints sha256. Second run is fully offline.

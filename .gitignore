@@ -24,3 +24,4 @@ reports/*/neurips_2026.sty
 reports/*/*.aux
 reports/*/*.log
 reports/*/*.out
+.exp-checkouts/
