@@ -70,3 +70,10 @@ heatmap-test:
 # rebuild both PDFs, and render the figure pages for review.
 scatter-test:
 	bash scripts/exp/trivial-scatter.test.sh
+
+.PHONY: exp-macros-test
+
+# Experiment macros: regenerate paper/generated/exp-macros.tex, prove the
+# stale-output and missing-macro guards fire, rebuild both PDFs.
+exp-macros-test:
+	bash scripts/exp/macros.test.sh
