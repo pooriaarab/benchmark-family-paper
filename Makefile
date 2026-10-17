@@ -63,3 +63,10 @@ dmlr-test:
 # rebuild both PDFs, and render the figure pages for review.
 heatmap-test:
 	bash scripts/heatmap.test.sh
+
+.PHONY: reasons-test
+
+# Figure F6 (why blind-policy rows score 0): regenerate the figure CSV,
+# rebuild both PDFs, and render the figure pages for review.
+reasons-test:
+	bash scripts/exp/trivial-reasons-plot.test.sh

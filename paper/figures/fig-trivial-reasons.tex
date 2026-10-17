@@ -1,0 +1,35 @@
+% Figure F6: why blind-policy rows score 0, per package. Shares of each
+% package's zero-score rows pooled over its pinned versions, generated
+% by scripts/exp/trivial-reasons-plot.mjs from trivial-reasons.csv.
+\begin{figure}[!tbp]
+\centering
+\pgfplotstableset{col sep=comma}
+\begin{tikzpicture}
+\begin{axis}[
+  font=\small,
+  ybar stacked,
+  bar width=8pt,
+  scale only axis,
+  width=0.86\textwidth, height=0.42\textwidth,
+  ymin=0, ymax=100,
+  ylabel={share of zero-score rows (\%)},
+  ytick={0,25,50,75,100},
+  xtick=data,
+  xticklabels from table={generated/trivial-reasons-plot.csv}{package},
+  x tick label style={rotate=60,anchor=east,font=\scriptsize},
+  axis y line*=left, axis x line*=bottom,
+  legend style={at={(0.5,1.02)}, anchor=south, legend columns=5, font=\tiny, draw=none, /tikz/every even column/.append style={column sep=4pt}},
+]
+\addplot[fill=black!22, draw=none] table[x expr=\coordindex,y=wrong] {generated/trivial-reasons-plot.csv};
+\addplot[fill=okverm, draw=none] table[x expr=\coordindex,y=contract] {generated/trivial-reasons-plot.csv};
+\addplot[fill=okblue, draw=none] table[x expr=\coordindex,y=formatgate] {generated/trivial-reasons-plot.csv};
+\addplot[fill=black, draw=none] table[x expr=\coordindex,y=abort] {generated/trivial-reasons-plot.csv};
+\addplot[fill=white, draw=black!50] table[x expr=\coordindex,y=unclassified] {generated/trivial-reasons-plot.csv};
+\legend{wrong answer, contract violation, format gate, abort, unclassified}
+\pgfmathsetmacro{\wavebound}{\reviewWaveOne-0.5}
+\draw[black!35, dashed] (axis cs:\wavebound,0) -- (axis cs:\wavebound,100);
+\end{axis}
+\end{tikzpicture}
+\caption{Why the \trivialPolicies{} blind policies' zero-score rows die, per package, generated from \texttt{paper/data/exp/}\allowbreak\texttt{trivial-reasons.csv}. The format gate rejects a submission before substantive scoring (parse or shape failure), a contract violation names a breached task rule, and a wrong answer is a graded submission that was simply wrong. Shares pool each package's pinned versions; bar order matches Figure~\ref{fig:defects} and the dashed rule separates wave 1 (left) from wave 2.}
+\label{fig:trivial-reasons}
+\end{figure}
