@@ -1,0 +1,29 @@
+{
+  "generated_by": "scripts/pkg-reports.mjs",
+  "title": "benchmark-ranking-stability 0.2.0 package report",
+  "abstract": "Ranking Stability (benchmark-ranking-stability) is a public npm benchmark package in the benchmark-* family, version 0.2.0, status alpha. This report records what the package measures in its own words, its deterministic grader and its SDK, CLI, MCP and HTTP surfaces, and the offline validation the family data holds: a scripted good policy mean of 1 and a scripted bad policy mean of 0 over 300 tasks, from mock runs at seeds 1 and 2 on the public task split generated with seed 20261015. The review record shows 3 fix rounds, 4 defect classes with public locators, and 5 merged feature pull requests of which 4 were approved. The best trivial policy scored 0.0033 at 0.1.0 and 0.0333 at 0.2.0. No real-model scores are reported. Software concept DOI 10.5281/zenodo.23422385, family paper DOI 10.5281/zenodo.23428802.",
+  "license": "cc-by-4.0",
+  "subject_class": "cs.AI",
+  "authors": [
+    {
+      "name": "Arab, Pooria",
+      "affiliation": "Independent researcher",
+      "orcid": null
+    }
+  ],
+  "keywords": [
+    "ai-benchmark",
+    "llm-evaluation",
+    "agent-evaluation",
+    "deterministic-grader",
+    "benchmark-ranking-stability"
+  ],
+  "comments": "Generated per-package technical report for benchmark-ranking-stability 0.2.0; data from pooriaarab/benchmark-family-paper paper/data and cached package sources.",
+  "code_url": "https://github.com/pooriaarab/benchmark-ranking-stability",
+  "data_url": "https://huggingface.co/datasets/pooria/benchmark-ranking-stability",
+  "data_concept_dois": [
+    "10.5281/zenodo.23422385",
+    "10.5281/zenodo.23428802"
+  ],
+  "venues": []
+}
