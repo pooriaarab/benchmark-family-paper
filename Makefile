@@ -78,3 +78,10 @@ scatter-test:
 # twice, and diff the two CSV trees.
 hidden-audit-test:
 	bash scripts/exp/hidden-audit.test.sh
+
+.PHONY: exp-macros-test
+
+# Experiment macros: regenerate paper/generated/exp-macros.tex, prove the
+# stale-output and missing-macro guards fire, rebuild both PDFs.
+exp-macros-test:
+	bash scripts/exp/macros.test.sh
