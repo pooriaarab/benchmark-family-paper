@@ -71,6 +71,14 @@ heatmap-test:
 scatter-test:
 	bash scripts/exp/trivial-scatter.test.sh
 
+.PHONY: hidden-audit-test
+
+# E5 (tarball audit + hidden-split overlap): install the four
+# census-qualified artifacts into a temp cache, run both E5 scripts
+# twice, and diff the two CSV trees.
+hidden-audit-test:
+	bash scripts/exp/hidden-audit.test.sh
+
 .PHONY: exp-macros-test
 
 # Experiment macros: regenerate paper/generated/exp-macros.tex, prove the
