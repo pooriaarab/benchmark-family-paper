@@ -17,8 +17,8 @@ Written before the generator: every way it can fail, and the response.
 5. **Cache stale or absent.** GitHub files land in `reports/.cache/`
    with a `_fetchedAt` stamp; `--refresh` refetches; the cache date is
    printed every run. `GITHUB_TOKEN`/`GH_TOKEN` authenticate.
-6. **Rate limit / network down.** A non-200 fetch fails naming URL and
-   status; a warm cache still generates.
+6. **Rate limit / network down.** A non-200 fetch fails naming URL
+   and status; a warm cache still generates.
 7. **README without a question line.** The first lead paragraph that
    says what the package measures or asks is quoted; if none qualifies
    or carries banned wording, fail. Never paraphrase.

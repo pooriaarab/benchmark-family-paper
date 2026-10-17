@@ -73,8 +73,7 @@ const SURFACES = (pkg) => [
 const surfaceRows = (pkg, lines) => SURFACES(pkg).map(([name, test]) => ({ name, ...pickLine(lines, test, `README shows no ${name} surface`) }));
 function commandQuotes(lines) {
   const found = [], seen = new Set();
-  for (let i = 0; i < lines.length; i++) {
-    const t = lines[i].trim();
+  for (let i = 0; i < lines.length; i++) { const t = lines[i].trim();
     if (/^(npm install |npx \S+ run --provider (mock|openrouter))/.test(t) && !seen.has(t)) { seen.add(t); found.push({ lines: [t], line: i + 1 }); }
   }
   if (!found.length) fail("README has no install/mock command lines");
@@ -96,8 +95,7 @@ function sampleQuote(lines, pkg) {
 }
 function sectionLine(lines, headingRe, label) {
   const start = lines.findIndex((l) => headingRe.test(l));
-  if (start < 0) fail(label);
-  let fence = false;
+  if (start < 0) fail(label); let fence = false;
   for (let i = start + 1; i < lines.length; i++) {
     const t = lines[i].trim();
     if (t.startsWith("```")) { fence = !fence; continue; }
