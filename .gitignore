@@ -17,3 +17,9 @@ paper/dmlr/
 paper/main-dmlr.pdf
 paper/supplement-dmlr.pdf
 paper/dmlr-source.tar.gz
+reports/.cache/
+reports/*/*.pdf
+reports/*/neurips_2026.sty
+reports/*/*.aux
+reports/*/*.log
+reports/*/*.out

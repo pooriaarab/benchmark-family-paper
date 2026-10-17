@@ -1,0 +1,29 @@
+{
+  "generated_by": "scripts/pkg-reports.mjs",
+  "title": "benchmark-pelican 0.2.0 package report",
+  "abstract": "Pelican Bicycle SVG (benchmark-pelican) is a public npm benchmark package in the benchmark-* family, version 0.2.0, status alpha. This report records what the package measures in its own words, its deterministic grader and its SDK, CLI, MCP and HTTP surfaces, and the offline validation the family data holds: a scripted good policy mean of 1 and a scripted bad policy mean of 0 over 30 tasks at seed 20261015. The review record shows 9 fix rounds, 7 defect classes with public locators, and 5 council-reviewed pull requests of which 4 were approved. Its preregistered trivial-policy best moved from 0.0000 at 0.1.0 to 0.0000 at 0.2.0. No real-model scores are reported. Software concept DOI 10.5281/zenodo.23422362, family paper DOI 10.5281/zenodo.23428802.",
+  "authors": [
+    {
+      "name": "Arab, Pooria",
+      "affiliation": "Independent researcher",
+      "orcid": null
+    }
+  ],
+  "license": "cc-by-4.0",
+  "keywords": [
+    "ai-benchmark",
+    "llm-evaluation",
+    "agent-evaluation",
+    "deterministic-grader",
+    "benchmark-pelican"
+  ],
+  "subject_class": "cs.AI",
+  "comments": "Generated per-package technical report for benchmark-pelican 0.2.0; data from pooriaarab/benchmark-family-paper paper/data and cached package sources.",
+  "code_url": "https://github.com/pooriaarab/benchmark-pelican",
+  "data_url": "https://huggingface.co/datasets/pooria/benchmark-pelican",
+  "data_concept_dois": [
+    "10.5281/zenodo.23422362",
+    "10.5281/zenodo.23428802"
+  ],
+  "venues": []
+}
