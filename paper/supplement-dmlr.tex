@@ -1,0 +1,89 @@
+\documentclass[twoside,11pt]{article}
+
+% Supplementary PDF for the DMLR submission. Same style fetch as
+% main-dmlr.tex: scripts/fetch-dmlr-style.mjs, paper/dmlr/ (gitignored).
+\makeatletter\def\input@path{{dmlr/}}\makeatother
+\usepackage[preprint]{dmlr2e}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{xurl} % break long reviewer URLs anywhere
+
+% Computer Modern is wider than the NeurIPS fonts; give long
+% \texttt runs slack instead of editing the shared sections.
+\emergencystretch=2em
+
+\def\openreview{\url{https://openreview.net/group?id=DMLR}}
+\ShortHeadings{Supplementary Material}{Arab}
+\firstpageno{1}
+
+\begin{document}
+
+\title{Supplementary Material:\\Agents Can Build Benchmarks. Approvals Missed What Probing Found: 22 Cases}
+\author{\name Pooria Arab \email papers@private-repo-337e.com \\
+       \addr Independent researcher}
+
+\maketitle
+
+\section{Benchmark documentation and intended uses}
+The suite is 22 benchmark packages on one shared engine. Each row below
+is generated from \texttt{paper/data/suite.json} in the paper repository:
+``what it measures'' is the question each package's README answers first,
+``tasks'' is the public task count, and ``data'' lists the provenance
+kinds and per-source licences each package declares in its own
+\texttt{data/PROVENANCE.md}. Intended use is evaluation of models and
+agents against deterministic graders. Each package's README lists the known
+limits of what it measures; the Broader Impact Statement in the main paper
+states the misuse limits.
+
+\begin{center}\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.17\textwidth}>{\raggedright\arraybackslash}p{0.38\textwidth}>{\raggedright\arraybackslash}p{0.06\textwidth}>{\raggedright\arraybackslash}p{0.13\textwidth}>{\raggedright\arraybackslash}p{0.18\textwidth}@{}}
+\toprule
+Package & What it measures & Tasks & Data kinds & Licences \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\input{generated/dmlr-suite-rows.tex}
+\end{longtable}
+\end{center}
+
+\section{Access for reviewers}
+Every package is public: a GitHub repository under \texttt{pooriaarab},
+an npm package of the same name, and a Zenodo record with a DOI. The
+paper repository is
+\url{https://github.com/pooriaarab/benchmark-family-paper}; the engine is
+\url{https://github.com/pooriaarab/benchmark-core}; the directory site is
+\url{https://private-repo-337e.com}.
+
+\begin{itemize}\small
+\input{generated/dmlr-access-rows.tex}
+\end{itemize}
+
+\section{Rights and licence statement}
+The author bears all responsibility in case of violation of rights. The
+code in all 22 package repositories, the shared engine, and this paper
+repository is MIT licensed, verified against each repository's LICENSE
+file through the GitHub API on 2026-10-17. The paper text is CC BY 4.0.
+Per-source data licences are listed in the table above: MIT and CC0-1.0
+for generated and human-written items, CC-BY-4.0 for the OpenStax
+material skateboard cites, and \texttt{NOASSERTION} for the OpenRouter
+price feed behind cost-per-task, whose endpoint states no SPDX licence.
+No third-party data is redistributed beyond the declared sources each
+package lists in its provenance file.
+
+\section{Hosting, licensing, and maintenance plan}
+The packages are hosted on GitHub under \texttt{pooriaarab} and published
+to npm under the same names; each package also has a Zenodo record with a
+concept DOI and a version DOI (the links above resolve to the archived
+releases). Releases are versioned: each repository carries a
+\texttt{package.json} version, a changelog, and a \texttt{CITATION.cff}
+naming its concept DOI. Code is MIT; the paper text is CC BY 4.0.
+
+\noindent OWNER TO CONFIRM: maintenance commitment after publication.
+
+\end{document}
