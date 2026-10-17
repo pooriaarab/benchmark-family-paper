@@ -28,16 +28,31 @@ release-assets:
 clean:
 	rm -f paper/main.pdf paper/main.aux paper/main.log paper/main.bbl \
 		paper/main.blg paper/main.out paper/main.toc paper/neurips_2026.sty \
-		paper/main-dmlr.pdf
+		paper/main-dmlr.pdf paper/supplement-dmlr.pdf paper/dmlr-source.tar.gz
 
 # DMLR submission build: the same paper on the official dmlr2e style
 # plus the supplementary PDF DMLR asks for on benchmark submissions.
 # The .tex files set \input@path to paper/dmlr themselves.
 
-.PHONY: dmlr dmlr-style
+.PHONY: dmlr dmlr-style dmlr-supplement dmlr-source dmlr-test
 
 dmlr-style:
 	node scripts/fetch-dmlr-style.mjs
 
 dmlr: dmlr-style
 	cd paper && $(TECTONIC) main-dmlr.tex
+
+dmlr-supplement: dmlr-style
+	node scripts/gen-dmlr-supplement.mjs
+	cd paper && $(TECTONIC) supplement-dmlr.tex
+
+# Source archive for the OpenReview upload (tex, style, bib, inputs).
+dmlr-source: dmlr dmlr-supplement
+	@if grep -n 'OWNER TO CONFIRM' paper/main-dmlr.tex paper/supplement-dmlr.tex; then echo 'dmlr-source: replace every OWNER TO CONFIRM line before you package'; exit 1; fi
+	cd paper && tar czf dmlr-source.tar.gz \
+		main-dmlr.tex supplement-dmlr.tex refs.bib \
+		dmlr/dmlr2e.sty sections figures generated \
+		data/zenodo-dois.json data/suite.json data/suite.txt
+
+dmlr-test:
+	bash scripts/dmlr.test.sh
