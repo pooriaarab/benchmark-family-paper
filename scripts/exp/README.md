@@ -26,9 +26,12 @@ fail; read it before changing anything.
   in `paper/data/exp/oracle-definition.csv`, then prints their sha256.
 - `probes.test.sh` — installs the cited artifacts into a temp cache
   and runs the check twice, diffing the output.
-- `macros.mjs` — turns the `paper/data/exp/*.csv` files into
-  `paper/generated/exp-macros.tex`; `--check` fails on a stale
-  generated file or an `\exp*` macro used in text but not generated.
+- `macros.mjs` — turns the E1 CSVs (`trivial-battery-cells`,
+  `trivial-headroom`, `trivial-reasons`), `versions.json` and
+  `reason-classes.json` into `paper/generated/exp-macros.tex`;
+  `--check` fails on a stale generated file or an `\exp*` macro used
+  in text but not generated. Later experiment PRs add their CSVs as
+  inputs when they add macros.
 - `macros.test.sh` — the end-to-end check: proves both guards fire,
   regenerates the file, and rebuilds both PDFs.
 

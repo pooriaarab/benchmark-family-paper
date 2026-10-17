@@ -38,9 +38,6 @@ which guard catches it.
   is checked against the four frozen classes plus `unclassified`; a
   fifth class fails, so a classifier change cannot smuggle a new
   category into the paper.
-- Zero-row accounting: `\expZeroRows` is the sum of the reason table.
-  A battery rerun that produced more zero rows without regenerating
-  this file changes the CSV, which the drift check catches.
 - Stale output: the generated file is a pure function of the inputs.
   `--check` regenerates it in memory and fails when the committed
   file differs, which is what catches "CSV changed, macros not
@@ -50,18 +47,15 @@ which guard catches it.
   `.tex` file under `paper/` for `\exp<Uppercase...>` tokens and
   fails listing the undefined ones. The pattern needs a capital
   letter after `exp`, so the TeX primitive `\expandafter` cannot
-  false-positive.
-- A generated macro clashing with an existing command: the file only
-  ever emits `\newcommand{\exp...}` lines, and the prefix is reserved
-  for this generator. The check would fail on a duplicate defined
-  anywhere else in the tree only if someone hand-defines `\exp*`; a
-  collision surfaces as a TeX error in the build step.
+  false-positive. The scan is deliberately literal, so a comment
+  mention counts as a use: it can over-report, never under-report.
 - Nondeterministic output: no timestamps or environment reads; two
   runs on the same tree are byte identical, which the test verifies
   by regenerating and diffing.
-- A `.tex` file that references `\exp*` inside a comment: the scan is
-  deliberately literal; a comment mention counts as a use, so the
-  check can over-report but never under-report.
 - `make pdf`/`make dmlr` on a stale generated file: the build itself
   would still succeed because the file exists, so the drift check is
   what guards this; `macros.test.sh` runs it before building.
+- A `.tex` macro collision: the file only emits `\newcommand{\exp...}`
+  lines and the prefix is reserved for this generator, so a
+  hand-defined `\exp*` elsewhere surfaces as a TeX error in the
+  build step.
