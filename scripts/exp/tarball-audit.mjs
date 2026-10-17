@@ -2,8 +2,10 @@
 // E5a tarball audit: scan every pinned artifact's installed tree for
 // hidden-split files, answer-bearing data outside the public split, and
 // concrete seeds printed in the shipped docs. Also writes the E5 census:
-// which artifacts ship a generator with a --split flag plus a --tasks
-// CLI flag. Read hidden-audit.failure-modes.md first.
+// which artifacts ship a generator that parses --split, --seed and an
+// output flag itself (`qualifies`), and whether the CLI also takes
+// --tasks so a generated split can be graded (`tasks_flag`). Read
+// hidden-audit.failure-modes.md first.
 //
 //   node scripts/exp/tarball-audit.mjs                     # all 34 artifacts
 //   node scripts/exp/tarball-audit.mjs --only a@0.1.0,b@0.1.0 --out /tmp/x
@@ -112,6 +114,9 @@ function censusGenerator(pkgDir, files) {
   const scripts = files.filter((f) => relative(pkgDir, f).startsWith("scripts/") && f.endsWith(".mjs"));
   for (const file of scripts) {
     const src = readFileSync(file, "utf8");
+    // A generator parses its own argv; an e2e script that merely passes
+    // "--split" through to a child does not.
+    if (!/process\.argv|parseArgs/.test(src)) continue;
     const split = /"--split"|option\("split"|get\("--split"/.test(src);
     if (!split) continue;
     const seed = /"--seed"|option\("seed"|get\("--seed"/.test(src);
@@ -188,7 +193,7 @@ for (const artifact of artifacts) {
   const distFiles = files.filter((f) => rel(f).startsWith("dist/") && f.endsWith(".js"));
   const tasksFlag = distFiles.some((f) => readFileSync(f, "utf8").includes('"--tasks"'));
   const needsSeed = hiddenNeedsSeed(pkgDir, gen);
-  const qualifies = Boolean(gen && gen.split && gen.seed && tasksFlag);
+  const qualifies = Boolean(gen && gen.split && gen.seed && gen.output);
 
   auditRows.push([
     artifact.name, artifact.version, artifact.wave, files.length,
