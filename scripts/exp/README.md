@@ -65,11 +65,13 @@ fail; read it before changing anything.
   a comparison clause means the same thing in the check and the run.
 - `exploits-run-a.failure-modes.md` — every way the part-a run fails;
   read first.
-- `exploits-run-a.mjs` — runs the part-a exploit rows
-  (re-measurable-before-and-after for pelican, skateboard,
-  apology-pizza, ranking-stability) against the pinned tarballs
-  through each package's SDK and writes
-  `paper/data/exp/exploit-results-a.csv`; one builder per frozen row.
+- `exploits-run-a.mjs` — runs the 27 part-a exploit rows
+  (re-measurable-before-and-after and re-measurable-after-only for
+  pelican, skateboard, apology-pizza, ranking-stability,
+  accessibility-fix, schema-mutation, latency-budget and
+  memory-conflict) against the pinned tarballs through each package's
+  SDK and writes `paper/data/exp/exploit-results-a.csv`; one builder
+  per frozen row.
 - `exploits-run-a.test.sh` — runs the part twice, diffs the two CSVs,
   prints their sha256.
 - `macros.mjs` — turns the E1 CSVs (`trivial-battery-cells`,
