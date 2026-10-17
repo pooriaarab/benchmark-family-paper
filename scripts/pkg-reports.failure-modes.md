@@ -72,10 +72,15 @@ Written before the generator: every way it can fail, and the response.
     sourced to `scripts/collect.mjs`, `\pkgPublicSeed` sourced to
     `suite.json`). The test joins each paragraph before it checks, so
     a line break cannot hide a seed, and it binds the role word to
-    the segment that holds the seed: a public-split seed needs a
-    split or generation role, not just the word "public", and a mock
-    seed needs "mock". A package with no public seed prints a stated
-    absence, never a "seed none" placeholder.
+    the part of the segment that leads the seed: a public-split seed
+    needs a split or generation role ahead of it and a mock seed
+    needs "mock" ahead, so "a mock run at seed \pkgPublicSeed{} over
+    the public task split" fails. It still cannot catch a clause that
+    parks the right role word before the seed while naming it for
+    another run ("the public split is fixed, and a mock run at seed
+    \pkgPublicSeed{} reports it"), and it rejects a correct clause
+    whose role word follows the seed. A package with no public seed
+    prints a stated absence, never a "seed none" placeholder.
 23. **Paid-provider command under an offline heading.** A README run
     line can name `--provider openrouter`; quoting it under "the
     offline run" implies a hosted model was run here. Offline quotes
@@ -150,9 +155,14 @@ Written before the generator: every way it can fail, and the response.
     used to emit `\href{data/x.md}`, a target no viewer can open.
     Relative targets resolve against the quoted file's tagged blob
     URL. The test fails on any `\href` or `\url` address that is not
-    absolute or that carries whitespace or a `\` escape such as
-    `\allowbreak`; a break inside the address leaks `\protect
-    \penalty` into the PDF `/URI` and the link 404s.
+    absolute or that carries whitespace; a backslash is allowed only
+    before one of `& % $ # _ { }`, the set hyperref prints as the
+    plain character, so `README.md\#data-provenance` passes while a
+    `\allowbreak` or `\ ` still fails. The match also reads escaped
+    characters and empty groups, so an address carrying
+    `\textbackslash{}` or `\textasciitilde{}` is seen and rejected
+    rather than skipped by the pattern. A break inside the address
+    leaks `\protect \penalty` into the PDF `/URI` and the link 404s.
 38. **Header names a file outside the PR.** A comment pointing at a
     file that only exists in a later PR dangles for a reader of this
     PR alone. Headers name only what this tree ships.
@@ -225,10 +235,11 @@ Written before the generator: every way it can fail, and the response.
     `report.tex` or `meta.json` for the package, the test compares
     it byte for byte with the regenerated file.
 50. **A link rots after the report ships.** A `blob/` URL that
-    resolved on generation day can 404 later; with `--links` the
-    gate curls every `\href` and `\url` target in the generated
-    reports and fails on a non-200. The e2e run passes `--links`
-    only when the network is present.
+    resolved on generation day can 404 later; the gate curls every
+    `\href` and `\url` target in the generated reports and fails on
+    a non-200. The check is on by default when a probe of
+    `api.github.com` answers inside five seconds; `--links` forces
+    it on and `--no-links` forces it off.
 51. **Index-entry grader summary trips the wording rule.** The
     `suite.json` grader line prints as authored prose, so a banned
     word inside it fails the gate (ranking-stability: "the first
@@ -241,3 +252,11 @@ Written before the generator: every way it can fail, and the response.
     (exploit-resistance, latency-budget, pelican). The noun now
     comes from the count at generation time, and the committed
     report the fix changes is regenerated in the same change.
+53. **A table column runs past the measure.** A fixed `l` column
+    cannot wrap, so a long `\url` address, a long source name or an
+    unbreakable locator made whole tables overfull (18.5 pt on the
+    facts table, 4.9 pt on a defect locator). Wide cells now sit in
+    paragraph columns and locators carry break hints after `-`, `/`
+    and `:`. The gate generates every suite package into a temp
+    dir, rebuilds each report keeping the log, and fails on an
+    overfull `\hbox` over 1 pt.
