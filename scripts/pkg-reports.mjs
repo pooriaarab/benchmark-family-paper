@@ -61,7 +61,16 @@ function pickLine(lines, test, label) {
     if (test(t) && !BANNED.test(t)) return { lines: [t], line: i + 1 }; }
   fail(label);
 }
-const questionLine = (ls) => pickLine(ls, (t) => t && !"#[`|".includes(t[0]) && /(\bmeasures\b|\basks\b|\bis an open-source\b)/.test(t), "README has no question line");
+// A README wrapped at 80 columns splits one paragraph over many lines;
+// join the continuation lines or the quote ends mid-sentence. The join
+// stops at a blank line, a heading, a fence, a table row, a blockquote
+// or a new list item, so a one-line pick keeps its old output.
+const PARA_STOP = /^\s*(?:#|```|\||>|[-*+]\s|\d+[.)]\s)/;
+function joinPara(lines, it) {
+  for (let i = it.line; i < lines.length && lines[i].trim() && !PARA_STOP.test(lines[i]); i++) it.lines.push(lines[i].trim());
+  return it;
+}
+const questionLine = (ls) => joinPara(ls, pickLine(ls, (t) => t && !"#[`|".includes(t[0]) && /(\bmeasures\b|\basks\b|\bis an open-source\b)/.test(t), "README has no question line"));
 // Join each changelog paragraph and quote the one sentence carrying the
 // comparability phrase; a changelog without one returns null.
 const COMPARE_RE = /not comparable|cannot be compared/i;
@@ -149,7 +158,7 @@ function sectionLine(lines, headingRe) {
     const t = lines[i].trim();
     if (t.startsWith("```")) { fence = !fence; continue; }
     if (t.startsWith("#") && !fence) break;
-    if (t && !fence && !t.startsWith("|") && !BANNED.test(t)) return { lines: [t], line: i + 1 };
+    if (t && !fence && !t.startsWith("|") && !BANNED.test(t)) return joinPara(lines, { lines: [t], line: i + 1 });
   }
   return null;
 }

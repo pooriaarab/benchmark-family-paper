@@ -245,3 +245,13 @@ Written before the generator: every way it can fail, and the response.
     sentence fails the `, not ` slogan check when the summary itself
     carries that shape (rollback-recovery: "tool call, not free
     text"). The drop applies to either wording rule.
+54. **A wrapped README paragraph prints a mid-sentence fragment.**
+    `pickLine` and `sectionLine` returned one physical line, so a
+    README that wraps its question, provenance or limits paragraph
+    at 80 columns was quoted only to the first line break
+    (accessibility-fix printed "measures whether a model can repair
+    a broken" and stopped). `joinPara` now joins the continuation
+    lines until a blank line, a heading, a fence, a table row, a
+    blockquote or a new list item; a one-line paragraph keeps its
+    old output, so the gate's byte-compare on the committed reports
+    still holds.
