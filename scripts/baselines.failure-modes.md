@@ -1,9 +1,10 @@
 # Failure modes: baseline section rewrite (C5)
 
 Written before the edits. Section 5 (the preregistered check plus the
-E1 battery) is rewritten in `paper/sections/prereg.tex`, the table and
-the F5/F6 figure inputs move from placeholder comments in both mains
-into the section file at the points that cite them, and
+E1 battery) is rewritten in `paper/sections/prereg.tex`, the
+placeholder comments above the table and the F5/F6 figure inputs are
+dropped in both mains so the floats sit directly under the section
+input (the placement every other float in the paper uses), and
 `scripts/exp/macros.mjs` gains the per-cell trivial-score macros the
 prose cites. `scripts/baselines.test.sh` is the end-to-end check. Each
 row names which guard catches the failure.
@@ -14,11 +15,11 @@ row names which guard catches the failure.
   macro (`\trivial*`, `\exp*`, `\review*`). Typed digits that are not
   measurements are still real digits: the Zenodo DOIs and the
   registration date in the footnote, the version tokens `0.1.0` and
-  `0.2.0`, and the designators H1-H3, E1-E9, F1-F8, D2-D6, L1-L3 and
-  T1-T4. A check that fails on any digit would fail on those, so the
-  scan strips comments, `\texttt{...}` groups, ISO dates, version
-  tokens and the designator patterns first; anything left is a typed
-  count and fails.
+  `0.2.0`, and the designators H1-H3, E1-E9, F1-F8, D2-D6, L1-L3,
+  T1-T4 and `wave-1`/`wave-2`. A check that fails on any digit would
+  fail on those, so the scan strips comments, `\texttt{...}` groups,
+  ISO dates, version tokens and the designator patterns first;
+  anything left is a typed count and fails.
 - The per-cell best-trivial scores the prose cites (checkout-consent,
   tool-errors, ranking-stability at both versions; the three wave-2
   nonzero cells) are emitted by `scripts/exp/macros.mjs` from
@@ -43,15 +44,15 @@ row names which guard catches the failure.
 
 ## Orphaned or double-input float
 
-- The table and the two figures move out of the placeholder block in
-  `main.tex` and `main-dmlr.tex` into the section file, which both
-  mains input once. A dropped input orphans the float; a duplicated
-  input redefines the label and throws a LaTeX warning that the log
-  grep may not phrase as "undefined".
+- The table and the two figures keep their inputs in `main.tex` and
+  `main-dmlr.tex`, directly under the `\input{sections/prereg.tex}`
+  line; only the placeholder comments above them are removed. A
+  dropped input orphans the float; a duplicated input redefines the
+  label and throws a LaTeX warning that the log grep may not phrase as
+  "undefined".
 - Check: the test greps that each of `generated/trivial.tex`,
   `figures/fig-trivial-scatter.tex` and `fig-trivial-reasons.tex` is
-  input exactly once across the paper sources, inside
-  `sections/prereg.tex`, and that `\label{tab:trivial}`,
+  input exactly once in each main, and that `\label{tab:trivial}`,
   `\label{fig:trivial-scatter}` and `\label{fig:trivial-reasons}`
   still exist.
 
