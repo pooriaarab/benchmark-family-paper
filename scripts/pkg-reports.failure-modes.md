@@ -155,3 +155,10 @@ Written before the generator: every way it can fail, and the response.
     role still passed the role test. The test strips `\pkg<Name>{}`
     tokens before it matches role words, in the body and in the
     `meta.json` abstract.
+41. **Provenance under another heading.** Packages name the section
+    differently (`Data and reproducibility`, `Reproduce the data`,
+    `Where the data comes from`, a `Reproducible task generation`
+    subsection), so the lookup matches any `##` or `###` heading about
+    data, provenance or reproduction and takes its first text line.
+    A README with none of these gets a stated-absence sentence, the
+    same rule as the limits quote.
