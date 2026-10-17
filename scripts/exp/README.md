@@ -17,6 +17,12 @@ fail; read it before changing anything.
   fixed trivial policy, vendored from `pooriaarab/scripts` (source
   commit in its header) so this repo reproduces alone.
 - `scaffold.test.sh` — the end-to-end check for all of the above.
+- `probes.json` — the frozen E4 contract probes (honest variants and
+  attacks) with per-probe `expected` rules; frozen before any run.
+- `probes.failure-modes.md` — how the freeze step fails; read first.
+- `probes-check.mjs` — validates the freeze and the applicability
+  matrix in `paper/data/exp/probe-applicability.csv`, then prints
+  their sha256.
 
 ## Usage
 
