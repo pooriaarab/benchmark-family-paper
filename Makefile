@@ -71,6 +71,13 @@ heatmap-test:
 scatter-test:
 	bash scripts/exp/trivial-scatter.test.sh
 
+.PHONY: exp-macros-test
+
+# Experiment macros: regenerate paper/generated/exp-macros.tex, prove the
+# stale-output and missing-macro guards fire, rebuild both PDFs.
+exp-macros-test:
+	bash scripts/exp/macros.test.sh
+
 .PHONY: reasons-test
 
 # Figure F6 (why blind-policy rows score 0): regenerate the figure CSV,
