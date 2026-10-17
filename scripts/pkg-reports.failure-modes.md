@@ -162,3 +162,37 @@ Written before the generator: every way it can fail, and the response.
     data, provenance or reproduction and takes its first text line.
     A README with none of these gets a stated-absence sentence, the
     same rule as the limits quote.
+42. **Mock-run command carries flags.** Packages write the offline run
+    as `run --model offline --provider mock` or with a trailing
+    `--json`, so a literal `run --provider mock` match misses it. The
+    run line matches `npx <pkg> run` followed anywhere on the line by
+    `--provider mock`; the sample block is still the next fence, and
+    a `--provider openrouter` fence stays a paid quote.
+43. **Comparability sentence wraps or shares its line.** Changelog
+    entries break mid-phrase (`not\ncomparable`) and a clean
+    comparability sentence can sit on the same line as a banned word
+    (`an independent deep review`). The lookup joins each changelog
+    paragraph, then quotes only the sentence that carries the phrase,
+    and only when that sentence carries no banned wording. A package
+    whose changelog records no such sentence (a 0.1.0 entry has no
+    earlier release to compare against) gets a stated-absence
+    sentence, the same rule as limits and grading.
+44. **HTTP surface named without `Routes are`.** Some READMEs write
+    `` `handler` from `<pkg>/api` `` and a `Routes:` list instead of
+    the `Import handler ... Routes are` sentence. The surface row
+    matches a backticked `handler` mention or a `Routes:` list line,
+    which keeps the same first match on the READMEs that already
+    worked.
+45. **A quote carries the em dash its source wrote.** Source text can
+    hold a `—`; `tex()` escapes it to `\textemdash{}` and the gate's
+    wording checks skip quote regions anyway. Source-line selection
+    bans the five English words only; the em-dash ban binds authored
+    prose. A README whose only question line uses an em dash is still
+    quoted verbatim.
+46. **A banned word inside a hyphenated compound.** `cancel-first`
+    trips a `\bfirst\b` ban because `-` is a word boundary, and the
+    memory-conflict question line has no other candidate. The ban
+    reads whole words only: a banned word may not touch a letter,
+    digit or hyphen on either side, so `cancel-first` passes while a
+    bare `first` still fails. The gate applies the same boundary to
+    authored prose.
