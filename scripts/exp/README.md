@@ -17,12 +17,15 @@ fail; read it before changing anything.
   fixed trivial policy, vendored from `pooriaarab/scripts` (source
   commit in its header) so this repo reproduces alone.
 - `scaffold.test.sh` — the end-to-end check for all of the above.
-- `probes.json` — the frozen E4 contract probes (honest variants and
-  attacks) with per-probe `expected` rules; frozen before any run.
+- `probes.json` — the frozen E4 contract probes (honest variants,
+  unpromised-exploratory variants, and type A/B attacks) with
+  per-probe `expected` rules; frozen before any run.
 - `probes.failure-modes.md` — how the freeze step fails; read first.
-- `probes-check.mjs` — validates the freeze and the applicability
-  matrix in `paper/data/exp/probe-applicability.csv`, then prints
-  their sha256.
+- `probes-check.mjs` — validates the freeze, the applicability matrix
+  in `paper/data/exp/probe-applicability.csv`, and the oracle table
+  in `paper/data/exp/oracle-definition.csv`, then prints their sha256.
+- `probes.test.sh` — installs the cited artifacts into a temp cache
+  and runs the check twice, diffing the output.
 
 ## Usage
 
@@ -31,6 +34,7 @@ node scripts/exp/install.mjs                      # all 34 artifacts
 node scripts/exp/install.mjs benchmark-pelican@0.1.0   # one artifact
 node scripts/exp/install.mjs --cache /tmp/c ...   # elsewhere
 bash scripts/exp/scaffold.test.sh                 # end-to-end check
+bash scripts/exp/probes.test.sh                   # probe freeze check
 ```
 
 Each artifact lands in `.exp-cache/<name>@<version>/` as a self-
