@@ -56,3 +56,10 @@ dmlr-source: dmlr dmlr-supplement
 
 dmlr-test:
 	bash scripts/dmlr.test.sh
+
+.PHONY: heatmap-test
+
+# Figure F2 (defect class x package heatmap): regenerate the figure CSVs,
+# rebuild both PDFs, and render the figure pages for review.
+heatmap-test:
+	bash scripts/heatmap.test.sh
