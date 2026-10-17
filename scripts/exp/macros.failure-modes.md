@@ -2,7 +2,8 @@
 
 Every way the macro pipeline can fail, written before the code.
 `scripts/exp/macros.mjs` generates `paper/generated/exp-macros.tex`
-from the committed experiment CSVs and `scripts/exp/versions.json`;
+from the committed experiment CSVs, `scripts/exp/versions.json` and
+`scripts/exp/probes.json`;
 `node scripts/exp/macros.mjs --check` is the guard and
 `scripts/exp/macros.test.sh` is the end-to-end check. Each row says
 which guard catches it.
@@ -42,6 +43,29 @@ which guard catches it.
   is checked against the four frozen classes plus `unclassified`; a
   fifth class fails, so a classifier change cannot smuggle a new
   category into the paper.
+- A quoted CSV field split on the comma: `contract-probes.csv`
+  RFC-4180 quotes its `reason` column, so a plain split would misread
+  it; `readQuotedCsv` handles the quoted form and a doubled quote
+  inside it.
+- A probe the freeze does not declare: every probe id in
+  `contract-probes.csv` is checked against `scripts/exp/probes.json`,
+  and the row's `class` must equal the frozen kind. A new probe or a
+  renamed kind fails instead of silently entering the counts.
+- A missing or duplicated probe cell: every pinned artifact in
+  `versions.json` must appear exactly once per frozen probe; a gap or
+  a double row fails by name, so the honest-variant counts can never
+  come from a partial matrix.
+- An `outside_contract` flag that disagrees with `result`: the flag
+  must be `yes` exactly on outside-contract rows. A mismatch fails,
+  so a non-result can never be counted as a held or a failed
+  promise.
+- Acceptance counted on the wrong rows: honest acceptance counts a
+  released grader that failed none of its promised honest variants,
+  and exploratory, not-runnable and outside-contract cells never
+  count either way; forged acceptance counts a released grader where
+  any `atk-forged-` probe failed its frozen rule. A grader with no
+  promised variant still counts as accepted, which is the rule the
+  soundness text cites.
 - Stale output: the generated file is a pure function of the inputs.
   `--check` regenerates it in memory and fails when the committed
   file differs, which is what catches "CSV changed, macros not

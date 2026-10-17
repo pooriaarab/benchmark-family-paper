@@ -20,17 +20,22 @@ import { fileURLToPath } from "node:url";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const VERSIONS = join(ROOT, "scripts/exp/versions.json");
 const CLASSES = join(ROOT, "scripts/exp/reason-classes.json");
+const PROBES = join(ROOT, "scripts/exp/probes.json");
 const OUT = join(ROOT, "paper/generated/exp-macros.tex");
 const PAPER = join(ROOT, "paper");
 const REASON_CLASSES = ["format-gate", "contract-violation", "wrong-answer", "abort", "unclassified"];
+const PROBE_RESULTS = ["pass", "fail", "exploratory", "not-runnable", "outside-contract"];
 const NAME_RE = /^[a-z0-9][a-z0-9-]*$/;
+const FORGED_RE = /^atk-forged-/;
 
 const SOURCES = [
   { key: "versions", path: VERSIONS, rel: "scripts/exp/versions.json" },
   { key: "classes", path: CLASSES, rel: "scripts/exp/reason-classes.json" },
+  { key: "probes", path: PROBES, rel: "scripts/exp/probes.json" },
   { key: "cells", path: join(ROOT, "paper/data/exp/trivial-battery-cells.csv"), rel: "paper/data/exp/trivial-battery-cells.csv" },
   { key: "headroom", path: join(ROOT, "paper/data/exp/trivial-headroom.csv"), rel: "paper/data/exp/trivial-headroom.csv" },
   { key: "reasons", path: join(ROOT, "paper/data/exp/trivial-reasons.csv"), rel: "paper/data/exp/trivial-reasons.csv" },
+  { key: "contractProbes", path: join(ROOT, "paper/data/exp/contract-probes.csv"), rel: "paper/data/exp/contract-probes.csv" },
 ];
 
 function fail(message) {
@@ -58,6 +63,37 @@ function readCsv(path, header) {
       row[name] = fields[index];
     });
     return row;
+  });
+}
+
+// contract-probes.csv RFC-4180 quotes its reason column, so a plain
+// split would misread it; this parser handles the quoted form.
+function readQuotedCsv(path, header) {
+  const text = readFileSync(path, "utf8");
+  const rows = [];
+  let field = "", row = [], inQuote = false;
+  const push = () => { row.push(field); field = ""; };
+  const pushRow = () => { push(); if (row.length > 1 || row[0] !== "") rows.push(row); row = []; };
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (inQuote) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') { field += '"'; i += 1; } else inQuote = false;
+      } else field += ch;
+    } else if (ch === '"') inQuote = true;
+    else if (ch === ",") push();
+    else if (ch === "\n") pushRow();
+    else if (ch !== "\r") field += ch;
+  }
+  if (field !== "" || row.length) pushRow();
+  if (rows.length < 2) fail(`${path} has no data rows`);
+  const head = rows.shift();
+  if (JSON.stringify(head) !== JSON.stringify(header)) {
+    fail(`${path}: header is ${head.join(",")}, expected ${header.join(",")}`);
+  }
+  return rows.map((fields) => {
+    if (fields.length !== header.length) fail(`${path}: bad row ${fields.join(",")}`);
+    return Object.fromEntries(header.map((name, index) => [name, fields[index]]));
   });
 }
 
@@ -122,14 +158,23 @@ function loadInputs() {
     if (!declared.includes(cls)) fail(`reason-classes.json no longer declares ${cls}`);
   }
 
-  const cells = readCsv(SOURCES[2].path, ["package", "version", "policy", "mean", "rows", "tasks"]);
-  const headroom = readCsv(SOURCES[3].path, ["package", "version", "oracle", "best_policy", "best_trivial", "headroom"]);
-  const reasons = readCsv(SOURCES[4].path, ["package", "version", "class", "count"]);
-  return { versions, pinned, waveOf, released, cells, headroom, reasons };
+  const probeIds = new Map();
+  const probesDoc = JSON.parse(readFileSync(PROBES, "utf8"));
+  for (const p of probesDoc.probes ?? []) {
+    probeIds.set(p.id, p.kind);
+  }
+  if (probeIds.size === 0) fail("probes.json lists no probes");
+
+  const cells = readCsv(SOURCES[3].path, ["package", "version", "policy", "mean", "rows", "tasks"]);
+  const headroom = readCsv(SOURCES[4].path, ["package", "version", "oracle", "best_policy", "best_trivial", "headroom"]);
+  const reasons = readCsv(SOURCES[5].path, ["package", "version", "class", "count"]);
+  const contract = readQuotedCsv(SOURCES[6].path,
+    ["package", "version", "probe", "class", "result", "score", "reason", "outside_contract"]);
+  return { versions, pinned, waveOf, released, cells, headroom, reasons, probeIds, contract };
 }
 
 function analyse(input) {
-  const { pinned, waveOf, released, cells, headroom, reasons } = input;
+  const { pinned, waveOf, released, cells, headroom, reasons, probeIds, contract } = input;
   const artifacts = new Set();
   const policies = new Set();
   const seenCell = new Set();
@@ -148,10 +193,10 @@ function analyse(input) {
     if (row.mean === "") {
       failedCells += 1;
     } else {
-      const mean = num(SOURCES[2].rel, row, "mean");
+      const mean = num(SOURCES[3].rel, row, "mean");
       if (mean < 0 || mean > 1) fail(`trivial-battery-cells.csv: mean ${row.mean} outside [0,1]`);
     }
-    batteryRows += num(SOURCES[2].rel, row, "rows");
+    batteryRows += num(SOURCES[3].rel, row, "rows");
   }
 
   const headByKey = new Map();
@@ -168,9 +213,9 @@ function analyse(input) {
       headByKey.set(key, { key, pkg: row.package, ver: row.version, missing: true });
       continue;
     }
-    const best = num(SOURCES[3].rel, row, "best_trivial");
-    const oracle = num(SOURCES[3].rel, row, "oracle");
-    const room = num(SOURCES[3].rel, row, "headroom");
+    const best = num(SOURCES[4].rel, row, "best_trivial");
+    const oracle = num(SOURCES[4].rel, row, "oracle");
+    const room = num(SOURCES[4].rel, row, "headroom");
     if (Math.abs(oracle - best - room) > 0.001) {
       fail(`trivial-headroom.csv: ${key} headroom ${row.headroom} != oracle - best`);
     }
@@ -197,7 +242,7 @@ function analyse(input) {
     if (!Object.hasOwn(classCounts, row.class)) {
       fail(`trivial-reasons.csv: class ${row.class} is not a frozen reason class`);
     }
-    const count = num(SOURCES[4].rel, row, "count");
+    const count = num(SOURCES[5].rel, row, "count");
     if (!Number.isInteger(count) || count < 0) fail(`trivial-reasons.csv: bad count ${row.count}`);
     classCounts[row.class] += count;
     zeroRows += count;
@@ -222,6 +267,71 @@ function analyse(input) {
     if (measured.length === 0) fail(`${label}: no measured best trivial score`);
     return Math.max(0, ...measured);
   };
+  // Contract probes (E4): one row per artifact x probe. A promised
+  // honest variant is class honest-variant with result pass or fail;
+  // exploratory and outside-contract cells never count either way.
+  const probeSeen = new Set();
+  const probeStats = new Map(); // artifact key -> {hvPromised, hvFail, forgedFail}
+  const keyOf = (pkg, ver) => `${pkg}@${ver}`;
+  for (const row of contract) {
+    const key = keyOf(row.package, row.version);
+    if (!pinned.get(row.package)?.has(row.version)) {
+      fail(`contract-probes.csv: unpinned artifact ${key}`);
+    }
+    if (!probeIds.has(row.probe)) {
+      fail(`contract-probes.csv: probe ${row.probe} is not in the frozen list`);
+    }
+    if (row.class !== probeIds.get(row.probe)) {
+      fail(`contract-probes.csv: ${key} ${row.probe} class ${row.class} != frozen kind`);
+    }
+    if (!PROBE_RESULTS.includes(row.result)) {
+      fail(`contract-probes.csv: ${key} ${row.probe} bad result ${row.result}`);
+    }
+    if ((row.outside_contract === "yes") !== (row.result === "outside-contract")) {
+      fail(`contract-probes.csv: ${key} ${row.probe} outside_contract flag disagrees with result`);
+    }
+    const cellKey = `${key}|${row.probe}`;
+    if (probeSeen.has(cellKey)) fail(`contract-probes.csv: duplicate cell ${cellKey}`);
+    probeSeen.add(cellKey);
+    if (!probeStats.has(key)) probeStats.set(key, { hvPromised: 0, hvFail: 0, forgedFail: 0, fails: 0 });
+    const stat = probeStats.get(key);
+    if (row.result === "fail") stat.fails += 1;
+    if (row.class === "honest-variant" && (row.result === "pass" || row.result === "fail")) {
+      stat.hvPromised += 1;
+      if (row.result === "fail") stat.hvFail += 1;
+    }
+    if (FORGED_RE.test(row.probe) && row.result === "fail") stat.forgedFail += 1;
+  }
+  for (const [pkg, versions] of pinned) {
+    for (const ver of versions) {
+      for (const id of probeIds.keys()) {
+        if (!probeSeen.has(`${pkg}@${ver}|${id}`)) {
+          fail(`contract-probes.csv: missing cell ${pkg}@${ver} ${id}`);
+        }
+      }
+    }
+  }
+
+  // Released-version probes: honest acceptance counts a released grader
+  // that failed none of its promised honest variants (graders with no
+  // promise reject nothing); forged acceptance counts one where any
+  // forged-field attack broke its frozen rule.
+  let probesHonestAccepted = 0;
+  let probesHonestPromised = 0;
+  let probesHonestCells = 0;
+  let probesHonestHeld = 0;
+  let probesFailedCells = 0;
+  const forgedAcceptedPkgs = [];
+  for (const [pkg, ver] of released) {
+    const stat = probeStats.get(keyOf(pkg, ver));
+    if (stat.hvFail === 0) probesHonestAccepted += 1;
+    if (stat.hvPromised > 0) probesHonestPromised += 1;
+    probesHonestCells += stat.hvPromised;
+    probesHonestHeld += stat.hvPromised - stat.hvFail;
+    probesFailedCells += stat.fails;
+    if (stat.forgedFail > 0) forgedAcceptedPkgs.push(pkg);
+  }
+
   const releasedBest = releasedRows.map((row) => row.best);
   const maxBest = Math.max(...releasedBest);
   const headrooms = releasedRows.map((row) => row.headroom);
@@ -254,6 +364,15 @@ function analyse(input) {
     oracleBelowOnePkgs: releasedRows.filter((row) => row.oracle < 1).map((row) => row.pkg),
     zeroRows,
     classCounts,
+    probes: probeIds.size,
+    probeCells: contract.length,
+    probesHonestAccepted,
+    probesHonestPromised,
+    probesHonestCells,
+    probesHonestHeld,
+    probesForgedAccepted: forgedAcceptedPkgs.length,
+    probesForgedAcceptedPkgs: forgedAcceptedPkgs,
+    probesFailedCells,
   };
 }
 
@@ -300,6 +419,15 @@ function generate(stats) {
     `\\newcommand{\\expClassUnclassified}{${c.unclassified}}`,
     `\\newcommand{\\expFormatGateZeroPct}{${pct(c["format-gate"], stats.zeroRows)}}`,
     `\\newcommand{\\expFormatGateAllPct}{${pct(c["format-gate"], stats.batteryRows)}}`,
+    `\\newcommand{\\expProbes}{${stats.probes}}`,
+    `\\newcommand{\\expProbeCells}{${stats.probeCells}}`,
+    `\\newcommand{\\expProbesHonestAccepted}{${stats.probesHonestAccepted}}`,
+    `\\newcommand{\\expProbesHonestPromised}{${stats.probesHonestPromised}}`,
+    `\\newcommand{\\expProbesHonestCells}{${stats.probesHonestCells}}`,
+    `\\newcommand{\\expProbesHonestHeld}{${stats.probesHonestHeld}}`,
+    `\\newcommand{\\expProbesForgedAccepted}{${stats.probesForgedAccepted}}`,
+    `\\newcommand{\\expProbesForgedAcceptedPkgs}{${pkgList(stats.probesForgedAcceptedPkgs)}}`,
+    `\\newcommand{\\expProbesFailedCells}{${stats.probesFailedCells}}`,
     "",
   );
   return `${lines.join("\n")}`;
