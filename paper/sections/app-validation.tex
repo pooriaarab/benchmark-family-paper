@@ -1,3 +1,6 @@
+\section{Mock separation}
+\label{app:validation}
+
 The behavioural claim this release supports is narrow: every package separates its scripted good policy from its scripted bad policy. Table~\ref{tab:mock} is the measurement. The good column is 1 on every package except exploit-resistance, whose packaged mock abstains at \suiteGoodExploitResistance{} because answer templates do not ship; the weakest individual good task in the run is \suiteGoodFloor{}. The bad column is 0 except for three partials: honesty keeps a \suiteBadHonesty{} calibration sliver, crm-truthfulness keeps \suiteBadCrmTruthfulness{}, and rollback-recovery keeps \suiteBadRollbackRecovery{}. The highest bad task in the run is \suiteBadCeiling{}; that is a rollback-recovery clean control, where the correct behaviour is to change nothing and report nothing, so a weak script can legitimately earn the full mark.
 
 Seed 1 is the default mock mix. Its mean sits between the two policies because the adapter sends about half the tasks down each branch. The interval around that mean is the engine's bootstrap; it does not license ranking products. Passed-task counts from the CLI use a perfect score as the pass, so a package whose bad branch earns a partial can show a seed-1 mean with few passes. We report means for that reason.
@@ -6,7 +9,7 @@ Mock cost on every package is \suiteMockCost{}. That checks the accounting path.
 
 Re-running the collector is the reproducibility check we actually did. \texttt{node scripts/collect.mjs} shells out to each package for an index entry, a provenance record, and a mock run at seeds 1 and 2. The package list is \texttt{paper/data/suite.txt}. Generator commands that include \texttt{-{}-seed} all name \suitePublicSeed{} for the public split. Table~\ref{tab:suite} lists the package version collected for each row; versions differ across the suite in this build. Every index entry reports status \texttt{\suiteStatus{}}. Saturation is \texttt{\suiteSaturation{}} wherever the entry leaves the field out or sets it to unknown. No entry reports a number.
 
-The end-to-end script in each package is a separate guard. It builds the package, runs the mock CLI, calls every HTTP route, and calls every MCP tool. Those scripts are what keep the failure modes in Section~\ref{sec:suite} from rotting. We did not re-execute all \suitePackages{} of those scripts for this paper. The numbers in the tables come only from the published CLIs.
+The end-to-end script in each package is a separate guard. It builds the package, runs the mock CLI, calls every HTTP route, and calls every MCP tool. Those scripts are what keep the failure modes in Appendix~\ref{app:suite} from rotting. We did not re-execute all \suitePackages{} of those scripts for this paper. The numbers in the tables come only from the published CLIs.
 
 There is no public leaderboard. We did not run a hosted model. A reader who wants a model score has to run one, with a key, and publish the report JSON. Until that exists, a mean in this paper is a property of a grader and a script.
 
