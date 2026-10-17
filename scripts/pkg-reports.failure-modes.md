@@ -229,3 +229,9 @@ Written before the generator: every way it can fail, and the response.
     gate curls every `\href` and `\url` target in the generated
     reports and fails on a non-200. The e2e run passes `--links`
     only when the network is present.
+51. **A count of one prints a plural noun.** The abstract and the
+    council-record sentence fixed their nouns, so a singular count
+    read "1 defect classes", "1 were approved" or "1 requests"
+    (exploit-resistance, latency-budget, pelican). The noun now
+    comes from the count at generation time, and the committed
+    report the fix changes is regenerated in the same change.

@@ -295,7 +295,9 @@ async function emit(pkg, data, d) {
   const prs = council.map((r) => `\\href{https://github.com/pooriaarab/${pkg}/pull/${r.pr}}{\\#${r.pr}}`
     + ` & ${r.council_reviews} & ${r.approved === "1" ? "yes" : "no"}`
     + ` & ${tex(r.vibecodereview_latest)} & ${tex(r.check_latest)} \\\\`);
-  const approvedN = council.filter((r) => r.approved === "1").length, suite = (k) => `paper/data/suite.json ${pkg}.${k}`;
+  const approvedN = council.filter((r) => r.approved === "1").length, reviewsN = council.reduce((a, r) => a + Number(r.council_reviews), 0),
+    failedN = council.filter((r) => r.vibecodereview_any_failure === "1").length, suite = (k) => `paper/data/suite.json ${pkg}.${k}`;
+  const noun = (n, one, many = one + "s") => (Number(n) === 1 ? one : many);
   const macroLines = (l) => l.map(([n, v, src]) => `% source: ${src}\n\\newcommand{\\pkg${n}}{${tex(v)}}`).join("\n");
   const M = macroLines([
     ["Name", s.name, suite("name")], ["Version", s.version, suite("version")],
@@ -310,8 +312,8 @@ async function emit(pkg, data, d) {
     ["FixRounds", rounds.fix_rounds, `paper/data/review-rounds.csv ${pkg}.fix_rounds`],
     ["CouncilPrs", council.length, `paper/data/council-prs.csv ${pkg} row count`],
     ["CouncilApproved", approvedN, `paper/data/council-prs.csv ${pkg} approved count`],
-    ["CouncilReviews", council.reduce((a, r) => a + Number(r.council_reviews), 0), `paper/data/council-prs.csv ${pkg} council_reviews sum`],
-    ["CouncilFailed", council.filter((r) => r.vibecodereview_any_failure === "1").length, `paper/data/council-prs.csv ${pkg} vibecodereview_any_failure count`],
+    ["CouncilReviews", reviewsN, `paper/data/council-prs.csv ${pkg} council_reviews sum`],
+    ["CouncilFailed", failedN, `paper/data/council-prs.csv ${pkg} vibecodereview_any_failure count`],
     ["ConceptDoi", dois.concept_doi, `paper/data/zenodo-dois.json ${pkg}.concept_doi`],
     ["VersionDoi", dois.version_doi, `paper/data/zenodo-dois.json ${pkg}.version_doi`],
     ["SnapshotDate", DATE, "generator invocation date (not data)"],
@@ -345,12 +347,13 @@ async function emit(pkg, data, d) {
     + ` of ${s.badMean} over ${s.taskCount} tasks, from mock runs at seeds ${mockSeeds[0]} and ${mockSeeds[1]}`
     + (s.publicSeeds.length ? ` on the public task split generated with seed ${s.publicSeeds.join(", ")}` : "; it declares no public task-split seed")
     + `. The review record shows ${rounds.fix_rounds}`
-    + ` fix rounds, ${defectRows.length} defect classes with public locators, and ${council.length} merged feature pull requests`
-    + ` of which ${approvedN} were approved.${trivClause} No real-model scores are reported.`
+    + ` ${noun(rounds.fix_rounds, "fix round")}, ${defectRows.length} ${noun(defectRows.length, "defect class", "defect classes")} with public locators,`
+    + ` and ${council.length} merged feature pull ${noun(council.length, "request")}`
+    + ` of which ${approvedN} ${approvedN === 1 ? "was" : "were"} approved.${trivClause} No real-model scores are reported.`
     + ` Software concept DOI ${dois.concept_doi}, family paper DOI ${data.dois.paper.version_doi}.`;
   const q = (file, it, code) => quote(pkg, ref, file, it, code), gq = grading ? gradingQuote(grading) : null, cmds = commandQuotes(readme);
   const defectBlock = defectRows.length
-    ? `Table~\\ref{tab:defects} lists the defect classes that touched this package, each cell linked to its public record in \\texttt{paper/data/defects.csv}.\n`
+    ? `Table~\\ref{tab:defects} lists the ${noun(defectRows.length, "defect class", "defect classes")} that touched this package, each cell linked to its public record in \\texttt{paper/data/defects.csv}.\n`
       + tbl(["Defect class", "Record kind", "Locators"], DEFECT_SPEC,
         defectRows.map((r) => `\\texttt{${tex(r.cls).replaceAll("-", "-\\allowbreak ")}} & {\\footnotesize ${tex(r.source)}} & ${r.locators.map((l) => locatorLink(pkg, ref, l)).join(";\\ ")} \\\\`),
         `Defect classes touching \\texttt{${pkg}}, from \\texttt{paper/data/defects.csv}.`, "tab:defects")
@@ -421,12 +424,12 @@ Source: \\texttt{paper/data/suite.json}, collected by \\texttt{scripts/collect.m
 The README prints a sample run:
 ${q("README.md", sampleQuote(readme, pkg), true)}
 \\section{Review record}
-The package went through \\pkgFixRounds{} fix rounds recorded in \\texttt{paper/data/review-rounds.csv}, counted from release \\texttt{review-log-v1} of this repository.
+The package went through \\pkgFixRounds{} ${noun(rounds.fix_rounds, "fix round")} recorded in \\texttt{paper/data/review-rounds.csv}, counted from release \\texttt{review-log-v1} of this repository.
 ${defectBlock}
 ${changelogBlock}
-The merged feature pull requests for this package are listed in Table~\\ref{tab:council}:
-\\pkgCouncilPrs{} requests, \\pkgCouncilReviews{} council reviews, \\pkgCouncilApproved{} approvals,
-and \\pkgCouncilFailed{} requests that ever showed a failing \\texttt{vibecodereview} run (\\texttt{paper/data/council-prs.csv}).
+The merged feature pull ${noun(council.length, "request")} for this package ${council.length === 1 ? "is" : "are"} listed in Table~\\ref{tab:council}:
+\\pkgCouncilPrs{} ${noun(council.length, "request")}, \\pkgCouncilReviews{} council ${noun(reviewsN, "review")}, \\pkgCouncilApproved{} ${noun(approvedN, "approval")},
+and \\pkgCouncilFailed{} ${noun(failedN, "request")} that ever showed a failing \\texttt{vibecodereview} run (\\texttt{paper/data/council-prs.csv}).
 ${tbl(["Pull request", "Council reviews", "Approved", "Council run", "CI check"], "lllll", prs, `Council record for \\texttt{${pkg}}, from \\texttt{paper/data/council-prs.csv}.`, "tab:council")}
 ${apprText}
 \\section{Preregistered trivial-policy check}
