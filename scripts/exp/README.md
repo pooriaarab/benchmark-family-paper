@@ -26,6 +26,13 @@ fail; read it before changing anything.
   in `paper/data/exp/oracle-definition.csv`, then prints their sha256.
 - `probes.test.sh` — installs the cited artifacts into a temp cache
   and runs the check twice, diffing the output.
+- `contract-probes.mjs` — runs the frozen probes against every pinned
+  artifact through each package's SDK and writes
+  `paper/data/exp/contract-probes.csv` (one row per artifact x probe).
+- `contract-probes.failure-modes.md` — how the run step fails; read
+  first.
+- `contract-probes.test.sh` — installs three artifacts into a temp
+  cache, runs the script twice, and diffs the CSV sha256.
 - `determinism.json` — the frozen E6 run matrix: the released version
   of each of the 22 packages, mock seeds 1 and 2, concurrency 1, 4 and
   16, three repeats, plus three trivial-server repeats, the per-run
@@ -84,6 +91,7 @@ no experiment PR edits `main.tex` for numbers.
 | File | Experiment | Status |
 |---|---|---|
 | `trivial-battery.csv`, `trivial-battery-cells.csv`, `trivial-reasons.csv`, `trivial-headroom.csv` | E1 trivial battery + E1b reason classes | done |
+| `contract-probes.csv` | E4 grader contract probes | done |
 | `determinism.csv` | E6 determinism and repeat runs | done |
 
 The vendored server plays eight policies selected by model id
