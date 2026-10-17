@@ -31,7 +31,7 @@ says which behaviour catches it.
   digits count. Example seeds printed as hidden-split illustrations
   land in `doc_hidden_seed_examples`, which is a documentation
   observation, not a shipped-file leak.
-- Generator flag drift: the three shipped generators do not share a
+- Generator flag drift: the four shipped generators do not share a
   flag spelling (`--output` vs `--out`, optional `--count`). The
   frozen `hidden-census.csv` records the flag spelling found in each
   tarball, and `hidden-overlap.mjs` uses it verbatim; a tarball that
