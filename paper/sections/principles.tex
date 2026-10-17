@@ -17,4 +17,4 @@ A seeded environment exposes tools, accepts calls, and can be reset. The grader 
 The report stores token and dollar totals when the adapter sends them. The mock provider reports zero. We do not invent a price for a run that had none.
 
 \paragraph{Write the grader's failure modes down first.}
-Several packages keep a list of ways the grader can be wrong, written before the implementation, and an end-to-end script that tries the cheap attacks: empty output, random text, an always-yes answer, a repeated tool call. That does not prove the grader correct. It is a check that the obvious ways to game it do not score like a real solution. Section~\ref{sec:suite} names one failure mode per package and the guard that watches it.
+Several packages keep a list of ways the grader can be wrong, written before the implementation, and an end-to-end script that tries the cheap attacks: empty output, random text, an always-yes answer, a repeated tool call. That does not prove the grader correct. It is a check that the obvious ways to game it do not score like a real solution. Appendix~\ref{app:suite} names one failure mode per package and the guard that watches it.
