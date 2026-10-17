@@ -79,13 +79,15 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-Hundred Step (benchmark-hundred-step) is a public npm benchmark package in the benchmark-* family, version 0.2.0, status alpha. This report records what the package measures in its own words, its deterministic grader and its SDK, CLI, MCP and HTTP surfaces, and the offline validation the family data holds: a scripted good policy mean of 1 and a scripted bad policy mean of 0 over 24 tasks, from mock runs at seeds 1 and 2 on the public task split generated with seed 20261015. The review record shows 1 fix rounds, 3 defect classes with public locators, and 7 merged feature pull requests of which 6 were approved. The best trivial policy scored 0.0000 at both versions. No real-model scores are reported. Software concept DOI 10.5281/zenodo.23422383, family paper DOI 10.5281/zenodo.23428802.
+Hundred Step (benchmark-hundred-step) is a public npm benchmark package in the benchmark-* family, version 0.2.0, status alpha. This report records what the package measures in its own words, its deterministic grader and its SDK, CLI, MCP and HTTP surfaces, and the offline validation the family data holds: a scripted good policy mean of 1 and a scripted bad policy mean of 0 over 24 tasks, from mock runs at seeds 1 and 2 on the public task split generated with seed 20261015. The review record shows 1 fix round, 3 defect classes with public locators, and 7 merged feature pull requests of which 6 were approved. The best trivial policy scored 0.0000 at both versions. No real-model scores are reported. Software concept DOI 10.5281/zenodo.23422383, family paper DOI 10.5281/zenodo.23428802.
 \end{abstract}
 \section{What the package asks}
 The package states its question in its own README:
 % quote: benchmark-hundred-step/README.md#L7
 \begin{quote}
-benchmark-hundred-step measures whether an AI agent can preserve dependencies,
+benchmark-hundred-step measures whether an AI agent can preserve
+dependencies, recover from faults, and roll back correctly across 25,
+50, 75, or 100 tool steps. Run the complete benchmark offline:
 \end{quote}
 {\footnotesize Source: \href{https://github.com/pooriaarab/benchmark-hundred-step/blob/v0.2.0/README.md#L7}{\texttt{benchmark-hundred-step:README.md\#L7}}.}
 
@@ -109,7 +111,7 @@ Task family & Count \\
 \caption{Index-entry fields for \texttt{benchmark-hundred-step}, from \texttt{paper/data/suite.json}.}
 \label{tab:facts}
 {\small
-\begin{tabular}{ll}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.24\textwidth}>{\raggedright\arraybackslash}p{0.68\textwidth}@{}}
 \toprule
 Field & Value \\
 \midrule
@@ -129,7 +131,10 @@ Documentation & \url{https://private-repo-337e.com/benchmarks/benchmark-hundred-
 The README records where the task data comes from:
 % quote: benchmark-hundred-step/README.md#L175
 \begin{quote}
-\texttt{data/tasks.jsonl} contains 24 generated tasks: six workflows crossed with four
+\texttt{data/tasks.jsonl} contains 24 generated tasks: six workflows
+crossed with four lengths. Failure positions come from a seeded
+shuffle; each task contains at least one rollback and one transient
+fault. Regenerate the public data exactly:
 \end{quote}
 {\footnotesize Source: \href{https://github.com/pooriaarab/benchmark-hundred-step/blob/v0.2.0/README.md#L175}{\texttt{benchmark-hundred-step:README.md\#L175}}.}
 
@@ -216,7 +221,7 @@ $\hookrightarrow$\hspace*{0.5em}~recoveries=2/2;~rollback=1/1~|\\
 {\footnotesize Source: \href{https://github.com/pooriaarab/benchmark-hundred-step/blob/v0.2.0/README.md#L18}{\texttt{benchmark-hundred-step:README.md\#L18}}.}
 
 \section{Review record}
-The package went through \pkgFixRounds{} fix rounds recorded in \texttt{paper/data/review-rounds.csv}, counted from release \texttt{review-log-v1} of this repository.
+The package went through \pkgFixRounds{} fix round recorded in \texttt{paper/data/review-rounds.csv}, counted from release \texttt{review-log-v1} of this repository.
 Table~\ref{tab:defects} lists the defect classes that touched this package, each cell linked to its public record in \texttt{paper/data/defects.csv}.
 \begin{table}[H]
 \centering
@@ -227,9 +232,9 @@ Table~\ref{tab:defects} lists the defect classes that touched this package, each
 \toprule
 Defect class & Record kind & Locators \\
 \midrule
-\texttt{unsolvable-\allowbreak tasks} & {\footnotesize 0.2.0 changelogs; schema-mutation Unreleased changelog and issue 20; silent-constraints issue 9} & \href{https://github.com/pooriaarab/benchmark-hundred-step/blob/v0.2.0/CHANGELOG.md#L24}{\texttt{benchmark-hundred-step:\allowbreak CHANGELOG.md\#L24}};\ \href{https://github.com/pooriaarab/benchmark-hundred-step/issues/16}{\texttt{benchmark-hundred-step\#16}} \\
-\texttt{hidden-\allowbreak split-\allowbreak not-\allowbreak hidden} & {\footnotesize review issues and PRs (per-package locators); 0.2.0 changelogs} & \href{https://github.com/pooriaarab/benchmark-hundred-step/issues/9}{\texttt{benchmark-hundred-step\#9}} \\
-\texttt{docs-\allowbreak ahead-\allowbreak of-\allowbreak code} & {\footnotesize review issues and PR review comments} & \href{https://github.com/pooriaarab/benchmark-hundred-step/blob/v0.2.0/README.md#L90}{\texttt{benchmark-hundred-step:\allowbreak README.md\#L90}} \\
+\texttt{unsolvable-\allowbreak tasks} & {\footnotesize 0.2.0 changelogs; schema-mutation Unreleased changelog and issue 20; silent-constraints issue 9} & \href{https://github.com/pooriaarab/benchmark-hundred-step/blob/v0.2.0/CHANGELOG.md#L24}{\texttt{benchmark-\allowbreak hundred-\allowbreak step:\allowbreak CHANGELOG.md\#L24}};\ \href{https://github.com/pooriaarab/benchmark-hundred-step/issues/16}{\texttt{benchmark-\allowbreak hundred-\allowbreak step\#16}} \\
+\texttt{hidden-\allowbreak split-\allowbreak not-\allowbreak hidden} & {\footnotesize review issues and PRs (per-package locators); 0.2.0 changelogs} & \href{https://github.com/pooriaarab/benchmark-hundred-step/issues/9}{\texttt{benchmark-\allowbreak hundred-\allowbreak step\#9}} \\
+\texttt{docs-\allowbreak ahead-\allowbreak of-\allowbreak code} & {\footnotesize review issues and PR review comments} & \href{https://github.com/pooriaarab/benchmark-hundred-step/blob/v0.2.0/README.md#L90}{\texttt{benchmark-\allowbreak hundred-\allowbreak step:\allowbreak README.md\#L90}} \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -276,7 +281,9 @@ and \pkgTrivialNew{} at \pkgTrivialVerNew{}, won by \texttt{\pkgTrivialPolicy{}}
 The package documents its own limit:
 % quote: benchmark-hundred-step/README.md#L237
 \begin{quote}
-The workflows are compact synthetic abstractions, not replicas of production
+The workflows are compact synthetic abstractions, not replicas of
+production ticketing, accounting, warehouse, identity, database, or
+calendar systems.
 \end{quote}
 {\footnotesize Source: \href{https://github.com/pooriaarab/benchmark-hundred-step/blob/v0.2.0/README.md#L237}{\texttt{benchmark-hundred-step:README.md\#L237}}.}
 
@@ -324,7 +331,7 @@ Table~\ref{tab:sources} lists the declared data sources from the index entry (\t
 \caption{Declared data sources of \texttt{benchmark-hundred-step} from its index entry.}
 \label{tab:sources}
 {\small
-\begin{tabular}{lll}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.58\textwidth}>{\raggedright\arraybackslash}p{0.14\textwidth}>{\raggedright\arraybackslash}p{0.18\textwidth}@{}}
 \toprule
 Source & Kind & Licence \\
 \midrule
