@@ -17,7 +17,7 @@ test -s "$TMP/paper/main-dmlr.pdf" || { echo "missing main-dmlr.pdf"; exit 1; }
 test -s "$TMP/paper/supplement-dmlr.pdf" || { echo "missing supplement-dmlr.pdf"; exit 1; }
 
 # Abstract must be identical between the NeurIPS and DMLR mains.
-sed -n '/\\begin{abstract}/,/\\end{abstract}/p' "$ROOT/paper/main.tex" > "$TMP/abs-main.txt"
+sed -n '/\\begin{abstract}/,/\\end{abstract}/p' "$TMP/paper/main.tex" > "$TMP/abs-main.txt"
 sed -n '/\\begin{abstract}/,/\\end{abstract}/p' "$TMP/paper/main-dmlr.tex" > "$TMP/abs-dmlr.txt"
 diff -u "$TMP/abs-main.txt" "$TMP/abs-dmlr.txt"
 
@@ -33,7 +33,7 @@ while IFS= read -r pkg; do
     || { echo "missing suite row: $pkg"; exit 1; }
 done < "$TMP/paper/data/suite.txt"
 
-sha256sum "$ROOT/paper/main-dmlr.tex" "$ROOT/paper/supplement-dmlr.tex"
+sha256sum "$TMP/paper/main-dmlr.tex" "$TMP/paper/supplement-dmlr.tex"
 for p in main-dmlr supplement-dmlr; do
   pages=$(pdfinfo "$TMP/paper/$p.pdf" | awk '/^Pages/ {print $2}')
   echo "$p.pdf: $pages pages"
