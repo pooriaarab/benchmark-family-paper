@@ -64,6 +64,13 @@ dmlr-test:
 heatmap-test:
 	bash scripts/heatmap.test.sh
 
+.PHONY: related-test
+
+# C9 related-work compression: rebuild both PDFs, fail on undefined
+# references or citations, report the section span, print hashes.
+related-test:
+	bash scripts/related-compress.test.sh
+
 .PHONY: bookkeeping-test
 
 # C2 bookkeeping move: rebuild both PDFs, fail on undefined references
