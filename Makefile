@@ -48,6 +48,7 @@ dmlr-supplement: dmlr-style
 
 # Source archive for the OpenReview upload (tex, style, bib, inputs).
 dmlr-source: dmlr dmlr-supplement
+	@if grep -n 'OWNER TO CONFIRM' paper/main-dmlr.tex paper/supplement-dmlr.tex; then echo 'dmlr-source: replace every OWNER TO CONFIRM line before you package'; exit 1; fi
 	cd paper && tar czf dmlr-source.tar.gz \
 		main-dmlr.tex supplement-dmlr.tex refs.bib \
 		dmlr/dmlr2e.sty sections figures generated \
