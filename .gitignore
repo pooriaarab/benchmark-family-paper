@@ -12,3 +12,5 @@ paper/*.synctex.gz
 paper/neurips_2026.sty
 arxiv/*.tar.gz
 .tectonic-cache/
+paper/dmlr/
+paper/main-dmlr.pdf
