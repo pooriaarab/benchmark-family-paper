@@ -22,8 +22,11 @@ Written before the generator: every way it can fail, and the response.
 7. **README without a question line.** The first lead paragraph that
    says what the package measures or asks is quoted; if none qualifies
    or carries banned wording, fail. Never paraphrase.
-8. **Grading doc absent.** Quote `docs/grading.md`'s first paragraph
-   or fail.
+8. **Grading doc absent.** Quote `docs/grading.md`'s first paragraph.
+   When no `docs/grading.md` exists the report says so in one prose
+   sentence; it never quotes whichever `docs/*.md` file sorts
+   first, and a present grading doc with no usable paragraph still
+   fails.
 9. **Claim with no source.** Every printed number is a `\pkg*` macro
    with a `% source:` comment; every package sentence is a verbatim
    quote block with a `% quote:` locator. The test checks both.
@@ -110,3 +113,86 @@ Written before the generator: every way it can fail, and the response.
     pr-standards checker counts `reports/*/report.tex` and
     `meta.json`; the generator PR ships no committed output and the
     rendered reports ride in a follow-up PR.
+33. **Limits fallback that never runs.** `sectionLine` used to `fail()`
+    inside a `try`, so the `catch` fallback was dead code and a README
+    without a `## Limits` heading stopped the run. The rule now: quote
+    the first README section whose heading matches limits, scope, what
+    it does not or caveats; when no such section exists the report
+    prints a stated-absence sentence in place of the quote. The run
+    stops for nothing in this lookup.
+34. **Source links drift as `main` moves.** Fetches and `blob/` links
+    used `main`, so a quote's permalink changed meaning on the next
+    README commit. Sources are read from the `v<version>` tag that
+    `paper/data/suite.json` records for the package and every link
+    points at `blob/v<version>/`. A missing tag fails the fetch with
+    the URL and status. The cache records the ref it fetched and is
+    discarded when the ref changes.
+35. **Tree listing fails silently.** A non-200 from the git-trees API
+    used to skip the docs fetch without a word, leaving stale or
+    absent docs. It now fails naming the URL and status, the same as a
+    raw-file fetch.
+36. **Code lines measured in escaped characters.** `wrapCode` compared
+    the escaped string length against 95 glyphs while the typewriter
+    measure fits about 70, so lines of 71 to 95 glyphs ran past the
+    margin. Width is now counted in rendered glyphs (each `\cmd{}`
+    escape is one glyph, `\hspace*{Nem}` is N/0.5, `-{}-` is two) and
+    wrapping uses the same 70-glyph width. The test fails when a
+    printed code row unescapes past 70 glyphs.
+37. **Relative markdown link dies in the PDF.** `[text](data/x.md)`
+    used to emit `\href{data/x.md}`, a target no viewer can open.
+    Relative targets resolve against the quoted file's tagged blob URL
+    and the test fails on any `\href` that is not absolute.
+38. **Header names a file outside the PR.** A comment pointing at a
+    file that only exists in a later PR dangles for a reader of this
+    PR alone. Headers name only what this tree ships.
+39. **Surface quote ends on a colon.** A README surface line ending in
+    `:` announces a fenced block; quoting the sentence alone leaves
+    the reader on a colon. The quote now collects the fence it
+    introduces and prints it as a code quote, the same rule
+    `gradingQuote` already follows.
+40. **Seed check trusts a macro name.** `\pkgPublicSeed{}` contains the
+    word "public", so a clause that gave the public-split seed a mock
+    role still passed the role test. The test strips `\pkg<Name>{}`
+    tokens before it matches role words, in the body and in the
+    `meta.json` abstract.
+41. **Provenance under another heading.** Packages name the section
+    differently (`Data and reproducibility`, `Reproduce the data`,
+    `Where the data comes from`, a `Reproducible task generation`
+    subsection), so the lookup matches any `##` or `###` heading about
+    data, provenance or reproduction and takes its first text line.
+    A README with none of these gets a stated-absence sentence, the
+    same rule as the limits quote.
+42. **Mock-run command carries flags.** Packages write the offline run
+    as `run --model offline --provider mock` or with a trailing
+    `--json`, so a literal `run --provider mock` match misses it. The
+    run line matches `npx <pkg> run` followed anywhere on the line by
+    `--provider mock`; the sample block is still the next fence, and
+    a `--provider openrouter` fence stays a paid quote.
+43. **Comparability sentence wraps or shares its line.** Changelog
+    entries break mid-phrase (`not\ncomparable`) and a clean
+    comparability sentence can sit on the same line as a banned word
+    (`an independent deep review`). The lookup joins each changelog
+    paragraph, then quotes only the sentence that carries the phrase,
+    and only when that sentence carries no banned wording. A package
+    whose changelog records no such sentence (a 0.1.0 entry has no
+    earlier release to compare against) gets a stated-absence
+    sentence, the same rule as limits and grading.
+44. **HTTP surface named without `Routes are`.** Some READMEs write
+    `` `handler` from `<pkg>/api` `` and a `Routes:` list instead of
+    the `Import handler ... Routes are` sentence. The surface row
+    matches a backticked `handler` mention or a `Routes:` list line,
+    which keeps the same first match on the READMEs that already
+    worked.
+45. **A quote carries the em dash its source wrote.** Source text can
+    hold a `—`; `tex()` escapes it to `\textemdash{}` and the gate's
+    wording checks skip quote regions anyway. Source-line selection
+    bans the five English words only; the em-dash ban binds authored
+    prose. A README whose only question line uses an em dash is still
+    quoted verbatim.
+46. **A banned word inside a hyphenated compound.** `cancel-first`
+    trips a `\bfirst\b` ban because `-` is a word boundary, and the
+    memory-conflict question line has no other candidate. The ban
+    reads whole words only: a banned word may not touch a letter,
+    digit or hyphen on either side, so `cancel-first` passes while a
+    bare `first` still fails. The gate applies the same boundary to
+    authored prose.
