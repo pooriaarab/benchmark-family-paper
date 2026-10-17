@@ -31,9 +31,10 @@ figure can fail, and the check that catches it.
   `\reviewRoundsMax`, `\trivialPolicies`, `\suitePackages`). The only
   digits allowed as literals are the structural names L1, L2 and L3,
   which are defined terms, not measurements.
-- Check: `git diff` on `sections/verification-layers.tex` and
-  `figures/fig-system.tex` introduces no bare numeral outside the L1,
-  L2, L3 gate names and the ladder rung order.
+- Check: the script strips comments and the L1, L2, L3 gate names from
+  the section's prose and from the figure's caption, node texts and
+  edge labels, then fails if any numeral remains. TikZ coordinates and
+  style parameters are layout, not claims, so they are not scanned.
 
 ## Text promising an experiment that is not in the data
 
