@@ -70,7 +70,7 @@ function extractMember(zip, name) {
     const compressed = zip.readUInt32LE(offset + 20);
     const nameLen = zip.readUInt16LE(offset + 28);
     const extraLen = zip.readUInt16LE(offset + 30);
-    const commentLen = zip.readUInt32LE(offset + 32);
+    const commentLen = zip.readUInt16LE(offset + 32);
     const local = zip.readUInt32LE(offset + 42);
     const member = zip.slice(offset + 46, offset + 46 + nameLen).toString("utf8");
     if (member === name || member.endsWith(`/${name}`)) {
