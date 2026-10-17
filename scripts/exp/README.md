@@ -26,6 +26,18 @@ fail; read it before changing anything.
   in `paper/data/exp/oracle-definition.csv`, then prints their sha256.
 - `probes.test.sh` — installs the cited artifacts into a temp cache
   and runs the check twice, diffing the output.
+- `determinism.json` — the frozen E6 run matrix: the released version
+  of each of the 22 packages, mock seeds 1 and 2, concurrency 1, 4 and
+  16, three repeats, plus three trivial-server repeats, the per-run
+  timeout and the canonical hash form.
+- `determinism.failure-modes.md` — how the determinism run fails;
+  read first.
+- `determinism.mjs` — runs the frozen matrix, hashes
+  (taskId, score, reason) per run and writes
+  `paper/data/exp/determinism.csv` with a per-run sha256 and a
+  `uniform` flag per (package, path, seed) group.
+- `determinism.test.sh` — runs the matrix on three released artifacts
+  twice and diffs the two CSVs.
 - `hidden-seeds.json` — the frozen E5 seed list: five fresh seeds
   used for hidden-split regeneration. Frozen before the run; the
   paper's public task-split seed 20261015 is never among them.
@@ -80,6 +92,7 @@ it is built in PR B1, so no experiment PR edits `main.tex` for numbers.
 | File | Experiment | Status |
 |---|---|---|
 | `trivial-battery.csv`, `trivial-battery-cells.csv`, `trivial-reasons.csv`, `trivial-headroom.csv` | E1 trivial battery + E1b reason classes | done |
+| `determinism.csv` | E6 determinism and repeat runs | done |
 | `tarball-audit.csv`, `hidden-census.csv`, `hidden-overlap.csv` | E5 hidden-split hygiene audit | done |
 
 The vendored server plays eight policies selected by model id
