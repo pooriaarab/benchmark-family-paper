@@ -3,14 +3,17 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 ROOT=$(pwd); TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
 export PP="${PAPER_PUBLISH:-$(command -v paper-publish || echo "$HOME/Documents/Personal/scripts/paper-publish")}" PKGS="benchmark-pelican benchmark-sycophancy benchmark-honesty"
-export GITHUB_TOKEN="${GITHUB_TOKEN:-$(gh auth token 2>/dev/null || true)}" LINKS=0
-for a in "$@"; do [ "$a" = "--links" ] && LINKS=1; done
+export GITHUB_TOKEN="${GITHUB_TOKEN:-$(gh auth token 2>/dev/null || true)}"
+LINKS=""
+for a in "$@"; do [ "$a" = "--links" ] && LINKS=1; [ "$a" = "--no-links" ] && LINKS=0; done
+[ -n "$LINKS" ] || LINKS=$(curl -sfI -o /dev/null --max-time 5 https://api.github.com && echo 1 || echo 0)
+export LINKS
 if [ ! -x "$PP" ]; then
   echo "pkg-reports.test.sh: paper-publish not found at '$PP'" >&2
   echo "expected an executable at \$HOME/Documents/Personal/scripts/paper-publish or set PAPER_PUBLISH" >&2
   exit 2
 fi
-for p in $PKGS; do node scripts/pkg-reports.mjs "$p" --out "$TMP/reports" --date 2026-10-17 >/dev/null; done
+node scripts/pkg-reports.mjs all --out "$TMP/reports" --date 2026-10-17 >/dev/null
 
 python3 - "$ROOT" "$TMP" $PKGS <<'PY'
 import json, math, re, subprocess, sys, os
@@ -113,16 +116,17 @@ for pkg in pkgs:
         if not skip: rest.append(ln)
     if re.search(r"--|-\{\}-", re.sub(r"\\texttt\{((?:\\.|-\{\}-|[^{}])*)\}", "", "\n".join(rest))):  # 2b. no bare -- in roman text
         bad.append(f"{pkg}: bare -- outside monospace")
-    for m in re.finditer(r"\\(?:href|url)\{([^{}]*)\}", "\n".join(lines)):  # 6. every link address is one absolute token
-        a = m.group(1)
-        if not re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", a) or re.search(r"[\s\\]", a):
+    for m in re.finditer(r"\\(?:href|url)\{((?:\\.|\{\}|[^{}])*)\}", "\n".join(lines)):  # 6. every link address is one absolute token
+        a = m.group(1)  # hyperref prints \# \% \_ \& as the plain char; any other escape still fails
+        addr = re.sub(r"\\([&%$#_{}])", r"\1", a)
+        if not re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", addr) or re.search(r"[\s\\]", addr):
             bad.append(f"{pkg}: link address not one absolute URL token: {a[:60]}")
     macrov = {m.group(1): m.group(2) for m in (re.match(r"\\newcommand\{\\pkg(\w+)\}\{(.*)\}", l) for l in lines) if m}
     pub = {str(x) for p in suite["packages"] if p["id"] == pkg for x in p.get("publicSeeds") or []}
     def seed_check(text, resolve, where):  # 5. every seed named keeps the role its source gives it
-        for seg in re.split(r"[.;:()]", text):  # the role word must sit in the same segment as the seed
-            bare = re.sub(r"\\pkg\w+\{\}", "", seg)  # role words come from prose, never a macro name
+        for seg in re.split(r"[.;:()]", text):  # the role word must lead the seed inside its segment
             for m in re.finditer(r"\bseeds?\s*-?\s*(?:at\s+|of\s+)?((?:\\pkg\w+\{\}|\d+)(?:\s*(?:,|and)\s*(?:\\pkg\w+\{\}|\d+))*)", seg):
+                bare = re.sub(r"\\pkg\w+\{\}", "", seg[: m.start()])  # role words come from prose, never a macro name
                 for mac, num in re.findall(r"\\pkg(\w+)\{\}|(\d+)", m.group(1)):
                     for n in numbers(num or resolve.get(mac, "")):
                         if n in pub:
@@ -160,14 +164,22 @@ for pkg in pkgs:
         have = os.path.join(root, "reports", pkg, f)
         if os.path.exists(have) and open(have, "rb").read() != open(f"{tmp}/reports/{pkg}/{f}", "rb").read():
             bad.append(f"{pkg}: committed reports/{pkg}/{f} differs from regenerated output")
-    if os.environ.get("LINKS") == "1":  # --links: every link target must resolve (needs the network)
-        for u in sorted(set(re.findall(r"\\(?:href|url)\{([^{}]*)\}", "\n".join(lines)))):
+    if os.environ.get("LINKS") == "1":  # link check on: every link target must resolve (needs the network)
+        for u in sorted(set(re.findall(r"\\(?:href|url)\{((?:\\.|\{\}|[^{}])*)\}", "\n".join(lines)))):
+            u = re.sub(r"\\([&%$#_{}])", r"\1", u)  # curl the unescaped address
             c = subprocess.run(["curl", "-sI", "-o", "/dev/null", "-w", "%{http_code}", "-L", "--max-time", "15", u], capture_output=True, text=True).stdout.strip()
             if c != "200": bad.append(f"{pkg}: link {u} -> HTTP {c or 'timeout'}")
     r = subprocess.run([os.environ["PP"], "check", f"{tmp}/reports/{pkg}/meta.json", "--pdf", f"{tmp}/reports/{pkg}/report.pdf"], capture_output=True, text=True)
     if r.returncode: bad.append(f"{pkg}: paper-publish check: {r.stderr.strip()[-160:]}")
+for d in sorted(os.listdir(f"{tmp}/reports")):  # 7. every generated report builds inside the measure
+    ddir = f"{tmp}/reports/{d}"
+    if d == ".cache" or not os.path.isdir(ddir): continue
+    r = subprocess.run([os.environ.get("TECTONIC") or "tectonic", "--keep-logs", "report.tex"], cwd=ddir, capture_output=True, text=True)
+    if r.returncode: bad.append(f"{d}: tectonic rebuild failed: {r.stderr.strip()[-120:]}"); continue
+    for m in re.finditer(r"Overfull \\hbox \(([\d.]+)pt too wide\)[^\n]*", open(f"{ddir}/report.log", errors="replace").read()):
+        if float(m.group(1)) > 1.0: bad.append(f"{d}: {m.group(0).strip()}")
 if bad:
     print("\n".join("FAIL: " + b for b in bad), file=sys.stderr); sys.exit(1)
 PY
 for p in $PKGS; do sha256sum "$TMP/reports/$p/report.tex"; done
-echo "pkg-reports e2e: 3 reports generated, all checks passed -> ok"
+echo "pkg-reports e2e: all reports generated, all checks passed -> ok"
