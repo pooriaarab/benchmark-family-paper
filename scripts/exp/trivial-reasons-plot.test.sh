@@ -43,7 +43,6 @@ MP=$(figpage paper/main.pdf)
 DP=$(figpage paper/main-dmlr.pdf)
 pdftoppm -png -r 80 -f "$MP" -l "$MP" paper/main.pdf "$OUT/f6-main"
 pdftoppm -png -r 80 -f "$DP" -l "$DP" paper/main-dmlr.pdf "$OUT/f6-dmlr"
-mkdir -p "$ROOT/.proof-f6" && cp "$OUT"/f6-*.png "$ROOT/.proof-f6/"
 
 sha256sum paper/generated/trivial-reasons-plot.csv "$OUT"/f6-main-*.png "$OUT"/f6-dmlr-*.png
 echo "$ROWS bars, pages $MP/$DP rendered -> trivial-reasons, ok"
