@@ -28,6 +28,7 @@ const INPUTS = [
   ["generated/defects.tex", "defects.tex"],
   ["generated/defect-locators.tex", "defect-locators.tex"],
   ["generated/builders.tex", "builders.tex"],
+  ["generated/approval-defects.tex", "approval-defects.tex"],
   ["generated/suite-table.tex", "suite-table.tex"],
   ["generated/graders.tex", "graders.tex"],
   ["generated/mock-table.tex", "mock-table.tex"],

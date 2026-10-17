@@ -1,0 +1,14 @@
+x,label
+0,unsolvable-tasks*
+1,violation-not-penalised*
+2,blind-strategy-credit*
+3,honest-answer-rejected*
+4,hidden-split-not-hidden
+5,task-list-cache
+6,dropped-breakdowns
+7,forged-report-rows
+8,evaluator-escape
+9,docs-ahead-of-code
+10,generator-bugs*
+11,lexical-detector-miss*
+12,prompt-looser-than-grader*

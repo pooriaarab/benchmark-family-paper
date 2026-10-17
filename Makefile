@@ -60,3 +60,39 @@ dmlr-source: dmlr dmlr-supplement
 
 dmlr-test:
 	bash scripts/dmlr.test.sh
+
+.PHONY: heatmap-test
+
+# Figure F2 (defect class x package heatmap): regenerate the figure CSVs,
+# rebuild both PDFs, and render the figure pages for review.
+heatmap-test:
+	bash scripts/heatmap.test.sh
+
+.PHONY: bookkeeping-test
+
+# C2 bookkeeping move: rebuild both PDFs, fail on undefined references
+# or citations or a "??" in the extracted text, print artifact hashes.
+bookkeeping-test:
+	bash scripts/bookkeeping-move.test.sh
+
+.PHONY: scatter-test
+
+# Figure F5 (trivial score 0.1.0 vs 0.2.0): regenerate the figure CSVs,
+# rebuild both PDFs, and render the figure pages for review.
+scatter-test:
+	bash scripts/exp/trivial-scatter.test.sh
+
+.PHONY: hidden-audit-test
+
+# E5 (tarball audit + hidden-split overlap): install the four
+# census-qualified artifacts into a temp cache, run both E5 scripts
+# twice, and diff the two CSV trees.
+hidden-audit-test:
+	bash scripts/exp/hidden-audit.test.sh
+
+.PHONY: exp-macros-test
+
+# Experiment macros: regenerate paper/generated/exp-macros.tex, prove the
+# stale-output and missing-macro guards fire, rebuild both PDFs.
+exp-macros-test:
+	bash scripts/exp/macros.test.sh
