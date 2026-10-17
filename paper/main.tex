@@ -57,52 +57,35 @@ This release reports no real-model results and keeps no leaderboard; the registe
 \input{sections/intro.tex}
 \input{figures/fig-system.tex}
 
-\section{Design principles}
-\input{sections/principles.tex}
-
-\section{The engine}
-\label{sec:engine}
+\section{Setting: 22 agent-built packages}
+\label{sec:setting}
 \input{sections/engine.tex}
-
-\section{The suite}
-\label{sec:suite}
-\input{sections/suite.tex}
-
 \input{generated/suite-table.tex}
-\input{generated/graders.tex}
 
-\section{What each package measures}
-\label{sec:validity}
-\input{sections/validity.tex}
+\section{Verification layers and the policy ladder}
+\label{sec:layers}
+\input{sections/verification-layers.tex}
 
-\section{Validation}
-\label{sec:validation}
-\input{sections/validation.tex}
-
-\input{generated/mock-table.tex}
-\input{generated/summary.tex}
-\input{figures/fig-mock.tex}
-
-\section{Separate probing review}
+\section{What probing found}
 \label{sec:review}
 \input{sections/adversarial.tex}
-\input{generated/builders.tex}
 \input{generated/defects.tex}
 \input{figures/fig-defects.tex}
 \input{figures/fig-rounds.tex}
 
-\section{A preregistered check}
+\section{Do generic baselines catch it?}
 \label{sec:prereg}
 \input{sections/prereg.tex}
 \input{generated/trivial.tex}
 
-\section{The index}
-\input{sections/index.tex}
+\section{Are the shipped graders sound now?}
+\label{sec:soundness}
+\input{sections/grader-soundness.tex}
 
 \section{Related work}
 \input{sections/related.tex}
 
-\section{Limitations, ethics, and availability}
+\section{Limitations and what this does not show}
 \input{sections/closing.tex}
 
 \section{Conclusion}
@@ -112,7 +95,24 @@ This release reports no real-model results and keeps no leaderboard; the registe
 \bibliographystyle{plainnat}
 \bibliography{refs}
 
+% Appendix order follows the v2 outline; the stubs hold the letters
+% for the sections later PRs fill.
 \input{sections/appendix.tex}
+\input{sections/app-graders.tex}
+\input{generated/graders.tex}
+\input{sections/app-validity.tex}
+\input{sections/app-engine.tex}
+\input{sections/principles.tex}
+\input{sections/app-review-stats.tex}
+\input{sections/app-builders.tex}
+\input{generated/builders.tex}
 \input{generated/defect-locators.tex}
+\input{sections/app-validation.tex}
+\input{generated/mock-table.tex}
+\input{generated/summary.tex}
+\input{figures/fig-mock.tex}
+\input{sections/app-experiments.tex}
+\input{sections/app-reproducibility.tex}
+\input{sections/app-deviations.tex}
 
 \end{document}
