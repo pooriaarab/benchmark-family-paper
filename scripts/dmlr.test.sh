@@ -34,4 +34,8 @@ while IFS= read -r pkg; do
 done < "$TMP/paper/data/suite.txt"
 
 sha256sum "$ROOT/paper/main-dmlr.tex" "$ROOT/paper/supplement-dmlr.tex"
+for p in main-dmlr supplement-dmlr; do
+  pages=$(pdfinfo "$TMP/paper/$p.pdf" | awk '/^Pages/ {print $2}')
+  echo "$p.pdf: $pages pages"
+done
 echo "dmlr.test.sh: all checks passed"
