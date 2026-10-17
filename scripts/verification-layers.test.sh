@@ -19,7 +19,7 @@ trap 'rm -rf "$OUT"' EXIT
 grep -q 'label{fig:system}' paper/figures/fig-system.tex \
   || { echo 'fig-system.tex lost \label{fig:system}'; exit 1; }
 for m in paper/main.tex paper/main-dmlr.tex; do
-  grep -q 'input{figures/fig-system}' "$m" \
+  grep -q 'input{figures/fig-system' "$m" \
     || { echo "$m no longer inputs figures/fig-system"; exit 1; }
 done
 
@@ -63,7 +63,13 @@ build_round() { # $1 = round name
     fi
   done
   for f in paper/main.pdf paper/main-dmlr.pdf; do
-    if pdftotext "$f" - 2>/dev/null | grep -qF '??'; then
+    # Drain pdftotext before grep: grep -q can exit on an early match
+    # and SIGPIPE the extractor, which pipefail would read as a pass.
+    # The ?? filter drops the nullish operator in the engine.tex
+    # verbatim listing (submission.answer ?? ""), which is not a
+    # broken reference.
+    if grep -F '??' <<< "$(pdftotext "$f" - 2>/dev/null)" \
+        | grep -vqF '?? "'; then
       echo "$f ($1): extracted text contains ?? (a broken reference)"
       exit 1
     fi
@@ -78,20 +84,25 @@ diff "$OUT/hashes.first" "$OUT/hashes.second" \
   || { echo 'PDF hashes differ between the two builds'; exit 1; }
 
 # Section budget: the plan gives Section 3 about 0.75 page, so report
-# the real span for the reviewer.
+# the real span for the reviewer. page_has drains pdftotext fully
+# before grep runs: piping into grep -q races under pipefail because
+# an early match can SIGPIPE the extractor.
+page_has() { # $1 = pdf, $2 = page, $3 = pattern
+  local text
+  text=$(pdftotext -f "$2" -l "$2" "$1" - 2>/dev/null)
+  grep -q "$3" <<< "$text"
+}
 pages=$(pdfinfo paper/main.pdf | awk '/^Pages/ {print $2}')
 start=""
 for i in $(seq 1 "$pages"); do
-  if pdftotext -f "$i" -l "$i" paper/main.pdf - 2>/dev/null \
-      | grep -q "Verification layers and the policy ladder"; then
+  if page_has paper/main.pdf "$i" "layers and the policy ladder"; then
     start=$i; break
   fi
 done
 [ -n "$start" ] || { echo 'section heading not found in main.pdf'; exit 1; }
 end=$pages
 for i in $(seq "$start" "$pages"); do
-  if pdftotext -f "$i" -l "$i" paper/main.pdf - 2>/dev/null \
-      | grep -q "What probing found"; then
+  if page_has paper/main.pdf "$i" "What probing found"; then
     end=$i; break
   fi
 done
@@ -101,8 +112,7 @@ echo "Verification layers spans pages $start to $end of $pages"
 figpage() { # $1 = pdf path; prints the page holding the F1 caption
   local pages; pages=$(pdfinfo "$1" | awk '/^Pages/ {print $2}')
   for i in $(seq 1 "$pages"); do
-    if pdftotext -f "$i" -l "$i" "$1" - 2>/dev/null \
-        | grep -q "findings return to the builder as fix rounds"; then
+    if page_has "$1" "$i" "return to the builder as"; then
       echo "$i"; return
     fi
   done
