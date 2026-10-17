@@ -29,6 +29,10 @@ which guard catches it.
 - Headroom row without a best or an oracle: emitted as missing in the
   battery output; the macro pass fails instead of printing `NaN` into
   the paper.
+- A version arm with no measured best score at all: each group max
+  (wave 1 at 0.1.0, wave 1 at 0.2.0, wave 2 released) drops the
+  unmeasured rows and fails when none remain, so an all-missing arm
+  cannot print 0 as if it were a measured score.
 - "Released version" drift: the released version per package is the
   highest version pinned in `versions.json` (0.2.0 for wave 1, 0.1.0
   for wave 2). Hardcoding 0.2.0 would drop the wave-2 arm; deriving
