@@ -106,3 +106,10 @@ exp-macros-test:
 # rebuild both PDFs, and render the figure pages for review.
 reasons-test:
 	bash scripts/exp/trivial-reasons-plot.test.sh
+
+.PHONY: hidden-audit-plot-test
+
+# Figure F8 (tarball leaks + hidden/public overlap): regenerate the
+# figure inputs twice, rebuild both PDFs, and render the figure pages.
+hidden-audit-plot-test:
+	bash scripts/exp/hidden-audit-plot.test.sh
