@@ -1,0 +1,133 @@
+\documentclass[twoside,11pt]{article}
+
+% Official DMLR style (dmlr2e.sty) adapted from jmlr2e.sty.
+% Fetched by scripts/fetch-dmlr-style.mjs into paper/dmlr/; never
+% committed. make dmlr adds paper/dmlr to TEXINPUTS. The preprint option
+% drops the volume/editor block a new submission does not have.
+% dmlr2e loads natbib, graphicx, epsfig, amssymb and hyperref itself;
+% do not load them again here.
+\makeatletter\def\input@path{{dmlr/}}\makeatother
+\usepackage[preprint]{dmlr2e}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{booktabs}
+\usepackage{caption}
+\captionsetup{justification=raggedright,singlelinecheck=false}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{microtype}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+\usetikzlibrary{arrows.meta, patterns, positioning}
+
+% Computer Modern is wider than the NeurIPS fonts; give long
+% \texttt runs slack instead of editing the shared sections.
+\emergencystretch=6em
+
+\definecolor{okblue}{HTML}{0072B2}
+\definecolor{okverm}{HTML}{D55E00}
+\definecolor{okgreen}{HTML}{009E73}
+\definecolor{okorange}{HTML}{E69F00}
+\definecolor{oksky}{HTML}{56B4E9}
+
+\input{generated/macros.tex}
+\input{generated/review.tex}
+\input{generated/defects-macros.tex}
+\input{generated/review-data.tex}
+\input{generated/trivial-macros.tex}
+
+% No OpenReview forum id exists before submission; link the venue.
+\def\openreview{\url{https://openreview.net/group?id=DMLR}}
+\ShortHeadings{Agents Can Build Benchmarks}{Arab}
+\firstpageno{1}
+
+\begin{document}
+
+\title{Agents Can Build Benchmarks. Approvals Missed What Probing Found: 22 Cases}
+\author{\name Pooria Arab \email papers@aibenchmarkindex.com \\
+       \addr Independent researcher}
+
+\maketitle
+
+\begin{abstract}
+We report \suitePackages{} agent benchmarks built by AI coding agents on one shared TypeScript engine.
+No test job failed on the last commit of any of the \councilMergedFeature{} merged feature pull requests, and the LLM council that reviewed them approved \councilMergedApproved{} of them.
+A later probing review still found defects in all \suitePackages{}: each needed at least one fix round (median \reviewRoundsMedian{}, maximum \reviewRoundsMax{}), the first \reviewWaveOne{} shipped a release whose changelog marks earlier scores incomparable (a sentence the fix briefs required), and at least \defectBlindStrategyCredit{} packages record a strategy that ignored the task and still earned credit.
+A preregistered check then played \trivialPolicies{} generic trivial policies against the first \reviewWaveOne{} packages before and after the fixes: the best trivial score fell in only \trivialHigherOld{} packages, a null that suggests generic policies miss most of the logged defects.
+The approvals were real reviews: the council flagged defects that were then fixed, including the published hidden seed in sycophancy's pull request 20 and gaps in pelican's SVG scan. And \approvalDefectCases{} approved requests are documented holding defects a later review found: pelican's pull request 4, approved by the chair alone after the other members timed out, shipped a grader that scored a memorised SVG 1.0 on every task (issue 8), and sycophancy's pull request 20 was approved while a publishing leak and a grading-note claim the code did not back were still in the tree, both fixed after the approval.
+The artifact behind the suite is \texttt{benchmark-core}: one \texttt{defineBenchmark} call builds a task runner, a deterministic grader, and four runnable surfaces (SDK, CLI, MCP, HTTP) per package, and a mock provider separates an oracle script from a trivial script.
+We release the engine, the packages, the re-review protocol and review log, and the defect counts with their public sources.
+This release reports no real-model results and keeps no leaderboard; the registered real-model arm is still running.
+\end{abstract}
+
+\begin{keywords}
+benchmarks, coding agents, approval review, probing review, evaluation
+\end{keywords}
+
+\section{Introduction}
+\input{sections/intro.tex}
+\input{figures/fig-system.tex}
+
+\section{Design principles}
+\input{sections/principles.tex}
+
+\section{The engine}
+\label{sec:engine}
+\input{sections/engine.tex}
+
+\section{The suite}
+\label{sec:suite}
+\input{sections/suite.tex}
+
+\input{generated/suite-table.tex}
+\input{generated/graders.tex}
+
+\section{What each package measures}
+\label{sec:validity}
+\input{sections/validity.tex}
+
+\section{Validation}
+\label{sec:validation}
+\input{sections/validation.tex}
+
+\input{generated/mock-table.tex}
+\input{generated/summary.tex}
+\input{figures/fig-mock.tex}
+
+\section{Separate probing review}
+\label{sec:review}
+\input{sections/adversarial.tex}
+\input{generated/builders.tex}
+\input{generated/defects.tex}
+\input{figures/fig-defects.tex}
+\input{figures/fig-rounds.tex}
+
+\section{A preregistered check}
+\label{sec:prereg}
+\input{sections/prereg.tex}
+\input{generated/trivial.tex}
+
+\section{The index}
+\input{sections/index.tex}
+
+\section{Related work}
+\input{sections/related.tex}
+
+\section{Limitations, ethics, and availability}
+\input{sections/closing.tex}
+
+\section{Conclusion}
+\label{sec:conclusion}
+\input{sections/conclusion.tex}
+
+\impact{A published benchmark can be gamed twice: once by a model that overfits the public tasks, and once by a reader who treats a high score as a certification. Several packages are about refusal, consent, or not leaking a secret; a high score says nothing about what to buy or whether a deployment is safe. Checkout-consent uses a fake shop and a test payment and must not be pointed at a real card; mcp-safety uses a canary string and must not be pointed at a production tool server holding real credentials. The released engine, packages, re-review protocol, review log and defect counts with their public sources let the checks in this paper be repeated and extended. This release reports no real-model results and keeps no leaderboard.}
+
+\acks{The code and this draft were produced with AI coding agents under the author's direction and review; the author is responsible for what shipped. The author is an independent researcher. OWNER TO CONFIRM: external funding and competing interests.}
+
+\bibliography{refs}
+
+\input{sections/appendix.tex}
+\input{generated/defect-locators.tex}
+
+\end{document}
