@@ -63,3 +63,10 @@ dmlr-test:
 # rebuild both PDFs, and render the figure pages for review.
 heatmap-test:
 	bash scripts/heatmap.test.sh
+
+.PHONY: bookkeeping-test
+
+# C2 bookkeeping move: rebuild both PDFs, fail on undefined references
+# or citations or a "??" in the extracted text, print artifact hashes.
+bookkeeping-test:
+	bash scripts/bookkeeping-move.test.sh
