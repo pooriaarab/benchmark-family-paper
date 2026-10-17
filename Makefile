@@ -6,7 +6,11 @@
 TECTONIC ?= tectonic
 export TECTONIC
 
-.PHONY: collect pdf arxiv release-assets clean style
+.PHONY: collect pdf arxiv release-assets clean style reports
+
+reports: style
+	@test -n "$(PKG)" || { echo "make reports: set PKG=<package|all>" >&2; exit 2; }
+	node scripts/pkg-reports.mjs $(PKG)
 
 style:
 	node scripts/fetch-style.mjs
