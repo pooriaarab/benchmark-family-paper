@@ -91,10 +91,10 @@ for (const [pkg, versions] of versionSet) {
     if (nw === undefined) fail(`trivial-headroom.csv: ${pkg}@0.2.0 missing`);
     const reg = registered.get(pkg);
     if (!reg) fail(`paper/data/trivial.csv: ${pkg} missing from the registered table`);
-    if (Math.abs(reg.old - old) > TOLERANCE) {
+    if (!(Math.abs(reg.old - old) <= TOLERANCE)) {
       fail(`${pkg}@0.1.0: E1 best ${old} vs registered ${reg.old}`);
     }
-    if (Math.abs(reg.new - nw) > TOLERANCE) {
+    if (!(Math.abs(reg.new - nw) <= TOLERANCE)) {
       fail(`${pkg}@0.2.0: E1 best ${nw} vs registered ${reg.new}`);
     }
     w1rows.push({ pkg: shortId(pkg), x: old, y: nw });
