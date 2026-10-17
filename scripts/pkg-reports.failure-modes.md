@@ -229,3 +229,9 @@ Written before the generator: every way it can fail, and the response.
     gate curls every `\href` and `\url` target in the generated
     reports and fails on a non-200. The e2e run passes `--links`
     only when the network is present.
+51. **Index-entry grader summary trips the wording rule.** The
+    `suite.json` grader line prints as authored prose, so a banned
+    word inside it fails the gate (ranking-stability: "the first
+    number token"). A summary that matches `BANNED` is dropped: the
+    report says so and names the data file in place of the quote,
+    and the sentence is never rewritten to hide the rule.
