@@ -1,0 +1,47 @@
+{
+  "experiment": "E6 determinism and repeat runs",
+  "frozenAt": "2026-10-17",
+  "comment": "Run matrix for scripts/exp/determinism.mjs, frozen before the first run. Changing this file is a new freeze commit. artifacts holds the released version of each of the 22 packages: 0.2.0 for the 12 wave-1 packages, 0.1.0 for the 10 wave-2 packages, as pinned in versions.json.",
+  "artifacts": [
+    "benchmark-pelican@0.2.0",
+    "benchmark-skateboard@0.2.0",
+    "benchmark-apology-pizza@0.2.0",
+    "benchmark-tool-errors@0.2.0",
+    "benchmark-cost-per-task@0.2.0",
+    "benchmark-mcp-safety@0.2.0",
+    "benchmark-test-weakening@0.2.0",
+    "benchmark-checkout-consent@0.2.0",
+    "benchmark-honesty@0.2.0",
+    "benchmark-sycophancy@0.2.0",
+    "benchmark-hundred-step@0.2.0",
+    "benchmark-ranking-stability@0.2.0",
+    "benchmark-exploit-resistance@0.1.0",
+    "benchmark-latency-budget@0.1.0",
+    "benchmark-crm-truthfulness@0.1.0",
+    "benchmark-instruction-hierarchy@0.1.0",
+    "benchmark-memory-conflict@0.1.0",
+    "benchmark-accessibility-fix@0.1.0",
+    "benchmark-silent-constraints@0.1.0",
+    "benchmark-rollback-recovery@0.1.0",
+    "benchmark-schema-mutation@0.1.0",
+    "benchmark-payment-delegation@0.1.0"
+  ],
+  "mockArm": {
+    "provider": "mock",
+    "model": "offline",
+    "seeds": [1, 2],
+    "concurrency": [1, 4, 16],
+    "repeats": 3
+  },
+  "trivialServerArm": {
+    "provider": "openai",
+    "model": "trivial-echo",
+    "seed": 1,
+    "concurrency": 1,
+    "repeats": 3,
+    "server": "scripts/exp/trivial-policy-server.py",
+    "note": "trivial-echo is stateless; trivial-random is excluded because it is seeded by the server request count"
+  },
+  "perRunTimeoutMs": 120000,
+  "canon": "one JSON.stringify([taskId, score, reason]) line per row, sorted, LF-joined, sha256 hex"
+}
