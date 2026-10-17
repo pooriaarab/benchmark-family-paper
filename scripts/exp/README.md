@@ -46,7 +46,13 @@ fail; read it before changing anything.
 - `tarball-audit.mjs` — E5a. Scans each installed artifact's tree
   for hidden-named files, answer-bearing files outside the public
   split, and concrete seeds in shipped docs, and writes the
-  generator census that the overlap run consumes.
+  generator census.
+- `hidden-overlap.mjs` — E5b. Regenerates the hidden split for each
+  census-qualified artifact at the five frozen seeds and measures
+  overlap with the public split.
+- `hidden-audit.test.sh` — the E5 end-to-end check: installs the
+  four qualifying artifacts into a temp cache, runs both scripts
+  twice, diffs the CSV trees, prints their sha256.
 
 ## Usage
 
@@ -56,6 +62,7 @@ node scripts/exp/install.mjs benchmark-pelican@0.1.0   # one artifact
 node scripts/exp/install.mjs --cache /tmp/c ...   # elsewhere
 bash scripts/exp/scaffold.test.sh                 # end-to-end check
 bash scripts/exp/probes.test.sh                   # probe freeze check
+bash scripts/exp/hidden-audit.test.sh             # E5 end-to-end check
 ```
 
 Each artifact lands in `.exp-cache/<name>@<version>/` as a self-
@@ -86,7 +93,7 @@ it is built in PR B1, so no experiment PR edits `main.tex` for numbers.
 |---|---|---|
 | `trivial-battery.csv`, `trivial-battery-cells.csv`, `trivial-reasons.csv`, `trivial-headroom.csv` | E1 trivial battery + E1b reason classes | done |
 | `determinism.csv` | E6 determinism and repeat runs | done |
-| `tarball-audit.csv`, `hidden-census.csv` | E5 tarball audit + generator census | done |
+| `tarball-audit.csv`, `hidden-census.csv`, `hidden-overlap.csv` | E5 hidden-split hygiene audit | done |
 
 The vendored server plays eight policies selected by model id
 (`trivial-empty`, `trivial-yes`, `trivial-ok`, `trivial-refuse`,
