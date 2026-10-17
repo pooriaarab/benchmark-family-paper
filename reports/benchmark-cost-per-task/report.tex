@@ -79,7 +79,7 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-Cost Per Task (benchmark-cost-per-task) is a public npm benchmark package in the benchmark-* family, version 0.2.0, status alpha. This report records what the package measures in its own words, its deterministic grader and its SDK, CLI, MCP and HTTP surfaces, and the offline validation the family data holds: a scripted good policy mean of 1 and a scripted bad policy mean of 0 over 30 tasks, from mock runs at seeds 1 and 2 on the public task split generated with seed 20261015. The review record shows 2 fix rounds, 1 defect classes with public locators, and 6 merged feature pull requests of which 5 were approved. The best trivial policy scored 0.0000 at both versions. No real-model scores are reported. Software concept DOI 10.5281/zenodo.23422371, family paper DOI 10.5281/zenodo.23428802.
+Cost Per Task (benchmark-cost-per-task) is a public npm benchmark package in the benchmark-* family, version 0.2.0, status alpha. This report records what the package measures in its own words, its deterministic grader and its SDK, CLI, MCP and HTTP surfaces, and the offline validation the family data holds: a scripted good policy mean of 1 and a scripted bad policy mean of 0 over 30 tasks, from mock runs at seeds 1 and 2 on the public task split generated with seed 20261015. The review record shows 2 fix rounds, 1 defect class with public locators, and 6 merged feature pull requests of which 5 were approved. The best trivial policy scored 0.0000 at both versions. No real-model scores are reported. Software concept DOI 10.5281/zenodo.23422371, family paper DOI 10.5281/zenodo.23428802.
 \end{abstract}
 \section{What the package asks}
 The package states its question in its own README:
@@ -112,7 +112,7 @@ Task family & Count \\
 \caption{Index-entry fields for \texttt{benchmark-cost-per-task}, from \texttt{paper/data/suite.json}.}
 \label{tab:facts}
 {\small
-\begin{tabular}{ll}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.24\textwidth}>{\raggedright\arraybackslash}p{0.68\textwidth}@{}}
 \toprule
 Field & Value \\
 \midrule
@@ -227,7 +227,7 @@ The README prints a sample run:
 
 \section{Review record}
 The package went through \pkgFixRounds{} fix rounds recorded in \texttt{paper/data/review-rounds.csv}, counted from release \texttt{review-log-v1} of this repository.
-Table~\ref{tab:defects} lists the defect classes that touched this package, each cell linked to its public record in \texttt{paper/data/defects.csv}.
+Table~\ref{tab:defects} lists the defect class that touched this package, each cell linked to its public record in \texttt{paper/data/defects.csv}.
 \begin{table}[H]
 \centering
 \caption{Defect classes touching \texttt{benchmark-cost-per-task}, from \texttt{paper/data/defects.csv}.}
@@ -237,7 +237,7 @@ Table~\ref{tab:defects} lists the defect classes that touched this package, each
 \toprule
 Defect class & Record kind & Locators \\
 \midrule
-\texttt{hidden-\allowbreak split-\allowbreak not-\allowbreak hidden} & {\footnotesize review issues and PRs (per-package locators); 0.2.0 changelogs} & \href{https://github.com/pooriaarab/benchmark-cost-per-task/issues/22}{\texttt{benchmark-cost-per-task\#22}} \\
+\texttt{hidden-\allowbreak split-\allowbreak not-\allowbreak hidden} & {\footnotesize review issues and PRs (per-package locators); 0.2.0 changelogs} & \href{https://github.com/pooriaarab/benchmark-cost-per-task/issues/22}{\texttt{benchmark-\allowbreak cost-\allowbreak per-\allowbreak task\#22}} \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -328,7 +328,7 @@ Table~\ref{tab:sources} lists the declared data sources from the index entry (\t
 \caption{Declared data sources of \texttt{benchmark-cost-per-task} from its index entry.}
 \label{tab:sources}
 {\small
-\begin{tabular}{lll}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.58\textwidth}>{\raggedright\arraybackslash}p{0.14\textwidth}>{\raggedright\arraybackslash}p{0.18\textwidth}@{}}
 \toprule
 Source & Kind & Licence \\
 \midrule
