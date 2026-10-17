@@ -1,0 +1,67 @@
+# Experiment macros failure modes
+
+Every way the macro pipeline can fail, written before the code.
+`scripts/exp/macros.mjs` generates `paper/generated/exp-macros.tex`
+from the committed experiment CSVs and `scripts/exp/versions.json`;
+`node scripts/exp/macros.mjs --check` is the guard and
+`scripts/exp/macros.test.sh` is the end-to-end check. Each row says
+which guard catches it.
+
+- An input file missing or truncated: `readCsv` fails naming the path,
+  or a missing header column fails the per-file schema check. No
+  macros are emitted from partial data.
+- CSV shape drift: a row whose field count differs from the header,
+  an empty `mean`/`best_trivial`/`headroom` that is not one of the
+  documented empty cases (a failed cell, an unmeasured version), or a
+  non-numeric value in a numeric column fails validation naming the
+  file and row.
+- A package or version the pin list does not know: every package,
+  version and policy named in the CSVs is checked against
+  `versions.json`. A CSV row naming something unpinned fails instead
+  of silently widening the suite.
+- Duplicate cells: two rows for the same
+  (package, version, policy) in `trivial-battery-cells.csv` fail, so
+  the best-trivial computation never picks between two recorded
+  values for one cell.
+- A cell that failed in the battery: its `mean` is empty. It counts
+  in `\expFailedCells` and is excluded from best/headroom math rather
+  than read as zero, which would fabricate a defect or hide one.
+- Headroom row without a best or an oracle: emitted as missing in the
+  battery output; the macro pass fails instead of printing `NaN` into
+  the paper.
+- "Released version" drift: the released version per package is the
+  highest version pinned in `versions.json` (0.2.0 for wave 1, 0.1.0
+  for wave 2). Hardcoding 0.2.0 would drop the wave-2 arm; deriving
+  it keeps wave-2 packages in the released-version macros and marks
+  the wave-1-only comparisons correctly.
+- A reason class the freeze does not declare: `trivial-reasons.csv`
+  is checked against the four frozen classes plus `unclassified`; a
+  fifth class fails, so a classifier change cannot smuggle a new
+  category into the paper.
+- Zero-row accounting: `\expZeroRows` is the sum of the reason table.
+  A battery rerun that produced more zero rows without regenerating
+  this file changes the CSV, which the drift check catches.
+- Stale output: the generated file is a pure function of the inputs.
+  `--check` regenerates it in memory and fails when the committed
+  file differs, which is what catches "CSV changed, macros not
+  regenerated". The header carries a per-source sha256 line so the
+  drift shows in the diff itself.
+- A macro used in text but never generated: `--check` scans every
+  `.tex` file under `paper/` for `\exp<Uppercase...>` tokens and
+  fails listing the undefined ones. The pattern needs a capital
+  letter after `exp`, so the TeX primitive `\expandafter` cannot
+  false-positive.
+- A generated macro clashing with an existing command: the file only
+  ever emits `\newcommand{\exp...}` lines, and the prefix is reserved
+  for this generator. The check would fail on a duplicate defined
+  anywhere else in the tree only if someone hand-defines `\exp*`; a
+  collision surfaces as a TeX error in the build step.
+- Nondeterministic output: no timestamps or environment reads; two
+  runs on the same tree are byte identical, which the test verifies
+  by regenerating and diffing.
+- A `.tex` file that references `\exp*` inside a comment: the scan is
+  deliberately literal; a comment mention counts as a use, so the
+  check can over-report but never under-report.
+- `make pdf`/`make dmlr` on a stale generated file: the build itself
+  would still succeed because the file exists, so the drift check is
+  what guards this; `macros.test.sh` runs it before building.
