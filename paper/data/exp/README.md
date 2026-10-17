@@ -130,8 +130,10 @@ bash scripts/exp/exploits-run-a.test.sh       # runs twice, diffs the CSVs
 
 - `exploit-results-a.csv` - one row per frozen exploit row per
   comparison clause for the part-a rows (the
-  re-measurable-before-and-after rows: pelican, skateboard,
-  apology-pizza, ranking-stability): `package`, `locator`, `row` (the
+  re-measurable-before-and-after and re-measurable-after-only rows:
+  pelican, skateboard, apology-pizza, ranking-stability,
+  accessibility-fix, schema-mutation, latency-budget and
+  memory-conflict): `package`, `locator`, `row` (the
   exploits.csv line number), `version` (the clause's target),
   `clause`, `tasks` (the clause's task set size), `measured` (the mean
   score at that version), `baseline` (the oracle, empty, or other-
