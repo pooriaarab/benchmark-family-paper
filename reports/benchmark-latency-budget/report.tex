@@ -79,7 +79,8 @@ Latency Budget (benchmark-latency-budget) is a public npm benchmark package in t
 The package states its question in its own README:
 % quote: benchmark-latency-budget/README.md#L291
 \begin{quote}
-It measures one named behavior with inspectable tasks and grading. General
+It measures one named behavior with inspectable tasks and grading.
+General leaderboards combine broader capabilities.
 \end{quote}
 {\footnotesize Source: \href{https://github.com/pooriaarab/benchmark-latency-budget/blob/v0.1.0/README.md#L291}{\texttt{benchmark-latency-budget:README.md\#L291}}.}
 
@@ -103,7 +104,7 @@ Task family & Count \\
 \caption{Index-entry fields for \texttt{benchmark-latency-budget}, from \texttt{paper/data/suite.json}.}
 \label{tab:facts}
 {\small
-\begin{tabular}{ll}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.24\textwidth}>{\raggedright\arraybackslash}p{0.68\textwidth}@{}}
 \toprule
 Field & Value \\
 \midrule
@@ -123,7 +124,12 @@ Documentation & \url{https://private-repo-337e.com/benchmarks/benchmark-latency-
 The README records where the task data comes from:
 % quote: benchmark-latency-budget/README.md#L218
 \begin{quote}
-\texttt{data/tasks.jsonl} contains the 36 public tasks. \texttt{data/PROVENANCE.md} names
+\texttt{data/tasks.jsonl} contains the 36 public tasks.
+\texttt{data/PROVENANCE.md} names the generator, seed, licence,
+cutoff, and refresh steps. Run \texttt{npm run generate:tasks} to
+rebuild the public set and \texttt{node scripts/gen-tasks.mjs -{}-seed
+<n> -{}-split hidden} for a hidden split (written to gitignored
+\texttt{artifacts/}, never published).
 \end{quote}
 {\footnotesize Source: \href{https://github.com/pooriaarab/benchmark-latency-budget/blob/v0.1.0/README.md#L218}{\texttt{benchmark-latency-budget:README.md\#L218}}.}
 
@@ -235,7 +241,15 @@ This package was not part of the preregistered check, so \texttt{paper/data/triv
 The package documents its own limit:
 % quote: benchmark-latency-budget/README.md#L226
 \begin{quote}
-No public leaderboard yet: only the mock provider has been run here, so the
+No public leaderboard yet: only the mock provider has been run here,
+so the sample table above shows mock behavior, not model rankings.
+Declared mode cannot see where turns broke in a flat tool log, so each
+recorded call is billed as its own turn; measured mode fixes that but
+depends on the machine. Synthetic fixtures are small, so agents can
+look faster than on messy real tools. Public tasks can enter training
+data; keep a separately seeded hidden split for final comparisons.
+Remote providers can add cost and retain prompts under their own
+policies.
 \end{quote}
 {\footnotesize Source: \href{https://github.com/pooriaarab/benchmark-latency-budget/blob/v0.1.0/README.md#L226}{\texttt{benchmark-latency-budget:README.md\#L226}}.}
 
@@ -274,7 +288,7 @@ Table~\ref{tab:sources} lists the declared data sources from the index entry (\t
 \caption{Declared data sources of \texttt{benchmark-latency-budget} from its index entry.}
 \label{tab:sources}
 {\small
-\begin{tabular}{lll}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.58\textwidth}>{\raggedright\arraybackslash}p{0.14\textwidth}>{\raggedright\arraybackslash}p{0.18\textwidth}@{}}
 \toprule
 Source & Kind & Licence \\
 \midrule
