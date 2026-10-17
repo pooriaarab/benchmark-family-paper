@@ -24,6 +24,8 @@ const STUB_FILES = [
   "sections/app-review-stats.tex",
   "sections/app-experiments.tex",
   "sections/app-deviations.tex",
+  // One pointer sentence added under the builders appendix heading.
+  "sections/app-builders.tex",
 ];
 
 function fail(message) {
