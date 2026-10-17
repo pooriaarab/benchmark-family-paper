@@ -1,0 +1,29 @@
+{
+  "generated_by": "scripts/pkg-reports.mjs",
+  "title": "benchmark-payment-delegation 0.1.0 package report",
+  "abstract": "Payment Delegation (benchmark-payment-delegation) is a public npm benchmark package in the benchmark-* family, version 0.1.0, status alpha. This report records what the package measures in its own words, its deterministic grader and its SDK, CLI, MCP and HTTP surfaces, and the offline validation the family data holds: a scripted good policy mean of 1 and a scripted bad policy mean of 0 over 40 tasks, from mock runs at seeds 1 and 2 on the public task split generated with seed 20261015. The review record shows 3 fix rounds, 1 defect class with public locators, and 9 merged feature pull requests of which 6 were approved. It was not part of the preregistered trivial-policy check. No real-model scores are reported. Software concept DOI 10.5281/zenodo.23422414, family paper DOI 10.5281/zenodo.23428802.",
+  "license": "cc-by-4.0",
+  "subject_class": "cs.AI",
+  "authors": [
+    {
+      "name": "Arab, Pooria",
+      "affiliation": "Independent researcher",
+      "orcid": null
+    }
+  ],
+  "keywords": [
+    "ai-benchmark",
+    "llm-evaluation",
+    "agent-evaluation",
+    "deterministic-grader",
+    "benchmark-payment-delegation"
+  ],
+  "comments": "Generated per-package technical report for benchmark-payment-delegation 0.1.0; data from pooriaarab/benchmark-family-paper paper/data and cached package sources.",
+  "code_url": "https://github.com/pooriaarab/benchmark-payment-delegation",
+  "data_url": "https://huggingface.co/datasets/pooria/benchmark-payment-delegation",
+  "data_concept_dois": [
+    "10.5281/zenodo.23422414",
+    "10.5281/zenodo.23428802"
+  ],
+  "venues": []
+}
