@@ -136,9 +136,9 @@ Set \texttt{PRIVATE\_SEED} outside the repository. The hidden command
 writes an ignored \texttt{hidden/tasks.jsonl}; keep its seed and file
 private. Run it with \texttt{-{}-tasks hidden/tasks.jsonl} on any
 command.
-\href{https://github.com/pooriaarab/benchmark-honesty/blob/v0.2.0/data\allowbreak 
-/PROVENANCE.md}{data/PROVENANCE.md} records the source, licence,
-cutoff, refresh cadence, and retrieval commands.
+\href{https://github.com/pooriaarab/benchmark-honesty/blob/v0.2.0/data/PROVENANCE.md}{\allowbreak 
+data/PROVENANCE.md} records the source, licence, cutoff, refresh
+cadence, and retrieval commands.
 \end{quote}
 {\footnotesize Source: \href{https://github.com/pooriaarab/benchmark-honesty/blob/v0.2.0/README.md#L112}{\texttt{benchmark-honesty:README.md\#L112}}.}
 
@@ -177,8 +177,8 @@ Fetch-style HTTP API & \href{https://github.com/pooriaarab/benchmark-honesty/blo
 \end{table}
 % quote: benchmark-honesty/README.md#L69
 \begin{quote}\ttfamily
-import~\{~benchmark,~createBenchmark,~honestyMetrics,~run,~score~\}~from\\
-$\hookrightarrow$\hspace*{0.5em}~"benchmark-honesty";\\
+import~\{~benchmark,~createBenchmark,~honestyMetrics,~run,\\
+$\hookrightarrow$\hspace*{0.5em}~score~\}~from~"benchmark-honesty";\\
 \end{quote}
 {\footnotesize Source: \href{https://github.com/pooriaarab/benchmark-honesty/blob/v0.2.0/README.md#L69}{\texttt{benchmark-honesty:README.md\#L69}}.}
 % quote: benchmark-honesty/README.md#L10
@@ -221,14 +221,14 @@ The README prints a sample run:
 \{\\
 \hspace*{1em}"model":~"mock:1",\\
 \hspace*{1em}"mean":~0.5,\\
-\hspace*{1em}"confidenceInterval95":~\{~"low":~0.3653514010834465,~"high":\\
-$\hookrightarrow$\hspace*{0.5em}~0.6178158532859355~\},\\
+\hspace*{1em}"confidenceInterval95":~\{~"low":~0.3653514010834465,\\
+$\hookrightarrow$\hspace*{0.5em}~"high":~0.6178158532859355~\},\\
 \hspace*{1em}"totals":~\{~"tasks":~60,~"passed":~30,~"failed":~0~\},\\
 \hspace*{1em}"honesty":~\{\\
-\hspace*{2em}"fabricationRate":~0.5,~"abstainRate":~0.5,~"overAbstainRate":~0,\\
-$\hookrightarrow$\hspace*{0.5em}~"brier":~0.45125,\\
-\hspace*{2em}"answerableAccuracy":~0.5,~"unanswerableHonesty":~0.5,~"balanced":\\
-$\hookrightarrow$\hspace*{0.5em}~0.5,\\
+\hspace*{2em}"fabricationRate":~0.5,~"abstainRate":~0.5,\\
+$\hookrightarrow$\hspace*{0.5em}~"overAbstainRate":~0,~"brier":~0.45125,\\
+\hspace*{2em}"answerableAccuracy":~0.5,~"unanswerableHonesty":~0.5,\\
+$\hookrightarrow$\hspace*{0.5em}~"balanced":~0.5,\\
 \hspace*{2em}"taskMean":~0.5048750000000002\\
 \hspace*{1em}\}\\
 \}\\
@@ -321,7 +321,8 @@ The README also gives a run against a paid provider; it needs a paid key, and th
 % quote: benchmark-honesty/README.md#L44
 \begin{quote}\ttfamily
 OPENROUTER\_API\_KEY=your-key~npx~benchmark-honesty~run~\textbackslash{}\\
-\hspace*{1em}-{}-provider~openrouter~-{}-model~openai/gpt-5-mini~-{}-json~>~report.json\\
+\hspace*{1em}-{}-provider~openrouter~-{}-model~openai/gpt-5-mini~-{}-json~>\\
+$\hookrightarrow$\hspace*{0.5em}~report.json\\
 \end{quote}
 {\footnotesize Source: \href{https://github.com/pooriaarab/benchmark-honesty/blob/v0.2.0/README.md#L44}{\texttt{benchmark-honesty:README.md\#L44}}.}
 
