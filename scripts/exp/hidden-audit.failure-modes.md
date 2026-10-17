@@ -2,7 +2,8 @@
 
 Every way this audit can fail, written before the code.
 `scripts/exp/hidden-audit.test.sh` is the end-to-end check; each row
-says which behaviour catches it.
+says which behaviour catches it. It ships with the overlap half in
+the follow-up PR and exercises both scripts.
 
 - Tarball missing from the cache: both scripts read the installed
   prefixes under `.exp-cache/` and refuse with a named list when an
