@@ -38,6 +38,14 @@ fail; read it before changing anything.
   `uniform` flag per (package, path, seed) group.
 - `determinism.test.sh` — runs the matrix on three released artifacts
   twice and diffs the two CSVs.
+- `macros.mjs` — turns the E1 CSVs (`trivial-battery-cells`,
+  `trivial-headroom`, `trivial-reasons`), `versions.json` and
+  `reason-classes.json` into `paper/generated/exp-macros.tex`;
+  `--check` fails on a stale generated file or an `\exp*` macro used
+  in text but not generated. Later experiment PRs add their CSVs as
+  inputs when they add macros.
+- `macros.test.sh` — the end-to-end check: proves both guards fire,
+  regenerates the file, and rebuilds both PDFs.
 
 ## Usage
 
@@ -71,7 +79,7 @@ Every experiment script writes one CSV to `paper/data/exp/<name>.csv`
 and adds a row to the table below. Per-row data, no aggregates only;
 the paper's numbers come from these files through generated macros.
 `scripts/exp/macros.mjs` turns the CSVs into `paper/generated/exp-macros.tex`;
-it is built in PR B1, so no experiment PR edits `main.tex` for numbers.
+no experiment PR edits `main.tex` for numbers.
 
 | File | Experiment | Status |
 |---|---|---|
