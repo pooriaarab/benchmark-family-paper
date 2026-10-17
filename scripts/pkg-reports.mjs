@@ -53,12 +53,24 @@ function cachedLines(pkg, path) {
 // Quotes keep a source em dash (tex escapes it; the gate skips quote
 // regions); the five-word ban reads whole words, so cancel-first passes.
 const BANNED = /(?<![\w-])(independent\w*|novel|first|robust|comprehensive)(?![\w-])/i;
+// The gate's slogan rule binds authored prose the same way; a summary
+// carrying ", not " (rollback-recovery) is dropped, never rewritten.
+const SLOGAN = /,\s*not\s|\bnot of\b|council-reviewed pull/i;
 function pickLine(lines, test, label) {
   for (let i = 0; i < lines.length; i++) { const t = lines[i].trim();
     if (test(t) && !BANNED.test(t)) return { lines: [t], line: i + 1 }; }
   fail(label);
 }
-const questionLine = (ls) => pickLine(ls, (t) => t && !"#[`|".includes(t[0]) && /(\bmeasures\b|\basks\b|\bis an open-source\b)/.test(t), "README has no question line");
+// A README wrapped at 80 columns splits one paragraph over many lines;
+// join the continuation lines or the quote ends mid-sentence. The join
+// stops at a blank line, a heading, a fence, a table row, a blockquote
+// or a new list item, so a one-line pick keeps its old output.
+const PARA_STOP = /^\s*(?:#|```|\||>|[-*+]\s|\d+[.)]\s)/;
+function joinPara(lines, it) {
+  for (let i = it.line; i < lines.length && lines[i].trim() && !PARA_STOP.test(lines[i]); i++) it.lines.push(lines[i].trim());
+  return it;
+}
+const questionLine = (ls) => joinPara(ls, pickLine(ls, (t) => t && !"#[`|".includes(t[0]) && /(\bmeasures\b|\basks\b|\bis an open-source\b)/.test(t), "README has no question line"));
 // Join each changelog paragraph and quote the one sentence carrying the
 // comparability phrase; a changelog without one returns null.
 const COMPARE_RE = /not comparable|cannot be compared/i;
@@ -146,7 +158,7 @@ function sectionLine(lines, headingRe) {
     const t = lines[i].trim();
     if (t.startsWith("```")) { fence = !fence; continue; }
     if (t.startsWith("#") && !fence) break;
-    if (t && !fence && !t.startsWith("|") && !BANNED.test(t)) return { lines: [t], line: i + 1 };
+    if (t && !fence && !t.startsWith("|") && !BANNED.test(t)) return joinPara(lines, { lines: [t], line: i + 1 });
   }
   return null;
 }
@@ -238,11 +250,14 @@ function wrapCode(e) {
   return parts;
 }
 const blob = (pkg, ref, f, l) => `https://github.com/pooriaarab/${pkg}/blob/${ref}/${f}#L${l}`;
+// A locator is one \texttt token; break hints after - and / keep a long
+// package name or path from overflowing its table cell.
+const brk = (s) => s.replaceAll("/", "/\\allowbreak ").replaceAll("-", "-\\allowbreak ");
 const locatorLink = (pkg, ref, loc) => {
   const i = loc.match(/^([\w-]+)#(\d+)$/);
-  if (i) return `\\href{https://github.com/pooriaarab/${i[1]}/issues/${i[2]}}{\\texttt{${tex(i[1])}\\#${i[2]}}}`;
+  if (i) return `\\href{https://github.com/pooriaarab/${i[1]}/issues/${i[2]}}{\\texttt{${brk(tex(i[1]))}\\#${i[2]}}}`;
   const f = loc.match(/^([\w-]+):([\w./-]+)#L(\d+(?:-\d+)?)$/);
-  return f ? `\\href{${blob(f[1], ref, f[2], f[3])}}{\\texttt{${tex(f[1])}:\\allowbreak ${tex(f[2])}\\#L${f[3]}}}` : `\\texttt{${tex(loc)}}`;
+  return f ? `\\href{${blob(f[1], ref, f[2], f[3])}}{\\texttt{${brk(tex(f[1]))}:\\allowbreak ${brk(tex(f[2]))}\\#L${f[3]}}}` : `\\texttt{${tex(loc)}}`;
 };
 // Leading spaces become \hspace* (a \\ line start discards glue); the rest tie.
 const mono = (l) => wrapCode(tex(l).replaceAll("`", "\\textasciigrave{}").replace(/^ +/, (m) => `\\hspace*{${m.length / 2}em}`))
@@ -280,6 +295,8 @@ function buildOne(pkg, data) {
   return { s, rounds, council, defectRows, approvals, triv, dois };
 }
 const DEFECT_SPEC = "@{}>{\\raggedright\\arraybackslash}p{0.26\\textwidth}>{\\raggedright\\arraybackslash}p{0.3\\textwidth}>{\\raggedright\\arraybackslash}p{0.38\\textwidth}@{}";
+const FACT_SPEC = "@{}>{\\raggedright\\arraybackslash}p{0.24\\textwidth}>{\\raggedright\\arraybackslash}p{0.68\\textwidth}@{}";
+const SRC_SPEC = "@{}>{\\raggedright\\arraybackslash}p{0.58\\textwidth}>{\\raggedright\\arraybackslash}p{0.14\\textwidth}>{\\raggedright\\arraybackslash}p{0.18\\textwidth}@{}";
 async function emit(pkg, data, d) {
   const { s, rounds, council, defectRows, approvals, triv, dois } = d, ref = `v${s.version}`;
   const readme = cachedLines(pkg, "README.md"), pkgJson = JSON.parse(readFileSync(join(cacheDir(pkg), "package.json"), "utf8"));
@@ -295,7 +312,9 @@ async function emit(pkg, data, d) {
   const prs = council.map((r) => `\\href{https://github.com/pooriaarab/${pkg}/pull/${r.pr}}{\\#${r.pr}}`
     + ` & ${r.council_reviews} & ${r.approved === "1" ? "yes" : "no"}`
     + ` & ${tex(r.vibecodereview_latest)} & ${tex(r.check_latest)} \\\\`);
-  const approvedN = council.filter((r) => r.approved === "1").length, suite = (k) => `paper/data/suite.json ${pkg}.${k}`;
+  const approvedN = council.filter((r) => r.approved === "1").length, reviewsN = council.reduce((a, r) => a + Number(r.council_reviews), 0),
+    failedN = council.filter((r) => r.vibecodereview_any_failure === "1").length, suite = (k) => `paper/data/suite.json ${pkg}.${k}`;
+  const noun = (n, one, many = one + "s") => (Number(n) === 1 ? one : many);
   const macroLines = (l) => l.map(([n, v, src]) => `% source: ${src}\n\\newcommand{\\pkg${n}}{${tex(v)}}`).join("\n");
   const M = macroLines([
     ["Name", s.name, suite("name")], ["Version", s.version, suite("version")],
@@ -310,8 +329,8 @@ async function emit(pkg, data, d) {
     ["FixRounds", rounds.fix_rounds, `paper/data/review-rounds.csv ${pkg}.fix_rounds`],
     ["CouncilPrs", council.length, `paper/data/council-prs.csv ${pkg} row count`],
     ["CouncilApproved", approvedN, `paper/data/council-prs.csv ${pkg} approved count`],
-    ["CouncilReviews", council.reduce((a, r) => a + Number(r.council_reviews), 0), `paper/data/council-prs.csv ${pkg} council_reviews sum`],
-    ["CouncilFailed", council.filter((r) => r.vibecodereview_any_failure === "1").length, `paper/data/council-prs.csv ${pkg} vibecodereview_any_failure count`],
+    ["CouncilReviews", reviewsN, `paper/data/council-prs.csv ${pkg} council_reviews sum`],
+    ["CouncilFailed", failedN, `paper/data/council-prs.csv ${pkg} vibecodereview_any_failure count`],
     ["ConceptDoi", dois.concept_doi, `paper/data/zenodo-dois.json ${pkg}.concept_doi`],
     ["VersionDoi", dois.version_doi, `paper/data/zenodo-dois.json ${pkg}.version_doi`],
     ["SnapshotDate", DATE, "generator invocation date (not data)"],
@@ -345,12 +364,13 @@ async function emit(pkg, data, d) {
     + ` of ${s.badMean} over ${s.taskCount} tasks, from mock runs at seeds ${mockSeeds[0]} and ${mockSeeds[1]}`
     + (s.publicSeeds.length ? ` on the public task split generated with seed ${s.publicSeeds.join(", ")}` : "; it declares no public task-split seed")
     + `. The review record shows ${rounds.fix_rounds}`
-    + ` fix rounds, ${defectRows.length} defect classes with public locators, and ${council.length} merged feature pull requests`
-    + ` of which ${approvedN} were approved.${trivClause} No real-model scores are reported.`
+    + ` ${noun(rounds.fix_rounds, "fix round")}, ${defectRows.length} ${noun(defectRows.length, "defect class", "defect classes")} with public locators,`
+    + ` and ${council.length} merged feature pull ${noun(council.length, "request")}`
+    + ` of which ${approvedN} ${approvedN === 1 ? "was" : "were"} approved.${trivClause} No real-model scores are reported.`
     + ` Software concept DOI ${dois.concept_doi}, family paper DOI ${data.dois.paper.version_doi}.`;
   const q = (file, it, code) => quote(pkg, ref, file, it, code), gq = grading ? gradingQuote(grading) : null, cmds = commandQuotes(readme);
   const defectBlock = defectRows.length
-    ? `Table~\\ref{tab:defects} lists the defect classes that touched this package, each cell linked to its public record in \\texttt{paper/data/defects.csv}.\n`
+    ? `Table~\\ref{tab:defects} lists the ${noun(defectRows.length, "defect class", "defect classes")} that touched this package, each cell linked to its public record in \\texttt{paper/data/defects.csv}.\n`
       + tbl(["Defect class", "Record kind", "Locators"], DEFECT_SPEC,
         defectRows.map((r) => `\\texttt{${tex(r.cls).replaceAll("-", "-\\allowbreak ")}} & {\\footnotesize ${tex(r.source)}} & ${r.locators.map((l) => locatorLink(pkg, ref, l)).join(";\\ ")} \\\\`),
         `Defect classes touching \\texttt{${pkg}}, from \\texttt{paper/data/defects.csv}.`, "tab:defects")
@@ -369,7 +389,7 @@ async function emit(pkg, data, d) {
   const surfTbl = tbl(["Surface", "README line"], "ll",
     surfaces.map((r) => `${tex(r.name)} & \\href{${blob(pkg, ref, "README.md", r.para.line)}}{\\texttt{README.md\\#L${r.para.line}}} \\\\`),
     `Runnable surfaces of \\texttt{${pkg}}, each linked to the README line that names it.`, "tab:surfaces");
-  const srcTbl = tbl(["Source", "Kind", "Licence"], "lll", s.dataSources.map((d2) => `${tex(d2.name)} & ${tex(d2.kind)} & ${tex(d2.licence)} \\\\`),
+  const srcTbl = tbl(["Source", "Kind", "Licence"], SRC_SPEC, s.dataSources.map((d2) => `${tex(d2.name)} & ${tex(d2.kind)} & ${tex(d2.licence)} \\\\`),
     `Declared data sources of \\texttt{${pkg}} from its index entry.`, "tab:sources");
   const body = `% Generated by scripts/pkg-reports.mjs. Do not edit by hand.
 \\documentclass{article}
@@ -397,7 +417,7 @@ ${q("README.md", questionLine(readme))}
 Its index entry states the measured construct as: \`\`${tex(s.whatItMeasures)}\'\' (\\texttt{paper/data/suite.json}, \\texttt{${pkg}.whatItMeasures}).
 Table~\\ref{tab:tasks} counts the tasks by family.
 ${taskTbl}
-${tbl(["Field", "Value"], "ll", [
+${tbl(["Field", "Value"], FACT_SPEC, [
   ["Name", "\\pkgName{}"], ["npm package", `\\texttt{${pkg}}`], ["Version", "\\pkgVersion{}"],
   ["Status", "\\texttt{\\pkgStatus{}}"], ["Saturation", "\\texttt{\\pkgSaturation{}}"], ["Category", "\\pkgCategory{}"],
   ["Tags", s.tags.map((t) => `\\texttt{${tex(t)}}`).join(", ")], ["Public seed", s.publicSeeds.length ? "\\pkgPublicSeed{}" : "none declared"],
@@ -406,7 +426,9 @@ ${tbl(["Field", "Value"], "ll", [
 ${provBlock}
 \\section{Grader and surfaces}
 ${gradBlock}
-The index entry summarises the grader as: \`\`${tex(s.grader)}\'\' (\\texttt{paper/data/suite.json}, \\texttt{${pkg}.grader}).
+${BANNED.test(s.grader) || SLOGAN.test(s.grader)
+? `The index-entry grader summary trips this report's wording rule, so it is not quoted here (\\texttt{paper/data/suite.json}, \\texttt{${pkg}.grader}).`
+: `The index entry summarises the grader as: \`\`${tex(s.grader)}\'\' (\\texttt{paper/data/suite.json}, \\texttt{${pkg}.grader}).`}
 Table~\\ref{tab:surfaces} lists the runnable surfaces; each row cites the README line that describes it, and the quoted lines follow.
 ${surfTbl}
 ${surfaces.map((r) => q("README.md", r.para, isCmd(r.para.lines[0])) + (r.code ? q("README.md", r.code, true) : "")).join("")}
@@ -421,12 +443,12 @@ Source: \\texttt{paper/data/suite.json}, collected by \\texttt{scripts/collect.m
 The README prints a sample run:
 ${q("README.md", sampleQuote(readme, pkg), true)}
 \\section{Review record}
-The package went through \\pkgFixRounds{} fix rounds recorded in \\texttt{paper/data/review-rounds.csv}, counted from release \\texttt{review-log-v1} of this repository.
+The package went through \\pkgFixRounds{} ${noun(rounds.fix_rounds, "fix round")} recorded in \\texttt{paper/data/review-rounds.csv}, counted from release \\texttt{review-log-v1} of this repository.
 ${defectBlock}
 ${changelogBlock}
-The merged feature pull requests for this package are listed in Table~\\ref{tab:council}:
-\\pkgCouncilPrs{} requests, \\pkgCouncilReviews{} council reviews, \\pkgCouncilApproved{} approvals,
-and \\pkgCouncilFailed{} requests that ever showed a failing \\texttt{vibecodereview} run (\\texttt{paper/data/council-prs.csv}).
+The merged feature pull ${noun(council.length, "request")} for this package ${council.length === 1 ? "is" : "are"} listed in Table~\\ref{tab:council}:
+\\pkgCouncilPrs{} ${noun(council.length, "request")}, \\pkgCouncilReviews{} council ${noun(reviewsN, "review")}, \\pkgCouncilApproved{} ${noun(approvedN, "approval")},
+and \\pkgCouncilFailed{} ${noun(failedN, "request")} that ever showed a failing \\texttt{vibecodereview} run (\\texttt{paper/data/council-prs.csv}).
 ${tbl(["Pull request", "Council reviews", "Approved", "Council run", "CI check"], "lllll", prs, `Council record for \\texttt{${pkg}}, from \\texttt{paper/data/council-prs.csv}.`, "tab:council")}
 ${apprText}
 \\section{Preregistered trivial-policy check}
