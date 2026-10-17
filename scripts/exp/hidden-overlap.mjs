@@ -84,9 +84,16 @@ function loadTasks(file, { required = false } = {}) {
     if (required) fail(`missing ${file}`);
     return [];
   }
-  return readFileSync(file, "utf8").split(/\r?\n/).filter(Boolean).map((line) => {
-    try { return JSON.parse(line); } catch { return null; }
-  }).filter(Boolean);
+  const tasks = [];
+  const lines = readFileSync(file, "utf8").split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    if (!lines[i]) continue;
+    let parsed;
+    try { parsed = JSON.parse(lines[i]); }
+    catch { fail(`${file}: malformed JSON on line ${i + 1}`); }
+    if (parsed !== null) tasks.push(parsed);
+  }
+  return tasks;
 }
 
 function generate(pkgDir, gen, seed, outFile) {
