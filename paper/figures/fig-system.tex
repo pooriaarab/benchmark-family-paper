@@ -7,34 +7,55 @@
   artifact/.style={box, fill=okorange!30},
   engine/.style={box, fill=okgreen!25},
   surf/.style={box, fill=okblue!15},
-  rev/.style={box, fill=okverm!25},
+  gate/.style={box, fill=okverm!15, minimum width=25mm},
+  runga/.style={box, fill=black!6},
+  rungb/.style={box, fill=black!14},
+  rungc/.style={box, fill=black!26},
+  rundg/.style={box, fill=black!44},
   flow/.style={-{Stealth[length=2.2mm]}, semithick},
-  num/.style={font=\scriptsize\bfseries, midway, fill=white, inner sep=1pt},
+  fix/.style={-{Stealth[length=2.2mm]}, semithick, dashed},
   lbl/.style={font=\scriptsize, midway, fill=white, inner sep=1pt, align=center},
 ]
-\node[agent] (builder) {builder agent\\(coding CLI)};
-\node[artifact, right=6mm of builder] (package) {task set, grader,\\provenance};
-\node[engine, right=6mm of package] (eng) {\texttt{defineBenchmark}\\(shared engine)};
-\node[surf, right=6mm of eng, yshift=7mm] (sdk) {SDK};
-\node[surf, below=1.5mm of sdk] (cli) {CLI};
-\node[surf, below=1.5mm of cli] (mcp) {MCP};
-\node[surf, below=1.5mm of mcp] (http) {HTTP};
-\node[artifact, below=16mm of eng] (report) {run report:\\score, reason,\\bootstrap interval};
-\node[rev, below=20mm of builder] (reviewer) {probing reviewer\\(separate session)};
-\node[artifact, right=6mm of reviewer] (hidden) {hidden split\\(fresh seed, kept\\out of the package)};
+% build pipeline, top row
+\node[agent] (builder) at (0,0) {builder agent\\(coding CLI)};
+\node[artifact] (package) at (3.1,0) {\suitePackages{} packages:\\task set, grader,\\provenance};
+\node[engine] (eng) at (6.4,0) {\texttt{defineBenchmark}\\(shared engine)};
+\node[surf] (sdk) at (9.6,0.55) {SDK};
+\node[surf] (cli) at (9.6,0.15) {CLI};
+\node[surf] (mcp) at (9.6,-0.25) {MCP};
+\node[surf] (http) at (9.6,-0.65) {HTTP};
+\node[artifact] (report) at (6.4,-1.8) {run report:\\score, reason};
 
-\draw[flow] (builder) -- node[num]{1} (package);
-\draw[flow] (package) -- node[num]{2} (eng);
-\draw[flow] (eng.east) -- node[lbl]{3} (sdk.west);
+% verification gates, middle row
+\node[gate] (l1) at (3.1,-3.5) {L1\\tests and CI};
+\node[gate] (l2) at (6.4,-3.5) {L2\\LLM diff review};
+\node[gate] (l3) at (9.6,-3.5) {L3\\probing the\\running package};
+
+% policy ladder, bottom row in order of access
+\node[runga] (blind) at (1.2,-5.5) {blind};
+\node[rungb] (pread) at (4.0,-5.5) {prompt-reading};
+\node[rungc] (taware) at (7.0,-5.5) {task-aware};
+\node[rundg] (oracle) at (9.9,-5.5) {oracle};
+
+\draw[flow] (builder) -- (package);
+\draw[flow] (package) -- (eng);
+\draw[flow] (eng.east) -- (sdk.west);
 \draw[flow] (eng.east) -- (cli.west);
 \draw[flow] (eng.east) -- (mcp.west);
 \draw[flow] (eng.east) -- (http.west);
-\draw[flow] (http.south) |- node[num, pos=0.35]{4} (report.east);
-\draw[flow] (package.south) |- node[lbl, pos=0.3]{generates} (hidden.north);
-\draw[flow] (reviewer.east) -- node[num]{5} (hidden.west);
-\draw[flow] (reviewer.north) -- node[num]{6} (builder.south);
-\draw[flow, dashed] (reviewer.south) to[out=-25,in=215] node[lbl, pos=0.55]{probes} (report.south);
+\draw[flow] (http.south) |- (report.east);
+\draw[flow] (package.south) -- (l1.north);
+\draw[flow] (l1) -- (l2);
+\draw[flow] (l2) -- (l3);
+\draw[flow, dashed] (l3.north) to[bend left=20] node[lbl, pos=0.5]{probes} (http.south east);
+\draw[fix] (l3.south) -- ++(0,-0.5) -| node[lbl, pos=0.28]{fix rounds} (builder.south);
+\draw[flow, dashed] (l3.west) to[bend right=15] node[lbl, pos=0.55]{attacks} (taware.north);
+\draw[flow] (blind) -- (pread);
+\draw[flow] (pread) -- (taware);
+\draw[flow] (taware) -- (oracle);
+\draw[flow] (0.9,-6.05) -- (10.4,-6.05);
+\node[font=\scriptsize] at (5.6,-6.45) {policy ladder: each rung to the right sees more of the package};
 \end{tikzpicture}
-\caption{The pipeline assigns building and reviewing to different sessions by design. 1: a coding agent writes the task set, grader, and provenance. 2: one \texttt{defineBenchmark} call on the shared engine. 3: the engine builds four runnable surfaces. 4: a run produces a scored report. 5: a probing reviewer in a separate session attacks the package and the hidden split, which the generator writes outside the published package. 6: findings return to the builder as fix work. Builders and reviewers ran as separate sessions; the record does not say which model ran the reviewer sessions.}
+\caption{The build pipeline, the three verification gates, and the policy ladder. A builder agent writes the task set, grader, and provenance; one \texttt{defineBenchmark} call on the shared engine builds the SDK, CLI, MCP and HTTP surfaces, and a run produces a scored report. Each package passes L1 (its own tests and the shared CI job), L2 (an LLM council reading the diff), and L3 (probing sessions that attack the running package); findings return to the builder as fix rounds. The ladder orders attack policies by what they may see: blind policies see only run-time input, prompt-reading policies read the package's public text, task-aware policies are written against the package's own task shape, and the oracle is the scripted ideal answer shipped with each package. Builders and reviewers ran as separate sessions; the record does not say which model ran the reviewer sessions.}
 \label{fig:system}
 \end{figure}
