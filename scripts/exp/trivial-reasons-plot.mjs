@@ -71,7 +71,7 @@ for (const row of readCsv(REASONS, ["package", "version", "class", "count"])) {
   if (!pinned.get(row.package)?.has(row.version)) {
     fail(`trivial-reasons.csv: unpinned artifact ${row.package}@${row.version}`);
   }
-  const col = CLSMAP[row.class];
+  const col = Object.hasOwn(CLSMAP, row.class) ? CLSMAP[row.class] : undefined;
   if (!col) fail(`trivial-reasons.csv: class ${row.class} is not a frozen reason class`);
   const count = Number(row.count);
   if (!Number.isInteger(count) || count < 0) fail(`trivial-reasons.csv: bad count ${row.count}`);
