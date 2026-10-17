@@ -440,9 +440,7 @@ function analyse(input) {
   if (detGroups.size !== detArtifacts.size) fail("determinism.csv: unpinned package ran");
   const detDriftPkgs = [...detDrift.keys()].sort();
   const detIdentical = [...detArtifacts].filter((key) => {
-    const pkg = key.split("@")[0];
-    const paths = detDrift.get(pkg);
-    return !(paths && paths.has("mock"));
+    return !detDrift.has(key.split("@")[0]);
   }).length;
 
   const releasedRows = [];
