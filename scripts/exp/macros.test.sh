@@ -11,10 +11,12 @@ cd "$ROOT"
 OUT=$(mktemp -d)
 cp paper/data/exp/trivial-reasons.csv "$OUT/reasons.bak"
 cp paper/data/exp/trivial-headroom.csv "$OUT/headroom.bak"
+cp paper/data/exp/contract-probes.csv "$OUT/probes.bak"
 cleanup() {
   rm -f paper/sections/__exp-check-probe.tex
   cp "$OUT/reasons.bak" paper/data/exp/trivial-reasons.csv
   cp "$OUT/headroom.bak" paper/data/exp/trivial-headroom.csv
+  cp "$OUT/probes.bak" paper/data/exp/contract-probes.csv
   rm -rf "$OUT"
 }
 trap cleanup EXIT
@@ -48,6 +50,67 @@ if node scripts/exp/macros.mjs --check; then
   exit 1
 fi
 cp "$OUT/headroom.bak" paper/data/exp/trivial-headroom.csv
+
+# The contract-probe guards below doctor contract-probes.csv row 2 and
+# grep the stderr message so each named guard, not the staleness guard,
+# is what fires.
+echo "== guard: a probe id outside the frozen list fails"
+awk -F, 'BEGIN{OFS=","} NR==2 {$3="hv-not-a-probe"} {print}' \
+  paper/data/exp/contract-probes.csv > "$OUT/probes.csv"
+mv "$OUT/probes.csv" paper/data/exp/contract-probes.csv
+if node scripts/exp/macros.mjs --check > "$OUT/err" 2>&1; then
+  echo "frozen-probe guard did not fire"
+  exit 1
+fi
+grep -q "not in the frozen list" "$OUT/err" || { cat "$OUT/err"; exit 1; }
+cp "$OUT/probes.bak" paper/data/exp/contract-probes.csv
+
+echo "== guard: a row class that is not the frozen kind fails"
+awk -F, 'BEGIN{OFS=","} NR==2 {$4="attack-A"} {print}' \
+  paper/data/exp/contract-probes.csv > "$OUT/probes.csv"
+mv "$OUT/probes.csv" paper/data/exp/contract-probes.csv
+if node scripts/exp/macros.mjs --check > "$OUT/err" 2>&1; then
+  echo "frozen-kind guard did not fire"
+  exit 1
+fi
+grep -q "!= frozen kind" "$OUT/err" || { cat "$OUT/err"; exit 1; }
+cp "$OUT/probes.bak" paper/data/exp/contract-probes.csv
+
+echo "== guard: a missing artifact x probe cell fails"
+sed -i '2d' paper/data/exp/contract-probes.csv
+if node scripts/exp/macros.mjs --check > "$OUT/err" 2>&1; then
+  echo "missing-cell guard did not fire"
+  exit 1
+fi
+grep -q "missing cell" "$OUT/err" || { cat "$OUT/err"; exit 1; }
+cp "$OUT/probes.bak" paper/data/exp/contract-probes.csv
+
+echo "== guard: a duplicated artifact x probe cell fails"
+sed -i '2{p}' paper/data/exp/contract-probes.csv
+if node scripts/exp/macros.mjs --check > "$OUT/err" 2>&1; then
+  echo "duplicate-cell guard did not fire"
+  exit 1
+fi
+grep -q "duplicate cell" "$OUT/err" || { cat "$OUT/err"; exit 1; }
+cp "$OUT/probes.bak" paper/data/exp/contract-probes.csv
+
+echo "== guard: an outside_contract flag that disagrees with result fails"
+awk -F, 'BEGIN{OFS=","} NR==2 {$NF="yes"} {print}' \
+  paper/data/exp/contract-probes.csv > "$OUT/probes.csv"
+mv "$OUT/probes.csv" paper/data/exp/contract-probes.csv
+if node scripts/exp/macros.mjs --check > "$OUT/err" 2>&1; then
+  echo "outside-contract-flag guard did not fire"
+  exit 1
+fi
+grep -q "outside_contract flag disagrees" "$OUT/err" || { cat "$OUT/err"; exit 1; }
+cp "$OUT/probes.bak" paper/data/exp/contract-probes.csv
+
+echo "== guard: a quoted reason with a comma and doubled quotes still parses"
+sed -i '2s/"[^"]*"/"has ""inner"" quotes, and a comma"/' \
+  paper/data/exp/contract-probes.csv
+node scripts/exp/macros.mjs
+cp "$OUT/probes.bak" paper/data/exp/contract-probes.csv
+node scripts/exp/macros.mjs
 
 echo "== regenerate and check"
 node scripts/exp/macros.mjs
