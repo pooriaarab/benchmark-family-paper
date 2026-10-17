@@ -111,6 +111,13 @@ exp-macros-test:
 reasons-test:
 	bash scripts/exp/trivial-reasons-plot.test.sh
 
+.PHONY: probe-heatmap-test
+
+# Figure F7 (contract probes, artifact x probe): regenerate the figure
+# inputs twice, rebuild both PDFs, and render the figure pages.
+probe-heatmap-test:
+	bash scripts/exp/probe-heatmap.test.sh
+
 .PHONY: layers-test
 
 # C3 verification-layers section and F1 redraw: rebuild both PDFs, fail
@@ -119,3 +126,10 @@ reasons-test:
 # pages, and build twice to prove the sha256 repeats.
 layers-test:
 	bash scripts/verification-layers.test.sh
+
+.PHONY: hidden-audit-plot-test
+
+# Figure F8 (tarball leaks + hidden/public overlap): regenerate the
+# figure inputs twice, rebuild both PDFs, and render the figure pages.
+hidden-audit-plot-test:
+	bash scripts/exp/hidden-audit-plot.test.sh
