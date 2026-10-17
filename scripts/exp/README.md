@@ -53,7 +53,7 @@ it is built in PR B1, so no experiment PR edits `main.tex` for numbers.
 
 | File | Experiment | Status |
 |---|---|---|
-| (none yet) | | |
+| exploits.csv | E2 | frozen exploit list: locators, record values, reproducibility classes; no results yet |
 
 The vendored server plays eight policies selected by model id
 (`trivial-empty`, `trivial-yes`, `trivial-ok`, `trivial-refuse`,
