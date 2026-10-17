@@ -13,8 +13,14 @@ trap 'rm -rf "$OUT"' EXIT
 
 node scripts/exp/trivial-reasons-plot.mjs
 
+if [ -n "$(git status --porcelain paper/generated/trivial-reasons-plot.csv)" ]; then
+  echo "regeneration left uncommitted output"
+  exit 1
+fi
+
 ROWS=$(($(wc -l < paper/generated/trivial-reasons-plot.csv) - 1))
-[ "$ROWS" = "22" ] || { echo "plot rows: $ROWS, want 22"; exit 1; }
+WANT=$(($(wc -l < paper/data/review-rounds.csv) - 1))
+[ "$ROWS" = "$WANT" ] || { echo "plot rows: $ROWS, want $WANT"; exit 1; }
 awk -F, 'NR>1 { s=$2+$3+$4+$5+$6; if (s!=0 && (s<99.9 || s>100.1)) { print "row " NR " shares " s; exit 1 } }' \
   paper/generated/trivial-reasons-plot.csv \
   || { echo "a bar does not sum to 100"; exit 1; }

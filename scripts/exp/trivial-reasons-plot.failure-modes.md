@@ -15,12 +15,12 @@ check; each row says which guard catches it.
 - Unpinned artifact: every (package, version) is checked against
   `scripts/exp/versions.json`; a row outside the pin list fails.
 - A class the freeze does not declare: classes are checked against the
-  `classMeanings` keys of `scripts/exp/reason-classes.json` plus
-  `unclassified`; a fifth class fails instead of silently merging into
+  fixed class list in `trivial-reasons-plot.mjs` (the four frozen
+  classes plus `unclassified`); an unknown class fails instead of silently merging into
   a neighbour bar.
 - A package with no zero rows: its bar would be empty. The generator
-  emits an all-zero row and the test prints it, so the gap is visible
-  rather than hidden by normalisation.
+  emits an all-zero row, which the share-sum check accepts; the bar is
+  empty in the figure, so the gap is visible there.
 - Division by zero in the share pass: totals are checked per package
   before division; a zero total writes zeroes, never NaN into .tex.
 - Share-sum drift: per-package shares are rescaled to sum to exactly
@@ -36,8 +36,8 @@ check; each row says which guard catches it.
   either build; the test renders the figure pages at 80 dpi in the
   NeurIPS and DMLR PDFs and greps for overfull boxes.
 - Grayscale legibility: classes use one dark fill, two mid hues, one
-  light fill and an open white segment, ordered largest-share-first
-  so neighbours never share a shade; the render check produces PNGs
+  light fill and an open white segment, so neighbours never share a shade (stack order is fixed in the
+  generator); the render check produces PNGs
   the reviewer can inspect in grayscale.
 - Version mixing: counts are pooled over each package's pinned
   versions because the figure asks why rows die, not when; the
