@@ -229,3 +229,13 @@ Written before the generator: every way it can fail, and the response.
     gate curls every `\href` and `\url` target in the generated
     reports and fails on a non-200. The e2e run passes `--links`
     only when the network is present.
+51. **A wrapped README paragraph prints a mid-sentence fragment.**
+    `pickLine` and `sectionLine` returned one physical line, so a
+    README that wraps its question, provenance or limits paragraph
+    at 80 columns was quoted only to the first line break
+    (accessibility-fix printed "measures whether a model can repair
+    a broken" and stopped). `joinPara` now joins the continuation
+    lines until a blank line, a heading, a fence, a table row, a
+    blockquote or a new list item; a one-line paragraph keeps its
+    old output, so the gate's byte-compare on the committed reports
+    still holds.
