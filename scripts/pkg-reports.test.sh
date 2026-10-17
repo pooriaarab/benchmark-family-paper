@@ -11,7 +11,7 @@ import json, re, subprocess, sys, os
 root, tmp, pkgs = sys.argv[1], sys.argv[2], sys.argv[3:]
 banned = re.compile(r"\bindependent\w*\b|\b(novel|first|robust|comprehensive)\b|—", re.I)
 data_files = "suite.json defects.csv review-rounds.csv council-prs.csv trivial.csv approval-defects.csv review-notes.csv zenodo-dois.json builders.csv".split()
-numbers = lambda t: re.findall(r"\d+(?:\.\d+)*", t)
+numbers = lambda t: re.findall(r"\d+(?:\.\d+)*", t); norm = lambda s: re.sub(r"\s+", " ", s).strip()
 def unescape(ln):
     s = re.sub(r"\\allowbreak\s*", "", ln)          # a break there eats the space
     s = re.sub(r"\\\\$", "", s).replace("\\ ", " ")  # mono line end, explicit space
@@ -20,11 +20,9 @@ def unescape(ln):
     s = s.replace("\\textbackslash{}", "\x00")
     s = re.sub(r"\\([&%$#_{}])", r"\1", s)
     s = s.replace("\\textendash{}", "–").replace("\\textemdash{}", "—")
-    s = s.replace("\\textellipsis{}", "…").replace("\\texttimes{}", "×")
-    s = s.replace("\\textperiodcentered{}", "·").replace("\\textcopyright{}", "©")
+    s = s.replace("\\textellipsis{}", "…").replace("\\texttimes{}", "×").replace("\\textperiodcentered{}", "·").replace("\\textcopyright{}", "©")
     return s.replace("\\textasciitilde{}", "~").replace("\\textasciicircum{}", "^").replace("\x00", "\\")
-def tt_spans(ln):
-    return [unescape(s) for s in re.findall(r"\\texttt\{((?:\\.|-\{\}-|[^{}])*)\}", ln)]
+tt_spans = lambda ln: [unescape(s) for s in re.findall(r"\\texttt\{((?:\\.|-\{\}-|[^{}])*)\}", ln)]
 def regions(lines):
     inside, mono, cur, regs = False, False, [], []
     for ln in lines:
@@ -32,37 +30,30 @@ def regions(lines):
         elif "\\end{quote}" in ln: inside, regs = False, regs + [(mono, cur)]
         elif inside: cur.append(ln)
     return regs
-norm = lambda s: re.sub(r"\s+", " ", s).strip()
 bad = []
 for pkg in pkgs:
     lines = open(f"{tmp}/reports/{pkg}/report.tex").read().split("\n")
     meta = json.load(open(f"{tmp}/reports/{pkg}/meta.json"))
     union = "".join(open(f"{root}/paper/data/{f}").read() for f in data_files)
     for dp, _, fns in os.walk(f"{tmp}/reports/.cache/{pkg}"):
-        union += "".join(open(os.path.join(dp, f), errors="replace").read()
-                         for f in fns if f != "_fetchedAt")
-    union_nums = set(numbers(union))
-    prev = ""  # 1. every macro value must appear in its % source file
+        union += "".join(open(os.path.join(dp, f), errors="replace").read() for f in fns if f != "_fetchedAt")
+    union_nums = set(numbers(union)); prev = ""  # 1. every macro value must appear in its % source file
     for ln in lines:
-        m = re.match(r"\\newcommand\{\\pkg(\w+)\}\{(.*)\}$", ln)
-        sm = re.match(r"% source: (\S+)", prev) or ""
+        m, sm = re.match(r"\\newcommand\{\\pkg(\w+)\}\{(.*)\}$", ln), re.match(r"% source: (\S+)", prev) or ""
         if m:
             if not sm: bad.append(f"{pkg}: macro {m.group(1)} lacks a % source comment")
             elif not sm.group(1).startswith("generator"):
                 data = open(os.path.join(root, sm.group(1))).read() if os.path.exists(os.path.join(root, sm.group(1))) else ""
                 v = m.group(2)
-                ok = v in data if not re.fullmatch(r"\d+(\.\d+)?", v) else v in set(numbers(data))
-                if not ok: bad.append(f"{pkg}: macro {m.group(1)}={v} not in {sm.group(1)}")
+                if not (v in data if not re.fullmatch(r"\d+(\.\d+)?", v) else v in set(numbers(data))): bad.append(f"{pkg}: macro {m.group(1)}={v} not in {sm.group(1)}")
         prev = ln
     in_q = False  # 2. every printed number must exist in the data union
     for ln in lines:
         if "\\begin{quote}" in ln: in_q = True; continue
         if "\\end{quote}" in ln: in_q = False; continue
-        if in_q or ln.lstrip().startswith("%") or ln.startswith("\\newcommand"): continue
-        if "\\begin{tabular}" in ln or "\\begin{longtable}" in ln: continue
+        if in_q or ln.lstrip().startswith("%") or ln.startswith("\\newcommand") or "\\begin{tabular}" in ln or "\\begin{longtable}" in ln: continue
         for n in numbers(re.sub(r"[#\\]?L\d+", "", ln)):
-            if n not in union_nums:
-                bad.append(f"{pkg}: unsourced number {n}: {ln.strip()[:70]}")
+            if n not in union_nums: bad.append(f"{pkg}: unsourced number {n}: {ln.strip()[:70]}")
     qfiles = [m.group(1) for m in (re.match(r"% quote: [\w-]+/(\S+)#L\d+", l) for l in lines) if m]
     regs = regions(lines)
     if len(regs) != len(qfiles): bad.append(f"{pkg}: {len(regs)} quote blocks vs {len(qfiles)} locators")
@@ -76,11 +67,9 @@ for pkg in pkgs:
                 buf.append(l)
                 if l.rstrip().endswith("\\\\"):
                     u = unescape("\n".join(buf)).replace("\n", " ")
-                    if u.strip() and u.rstrip() not in srclines:
-                        bad.append(f"{pkg}: code line not verbatim in {f}: {u.rstrip()[:60]}")
+                    if u.strip() and u.rstrip() not in srclines: bad.append(f"{pkg}: code line not verbatim in {f}: {u.rstrip()[:60]}")
                     buf = []
-            if any(x.strip() for x in buf):
-                bad.append(f"{pkg}: code line loses its line break in {f}")
+            if any(x.strip() for x in buf): bad.append(f"{pkg}: code line loses its line break in {f}")
         else:
             joined = norm(unescape("\n".join(reg)))
             if joined and joined not in norm(srctext.replace("`", "")):  # 1a. quote text must match the source
@@ -89,31 +78,26 @@ for pkg in pkgs:
                 if re.search(r"\s\\allowbreak|\\allowbreak  ", l):
                     bad.append(f"{pkg}: break hint beside a space: {l.strip()[:60]}")
         for l in reg:  # 3. no backticks
-            if "`" in l:
-                bad.append(f"{pkg}: backtick in quote: {l.strip()[:60]}")
-        regtext = "\n".join(reg)
-        for flag in set(re.findall(r"--[a-zA-Z][\w-]*", unescape(regtext))):  # 2. -- flags stay monospace
-            if not mono and not any(flag in s for s in tt_spans(regtext)):
+            if "`" in l: bad.append(f"{pkg}: backtick in quote: {l.strip()[:60]}")
+        for flag in set(re.findall(r"--[a-zA-Z][\w-]*", unescape("\n".join(reg)))):  # 2. -- flags stay monospace
+            if not mono and not any(flag in s for s in tt_spans("\n".join(reg))):
                 bad.append(f"{pkg}: flag {flag} outside \\texttt in {f}")
     rest, skip = [], False
     for ln in lines:
         if "\\begin{quote}" in ln: skip = "ttfamily" in ln; continue
         if "\\end{quote}" in ln: skip = False; continue
         if not skip: rest.append(ln)
-    rest = re.sub(r"\\texttt\{((?:\\.|-\{\}-|[^{}])*)\}", "", "\n".join(rest))
-    if re.search(r"--|-\{\}-", rest):  # 2b. no bare -- in roman text
+    if re.search(r"--|-\{\}-", re.sub(r"\\texttt\{((?:\\.|-\{\}-|[^{}])*)\}", "", "\n".join(rest))):  # 2b. no bare -- in roman text
         bad.append(f"{pkg}: bare -- outside monospace")
     in_q = False  # 4. banned wording outside quotes ("Independent researcher" is the required affiliation)
     for ln in lines:
         if "\\begin{quote}" in ln: in_q = True; continue
         if "\\end{quote}" in ln: in_q = False; continue
-        if not in_q and banned.search(ln.replace("Independent researcher", "")):
-            bad.append(f"{pkg}: banned wording: {ln.strip()[:70]}")
+        if not in_q and banned.search(ln.replace("Independent researcher", "")): bad.append(f"{pkg}: banned wording: {ln.strip()[:70]}")
     if not 100 <= len(meta["abstract"]) <= 1920: bad.append(f"{pkg}: abstract {len(meta['abstract'])} chars")
     for k in ("title", "abstract", "comments"):
         if banned.search(str(meta.get(k, ""))): bad.append(f"{pkg}: banned wording in meta.json {k}")
-    r = subprocess.run([os.environ["PP"], "check", f"{tmp}/reports/{pkg}/meta.json",
-                        "--pdf", f"{tmp}/reports/{pkg}/report.pdf"], capture_output=True, text=True)
+    r = subprocess.run([os.environ["PP"], "check", f"{tmp}/reports/{pkg}/meta.json", "--pdf", f"{tmp}/reports/{pkg}/report.pdf"], capture_output=True, text=True)
     if r.returncode: bad.append(f"{pkg}: paper-publish check: {r.stderr.strip()[-160:]}")
 if bad:
     print("\n".join("FAIL: " + b for b in bad), file=sys.stderr); sys.exit(1)
