@@ -148,6 +148,15 @@ function andList(items) {
   return `${list.slice(0, -1).join(", ")} and ${list[list.length - 1]}`;
 }
 
+// benchmark-checkout-consent -> CheckoutConsent, for per-cell macro names.
+function camel(id) {
+  return id
+    .replace(/^benchmark-/, "")
+    .split("-")
+    .map((part) => part[0].toUpperCase() + part.slice(1))
+    .join("");
+}
+
 function loadInputs() {
   const versions = JSON.parse(readFileSync(VERSIONS, "utf8"));
   const pinned = new Map();
@@ -274,6 +283,7 @@ function analyse(input) {
   }
 
   const classCounts = Object.fromEntries(REASON_CLASSES.map((cls) => [cls, 0]));
+  const pkgGate = new Map(); // package -> {atGate, total} zero rows over its pinned versions
   let zeroRows = 0;
   for (const row of reasons) {
     if (!pinned.get(row.package)?.has(row.version)) {
@@ -286,8 +296,21 @@ function analyse(input) {
     if (!Number.isInteger(count) || count < 0) fail(`trivial-reasons.csv: bad count ${row.count}`);
     classCounts[row.class] += count;
     zeroRows += count;
+    const gate = pkgGate.get(row.package) ?? { atGate: 0, total: 0 };
+    gate.total += count;
+    if (row.class === "format-gate") gate.atGate += count;
+    pkgGate.set(row.package, gate);
   }
   if (zeroRows === 0) fail("trivial-reasons.csv records no zero rows");
+
+  // F6 prose guards: the packages whose every zero row dies at the
+  // format gate, and the count of packages that never show a
+  // format-gate row. A package absent from trivial-reasons.csv had no
+  // zero row to classify and lands in neither set.
+  const formatGateAllPkgs = [...pkgGate.entries()]
+    .filter(([, gate]) => gate.total > 0 && gate.atGate === gate.total)
+    .map(([pkg]) => pkg);
+  const formatGateNone = [...pkgGate.values()].filter((gate) => gate.atGate === 0).length;
 
   // Tarball audit and hidden-split overlap (E5): every pinned artifact
   // appears exactly once in the audit and the census; overlap rows exist
@@ -553,6 +576,35 @@ function analyse(input) {
   const wave1 = [...released].filter(([pkg]) => waveOf.get(pkg) === 1);
   const wave2 = [...released].filter(([pkg]) => waveOf.get(pkg) === 2);
 
+  // Per-cell best-trivial macros for the cells the prose cites: a
+  // wave-1 package gets Old/New (0.1.0/0.2.0) when either side is
+  // nonzero, a wave-2 package gets Rel at its released version when
+  // nonzero. A wave-1 package with one unmeasured arm and one nonzero
+  // arm fails instead of printing a fabricated zero.
+  const cellMacros = [];
+  for (const pkg of [...released.keys()].sort()) {
+    const label = camel(pkg);
+    if (waveOf.get(pkg) === 1) {
+      const oldBest = bestAt(pkg, "0.1.0");
+      const newBest = bestAt(pkg, "0.2.0");
+      if (oldBest === undefined || newBest === undefined) {
+        if ((oldBest ?? 0) > 0 || (newBest ?? 0) > 0) {
+          fail(`trivial-headroom.csv: incomplete wave-1 arm for ${pkg}`);
+        }
+        continue;
+      }
+      if (oldBest > 0 || newBest > 0) {
+        cellMacros.push([`expTriv${label}Old`, oldBest]);
+        cellMacros.push([`expTriv${label}New`, newBest]);
+      }
+    } else {
+      const best = bestAt(pkg, released.get(pkg));
+      if (best !== undefined && best > 0) {
+        cellMacros.push([`expTriv${label}Rel`, best]);
+      }
+    }
+  }
+
   return {
     packages: pinned.size,
     artifacts: artifacts.size,
@@ -572,6 +624,9 @@ function analyse(input) {
     wave1OldNonzero: wave1.filter(([pkg]) => nonzero(at(pkg, "0.1.0"))).length,
     wave1NewNonzero: wave1.filter(([pkg]) => nonzero(at(pkg, "0.2.0"))).length,
     wave2Nonzero: wave2.filter(([pkg, ver]) => nonzero(at(pkg, ver))).length,
+    cellMacros,
+    formatGateAllPkgs,
+    formatGateNone,
     headroomMin: Math.min(...headrooms),
     headroomMedian: median(headrooms),
     headroomMax: Math.max(...headrooms),
@@ -647,6 +702,7 @@ function generate(stats) {
     `\\newcommand{\\expWaveOneOldNonzero}{${stats.wave1OldNonzero}}`,
     `\\newcommand{\\expWaveOneNewNonzero}{${stats.wave1NewNonzero}}`,
     `\\newcommand{\\expWaveTwoNonzero}{${stats.wave2Nonzero}}`,
+    ...stats.cellMacros.map(([name, value]) => `\\newcommand{\\${name}}{${fmt(value)}}`),
     `\\newcommand{\\expHeadroomMin}{${fmt(stats.headroomMin)}}`,
     `\\newcommand{\\expHeadroomMedian}{${fmt(stats.headroomMedian)}}`,
     `\\newcommand{\\expHeadroomMax}{${fmt(stats.headroomMax)}}`,
@@ -660,6 +716,8 @@ function generate(stats) {
     `\\newcommand{\\expClassUnclassified}{${c.unclassified}}`,
     `\\newcommand{\\expFormatGateZeroPct}{${pct(c["format-gate"], stats.zeroRows)}}`,
     `\\newcommand{\\expFormatGateAllPct}{${pct(c["format-gate"], stats.batteryRows)}}`,
+    `\\newcommand{\\expFormatGateAllPkgs}{${pkgList(stats.formatGateAllPkgs)}}`,
+    `\\newcommand{\\expFormatGateNone}{${stats.formatGateNone}}`,
     `\\newcommand{\\expProbes}{${stats.probes}}`,
     `\\newcommand{\\expProbeCells}{${stats.probeCells}}`,
     `\\newcommand{\\expProbesHonestAccepted}{${stats.probesHonestAccepted}}`,
