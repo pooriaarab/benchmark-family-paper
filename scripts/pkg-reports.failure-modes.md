@@ -46,3 +46,21 @@ Written before the generator: every way it can fail, and the response.
     `report.tex`; the test prints the three SHA-256 sums.
 16. **Cache committed.** `reports/.cache/` and PDFs are gitignored; only
     `report.tex` and `meta.json` are committed.
+17. **Wrapped lines join without a space.** A `\allowbreak` placed beside
+    a space lets the PDF line break eat the space (`planrises`). The wrap
+    helper only breaks mid-word or at a real space, and the test re-finds
+    each normalised prose quote in the normalised source file.
+18. **`--` renders as an en dash.** Two hyphens in text mode are a
+    ligature; quote and code text escapes them as `-{}-` inside
+    `\texttt` spans or a `\ttfamily` quote block. The test fails on a
+    bare `--` outside monospace.
+19. **Markdown backticks print as quotes.** `` `x` `` in a quoted line
+    becomes `\texttt{x}`; a lone backtick becomes `\textasciigrave{}`.
+    The test fails on any backtick inside a quote region.
+20. **Code lines merge into one line.** Command and fenced blocks are
+    set `\ttfamily` with each source line ended by `\\`; the test
+    requires every monospace quote line to be a verbatim source line.
+21. **Floats drift out of their section.** Tables use `[H]` (package
+    `float`) and the caption sits above the tabular at full width;
+    `pdftoppm` review confirms each table stays in the section that
+    introduces it and nothing touches the margin.
