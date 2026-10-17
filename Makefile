@@ -100,6 +100,14 @@ hidden-audit-test:
 exp-macros-test:
 	bash scripts/exp/macros.test.sh
 
+.PHONY: reasons-test
+
+# Figure F6 (why blind-policy rows score 0): regenerate the figure CSV,
+# rebuild both PDFs, and render the figure pages for review.
+reasons-test:
+	bash scripts/exp/trivial-reasons-plot.test.sh
+>>>>>>> origin/main
+
 .PHONY: layers-test
 
 # C3 verification-layers section and F1 redraw: rebuild both PDFs, fail
