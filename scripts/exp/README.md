@@ -107,6 +107,7 @@ no experiment PR edits `main.tex` for numbers.
 | File | Experiment | Status |
 |---|---|---|
 | `trivial-battery.csv`, `trivial-battery-cells.csv`, `trivial-reasons.csv`, `trivial-headroom.csv` | E1 trivial battery + E1b reason classes | done |
+| exploits.csv | E2 | frozen exploit list: locators, record values, value kinds, measured states, reproducibility classes, comparison rules; no results yet. cost-per-task, test-weakening and payment-delegation carry no row because defects.csv has no in-scope locator for them |
 | `contract-probes.csv` | E4 grader contract probes | done |
 | `determinism.csv` | E6 determinism and repeat runs | done |
 | `tarball-audit.csv`, `hidden-census.csv`, `hidden-overlap.csv` | E5 hidden-split hygiene audit | done |
