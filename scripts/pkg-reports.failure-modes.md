@@ -22,8 +22,11 @@ Written before the generator: every way it can fail, and the response.
 7. **README without a question line.** The first lead paragraph that
    says what the package measures or asks is quoted; if none qualifies
    or carries banned wording, fail. Never paraphrase.
-8. **Grading doc absent.** Quote `docs/grading.md`'s first paragraph
-   or fail.
+8. **Grading doc absent.** Quote `docs/grading.md`'s first paragraph.
+   When no `docs/grading.md` exists the report says so in one prose
+   sentence; it never quotes whichever `docs/*.md` file sorts
+   first, and a present grading doc with no usable paragraph still
+   fails.
 9. **Claim with no source.** Every printed number is a `\pkg*` macro
    with a `% source:` comment; every package sentence is a verbatim
    quote block with a `% quote:` locator. The test checks both.
@@ -110,3 +113,45 @@ Written before the generator: every way it can fail, and the response.
     pr-standards checker counts `reports/*/report.tex` and
     `meta.json`; the generator PR ships no committed output and the
     rendered reports ride in a follow-up PR.
+33. **Limits fallback that never runs.** `sectionLine` used to `fail()`
+    inside a `try`, so the `catch` fallback was dead code and a README
+    without a `## Limits` heading stopped the run. The rule now: quote
+    the first README section whose heading matches limits, scope, what
+    it does not or caveats; when no such section exists the report
+    prints a stated-absence sentence in place of the quote. The run
+    stops for nothing in this lookup.
+34. **Source links drift as `main` moves.** Fetches and `blob/` links
+    used `main`, so a quote's permalink changed meaning on the next
+    README commit. Sources are read from the `v<version>` tag that
+    `paper/data/suite.json` records for the package and every link
+    points at `blob/v<version>/`. A missing tag fails the fetch with
+    the URL and status. The cache records the ref it fetched and is
+    discarded when the ref changes.
+35. **Tree listing fails silently.** A non-200 from the git-trees API
+    used to skip the docs fetch without a word, leaving stale or
+    absent docs. It now fails naming the URL and status, the same as a
+    raw-file fetch.
+36. **Code lines measured in escaped characters.** `wrapCode` compared
+    the escaped string length against 95 glyphs while the typewriter
+    measure fits about 70, so lines of 71 to 95 glyphs ran past the
+    margin. Width is now counted in rendered glyphs (each `\cmd{}`
+    escape is one glyph, `\hspace*{Nem}` is N/0.5, `-{}-` is two) and
+    wrapping uses the same 70-glyph width. The test fails when a
+    printed code row unescapes past 70 glyphs.
+37. **Relative markdown link dies in the PDF.** `[text](data/x.md)`
+    used to emit `\href{data/x.md}`, a target no viewer can open.
+    Relative targets resolve against the quoted file's tagged blob URL
+    and the test fails on any `\href` that is not absolute.
+38. **Header names a file outside the PR.** A comment pointing at a
+    file that only exists in a later PR dangles for a reader of this
+    PR alone. Headers name only what this tree ships.
+39. **Surface quote ends on a colon.** A README surface line ending in
+    `:` announces a fenced block; quoting the sentence alone leaves
+    the reader on a colon. The quote now collects the fence it
+    introduces and prints it as a code quote, the same rule
+    `gradingQuote` already follows.
+40. **Seed check trusts a macro name.** `\pkgPublicSeed{}` contains the
+    word "public", so a clause that gave the public-split seed a mock
+    role still passed the role test. The test strips `\pkg<Name>{}`
+    tokens before it matches role words, in the body and in the
+    `meta.json` abstract.
