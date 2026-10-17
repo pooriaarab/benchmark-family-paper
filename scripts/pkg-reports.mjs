@@ -1,15 +1,13 @@
 #!/usr/bin/env node
-// Generate one technical report per benchmark package from the family
-// data. Usage: node scripts/pkg-reports.mjs <package|all> [--refresh]
-// [--out DIR] [--date YYYY-MM-DD]. Failure modes:
-// scripts/pkg-reports.failure-modes.md. Gate: scripts/pkg-reports.test.sh.
+// One technical report per package from the family data. Usage:
+// node scripts/pkg-reports.mjs <package|all> [--refresh] [--out DIR]
+// [--date YYYY-MM-DD]. See scripts/pkg-reports.failure-modes.md.
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, copyFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), ".."), args = process.argv.slice(2);
-const flag = (n) => (args.includes(n) ? args[args.indexOf(n) + 1] : undefined);
-const flagVals = new Set([flag("--out"), flag("--date")]);
+const flag = (n) => (args.includes(n) ? args[args.indexOf(n) + 1] : undefined), flagVals = new Set([flag("--out"), flag("--date")]);
 const target = args.find((a) => !a.startsWith("--") && !flagVals.has(a));
 const OUT = flag("--out") || join(root, "reports");
 const DATE = flag("--date") || process.env.PKG_REPORT_DATE || new Date().toISOString().slice(0, 10), REFRESH = args.includes("--refresh");
@@ -151,8 +149,7 @@ const quote = (pkg, file, it) => `% quote: ${pkg}/${file}#L${it.line}
 ${it.lines.map((l) => wrapLong(tex(l))).join("\n")}
 \\end{quote}
 {\\footnotesize Source: \\href{${blob(pkg, file, it.line)}}{\\texttt{${pkg}:${file}\\#L${it.line}}}.}\n`;
-const short = (p) => p.replace(/^benchmark-/, "");
-const tbl = (cols, spec, rows, caption, label) => `\\begin{table}[h]
+const short = (p) => p.replace(/^benchmark-/, ""), tbl = (cols, spec, rows, caption, label) => `\\begin{table}[h]
 \\centering\\small
 \\begin{tabular}{${spec}}
 \\toprule
@@ -201,24 +198,16 @@ async function emit(pkg, data, d) {
   const suite = (k) => `paper/data/suite.json ${pkg}.${k}`;
   const M = macroLines([
     ["Name", s.name, suite("name")], ["Version", s.version, suite("version")],
-    ["Status", s.status, suite("status")], ["Saturation", s.saturation ?? "null", suite("saturation")],
-    ["Category", s.category, suite("category")], ["TaskCount", s.taskCount, suite("taskCount")],
-    ["MockMean", s.seed1.mean, suite("seed1.mean")], ["MockCiLow", s.seed1.ciLow, suite("seed1.ciLow")],
-    ["MockCiHigh", s.seed1.ciHigh, suite("seed1.ciHigh")], ["MockPassed", s.seed1.passed, suite("seed1.passed")],
-    ["MockCost", s.seed1.costUsd, suite("seed1.costUsd")], ["GoodMean", s.goodMean, suite("goodMean")],
-    ["BadMean", s.badMean, suite("badMean")], ["GoodMin", s.goodMin, suite("goodMin")],
-    ["BadMax", s.badMax, suite("badMax")], ["PublicSeed", s.publicSeeds.join(", ") || "none", suite("publicSeeds")],
-    ["FixRounds", rounds.fix_rounds, `paper/data/review-rounds.csv ${pkg}.fix_rounds`],
-    ["CouncilPrs", council.length, `paper/data/council-prs.csv ${pkg} row count`],
+    ["Status", s.status, suite("status")], ["Saturation", s.saturation ?? "null", suite("saturation")], ["Category", s.category, suite("category")], ["TaskCount", s.taskCount, suite("taskCount")],
+    ["MockMean", s.seed1.mean, suite("seed1.mean")], ["MockCiLow", s.seed1.ciLow, suite("seed1.ciLow")], ["MockCiHigh", s.seed1.ciHigh, suite("seed1.ciHigh")], ["MockPassed", s.seed1.passed, suite("seed1.passed")],
+    ["MockCost", s.seed1.costUsd, suite("seed1.costUsd")], ["GoodMean", s.goodMean, suite("goodMean")], ["BadMean", s.badMean, suite("badMean")], ["GoodMin", s.goodMin, suite("goodMin")],
+    ["BadMax", s.badMax, suite("badMax")], ["PublicSeed", s.publicSeeds.join(", ") || "none", suite("publicSeeds")], ["FixRounds", rounds.fix_rounds, `paper/data/review-rounds.csv ${pkg}.fix_rounds`],
+    ["CouncilPrs", council.length, `paper/data/council-prs.csv ${pkg} row count`], ["CouncilApproved", approvedN, `paper/data/council-prs.csv ${pkg} approved count`],
     ["CouncilReviews", council.reduce((a, r) => a + Number(r.council_reviews), 0), `paper/data/council-prs.csv ${pkg} council_reviews sum`],
-    ["CouncilApproved", approvedN, `paper/data/council-prs.csv ${pkg} approved count`],
     ["CouncilFailed", council.filter((r) => r.vibecodereview_any_failure === "1").length, `paper/data/council-prs.csv ${pkg} vibecodereview_any_failure count`],
-    ["ConceptDoi", dois.concept, `paper/data/zenodo-dois.json ${pkg}.concept`],
-    ["VersionDoi", dois.version, `paper/data/zenodo-dois.json ${pkg}.version`],
+    ["ConceptDoi", dois.concept, `paper/data/zenodo-dois.json ${pkg}.concept`], ["VersionDoi", dois.version, `paper/data/zenodo-dois.json ${pkg}.version`],
     ["SnapshotDate", DATE, "generator invocation date (not data)"],
-    ...(triv ? [["TrivialOld", triv.old, `paper/data/trivial.csv ${pkg}.old`],
-      ["TrivialNew", triv.new, `paper/data/trivial.csv ${pkg}.new`],
-      ["TrivialPolicy", triv.best_policy_old, `paper/data/trivial.csv ${pkg}.best_policy_old`]] : []),
+    ...(triv ? [["TrivialOld", triv.old, `paper/data/trivial.csv ${pkg}.old`], ["TrivialNew", triv.new, `paper/data/trivial.csv ${pkg}.new`], ["TrivialPolicy", triv.best_policy_old, `paper/data/trivial.csv ${pkg}.best_policy_old`]] : []),
   ]);
   const trivText = triv
     ? `The preregistered check ran eight generic trivial policies against this package at versions 0.1.0 and 0.2.0. The best trivial score was \\pkgTrivialOld{} at 0.1.0 and \\pkgTrivialNew{} at 0.2.0, won by \\texttt{\\pkgTrivialPolicy{}} (\\texttt{paper/data/trivial.csv}).`

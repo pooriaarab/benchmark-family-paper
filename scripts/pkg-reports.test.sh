@@ -2,19 +2,14 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 ROOT=$(pwd); TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
-export PP="${PAPER_PUBLISH:-$(command -v paper-publish || echo "$HOME/Documents/Personal/scripts/paper-publish")}"
-PKGS="benchmark-pelican benchmark-sycophancy benchmark-honesty"
-for p in $PKGS; do
-  node scripts/pkg-reports.mjs "$p" --out "$TMP/reports" --date 2026-10-17 >/dev/null
-done
+export PP="${PAPER_PUBLISH:-$(command -v paper-publish || echo "$HOME/Documents/Personal/scripts/paper-publish")}" PKGS="benchmark-pelican benchmark-sycophancy benchmark-honesty"
+for p in $PKGS; do node scripts/pkg-reports.mjs "$p" --out "$TMP/reports" --date 2026-10-17 >/dev/null; done
 
 python3 - "$ROOT" "$TMP" $PKGS <<'PY'
 import json, re, subprocess, sys, os
 root, tmp, pkgs = sys.argv[1], sys.argv[2], sys.argv[3:]
 banned = re.compile(r"\bindependent\w*\b|\b(novel|first|robust|comprehensive)\b|—", re.I)
-data_files = ["suite.json", "defects.csv", "review-rounds.csv", "council-prs.csv",
-              "trivial.csv", "approval-defects.csv", "review-notes.csv",
-              "zenodo-dois.json", "builders.csv"]
+data_files = "suite.json defects.csv review-rounds.csv council-prs.csv trivial.csv approval-defects.csv review-notes.csv zenodo-dois.json builders.csv".split()
 numbers = lambda t: re.findall(r"\d+(?:\.\d+)*", t)
 def unescape(ln):
     s = ln.replace("\\allowbreak ", "").replace("\\allowbreak", "")
