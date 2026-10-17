@@ -111,7 +111,7 @@ Task family & Count \\
 \caption{Index-entry fields for \texttt{benchmark-pelican}, from \texttt{paper/data/suite.json}.}
 \label{tab:facts}
 {\small
-\begin{tabular}{ll}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.24\textwidth}>{\raggedright\arraybackslash}p{0.68\textwidth}@{}}
 \toprule
 Field & Value \\
 \midrule
@@ -224,13 +224,13 @@ Table~\ref{tab:defects} lists the defect classes that touched this package, each
 \toprule
 Defect class & Record kind & Locators \\
 \midrule
-\texttt{unsolvable-\allowbreak tasks} & {\footnotesize 0.2.0 changelogs; schema-mutation Unreleased changelog and issue 20; silent-constraints issue 9} & \href{https://github.com/pooriaarab/benchmark-pelican/blob/v0.2.0/CHANGELOG.md#L14}{\texttt{benchmark-pelican:\allowbreak CHANGELOG.md\#L14}} \\
-\texttt{blind-\allowbreak strategy-\allowbreak credit} & {\footnotesize issues and changelogs (per-package locators)} & \href{https://github.com/pooriaarab/benchmark-pelican/issues/8}{\texttt{benchmark-pelican\#8}} \\
-\texttt{honest-\allowbreak answer-\allowbreak rejected} & {\footnotesize review issues and PRs (per-package locators)} & \href{https://github.com/pooriaarab/benchmark-pelican/issues/12}{\texttt{benchmark-pelican\#12}} \\
-\texttt{hidden-\allowbreak split-\allowbreak not-\allowbreak hidden} & {\footnotesize review issues and PRs (per-package locators); 0.2.0 changelogs} & \href{https://github.com/pooriaarab/benchmark-pelican/issues/11}{\texttt{benchmark-pelican\#11}} \\
-\texttt{dropped-\allowbreak breakdowns} & {\footnotesize review issues and PRs (per-package locators)} & \href{https://github.com/pooriaarab/benchmark-pelican/issues/21}{\texttt{benchmark-pelican\#21}};\ \href{https://github.com/pooriaarab/benchmark-pelican/issues/23}{\texttt{benchmark-pelican\#23}} \\
-\texttt{docs-\allowbreak ahead-\allowbreak of-\allowbreak code} & {\footnotesize review issues and PR review comments} & \href{https://github.com/pooriaarab/benchmark-pelican/issues/29}{\texttt{benchmark-pelican\#29}} \\
-\texttt{prompt-\allowbreak looser-\allowbreak than-\allowbreak grader} & {\footnotesize documented limits; issue and changelog} & \href{https://github.com/pooriaarab/benchmark-pelican/blob/v0.2.0/docs/grading.md#L102}{\texttt{benchmark-pelican:\allowbreak docs/grading.md\#L102}} \\
+\texttt{unsolvable-\allowbreak tasks} & {\footnotesize 0.2.0 changelogs; schema-mutation Unreleased changelog and issue 20; silent-constraints issue 9} & \href{https://github.com/pooriaarab/benchmark-pelican/blob/v0.2.0/CHANGELOG.md#L14}{\texttt{benchmark-\allowbreak pelican:\allowbreak CHANGELOG.md\#L14}} \\
+\texttt{blind-\allowbreak strategy-\allowbreak credit} & {\footnotesize issues and changelogs (per-package locators)} & \href{https://github.com/pooriaarab/benchmark-pelican/issues/8}{\texttt{benchmark-\allowbreak pelican\#8}} \\
+\texttt{honest-\allowbreak answer-\allowbreak rejected} & {\footnotesize review issues and PRs (per-package locators)} & \href{https://github.com/pooriaarab/benchmark-pelican/issues/12}{\texttt{benchmark-\allowbreak pelican\#12}} \\
+\texttt{hidden-\allowbreak split-\allowbreak not-\allowbreak hidden} & {\footnotesize review issues and PRs (per-package locators); 0.2.0 changelogs} & \href{https://github.com/pooriaarab/benchmark-pelican/issues/11}{\texttt{benchmark-\allowbreak pelican\#11}} \\
+\texttt{dropped-\allowbreak breakdowns} & {\footnotesize review issues and PRs (per-package locators)} & \href{https://github.com/pooriaarab/benchmark-pelican/issues/21}{\texttt{benchmark-\allowbreak pelican\#21}};\ \href{https://github.com/pooriaarab/benchmark-pelican/issues/23}{\texttt{benchmark-\allowbreak pelican\#23}} \\
+\texttt{docs-\allowbreak ahead-\allowbreak of-\allowbreak code} & {\footnotesize review issues and PR review comments} & \href{https://github.com/pooriaarab/benchmark-pelican/issues/29}{\texttt{benchmark-\allowbreak pelican\#29}} \\
+\texttt{prompt-\allowbreak looser-\allowbreak than-\allowbreak grader} & {\footnotesize documented limits; issue and changelog} & \href{https://github.com/pooriaarab/benchmark-pelican/blob/v0.2.0/docs/grading.md#L102}{\texttt{benchmark-\allowbreak pelican:\allowbreak docs/\allowbreak grading.md\#L102}} \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -243,7 +243,7 @@ Scoring changes in this release make 0.1.0 results not comparable with 0.2.0 res
 
 The merged feature pull requests for this package are listed in Table~\ref{tab:council}:
 \pkgCouncilPrs{} requests, \pkgCouncilReviews{} council reviews, \pkgCouncilApproved{} approvals,
-and \pkgCouncilFailed{} requests that ever showed a failing \texttt{vibecodereview} run (\texttt{paper/data/council-prs.csv}).
+and \pkgCouncilFailed{} request that ever showed a failing \texttt{vibecodereview} run (\texttt{paper/data/council-prs.csv}).
 \begin{table}[H]
 \centering
 \caption{Council record for \texttt{benchmark-pelican}, from \texttt{paper/data/council-prs.csv}.}
@@ -320,7 +320,7 @@ Table~\ref{tab:sources} lists the declared data sources from the index entry (\t
 \caption{Declared data sources of \texttt{benchmark-pelican} from its index entry.}
 \label{tab:sources}
 {\small
-\begin{tabular}{lll}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.58\textwidth}>{\raggedright\arraybackslash}p{0.14\textwidth}>{\raggedright\arraybackslash}p{0.18\textwidth}@{}}
 \toprule
 Source & Kind & Licence \\
 \midrule
