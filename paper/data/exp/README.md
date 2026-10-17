@@ -80,11 +80,9 @@ tasks), `reason`, `outside_contract`.
 `exploratory` cells (run and reported, never a defect), `not-runnable`
 where a probe could not run as written, and `outside-contract` on `no`
 cells (never run; the flag column is `yes` exactly on these). The frozen
-rules: honest variants keep `score >= oracle - 0.001` on every in-scope
-task, TYPE A attacks must not beat the empty submission by more than
-0.001, TYPE B attacks must stay within 0.001 of the oracle. The oracle
-submission per task is the good mock row of the paired mock-seed runs,
-re-scored through `benchmark.score` under the same seed.
+scoring rules are stated in `probes.json` and
+`contract-probes.failure-modes.md`; the oracle definition is in
+`oracle-definition.csv`.
 
 Regenerate with `node scripts/exp/install.mjs` once, then
 `node scripts/exp/contract-probes.mjs`;
