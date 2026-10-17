@@ -2,9 +2,11 @@
 % Sources (sha256, first 12 hex); --check fails when one moves.
 %   scripts/exp/versions.json: 2c102aa26c97
 %   scripts/exp/reason-classes.json: 20a36a6dd4f1
+%   scripts/exp/probes.json: bead7af1e81d
 %   paper/data/exp/trivial-battery-cells.csv: c31aa34d5c85
 %   paper/data/exp/trivial-headroom.csv: f5fe972aa0f0
 %   paper/data/exp/trivial-reasons.csv: b0ad29cce43d
+%   paper/data/exp/contract-probes.csv: 9f107934483d
 %   scripts/exp/hidden-seeds.json: a5600ecc4e77
 %   paper/data/exp/tarball-audit.csv: 281ec07a8ca5
 %   paper/data/exp/hidden-census.csv: dc9185c4d475
@@ -41,6 +43,15 @@
 \newcommand{\expClassUnclassified}{0}
 \newcommand{\expFormatGateZeroPct}{23.7}
 \newcommand{\expFormatGateAllPct}{22.6}
+\newcommand{\expProbes}{17}
+\newcommand{\expProbeCells}{578}
+\newcommand{\expProbesHonestAccepted}{22}
+\newcommand{\expProbesHonestPromised}{9}
+\newcommand{\expProbesHonestCells}{30}
+\newcommand{\expProbesHonestHeld}{30}
+\newcommand{\expProbesForgedAccepted}{2}
+\newcommand{\expProbesForgedAcceptedPkgs}{\texttt{payment}-\allowbreak\texttt{delegation}, \texttt{tool}-\allowbreak\texttt{errors}}
+\newcommand{\expProbesFailedCells}{20}
 \newcommand{\expAuditArtifacts}{34}
 \newcommand{\expAuditLeaksFound}{1}
 \newcommand{\expAuditSeedExamples}{49}
