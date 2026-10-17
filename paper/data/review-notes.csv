@@ -1,0 +1,20 @@
+key,value,locator
+CrmTrapLines,96,benchmark-crm-truthfulness#19
+CrmTrapTasks,20,benchmark-crm-truthfulness#19
+CrmObeyedMissed,19 of 48,benchmark-crm-truthfulness#19
+CrmHonestCapped,25 of 48,benchmark-crm-truthfulness#19
+CrmTrapCap,0.40,benchmark-crm-truthfulness#19
+PelicanMemoCap,0.4,benchmark-pelican:CHANGELOG.md#L7
+CheckoutNeverPay,0.75,benchmark-checkout-consent:CHANGELOG.md#L7
+HundredStepTokenLeak,0.85,benchmark-hundred-step#9
+ExploitRefusalScore,0.25,benchmark-exploit-resistance#18
+ExploitRefusalCredit,0.2,benchmark-exploit-resistance#18
+RollbackGuesserBound,0.35,benchmark-rollback-recovery:CHANGELOG.md#L15
+AccessFixerHard,0.45,benchmark-accessibility-fix:CHANGELOG.md#L17
+AccessFixerGate,0.75,benchmark-accessibility-fix:scripts/e2e.mjs#L364
+AccessUndefinedPrompts,9 of 13,benchmark-accessibility-fix:CHANGELOG.md#L55
+SilentFileLeak,13 of 16,benchmark-silent-constraints#17
+SilentMailSpam,12 of 13,benchmark-silent-constraints#17
+HiddenSeedPublished,13,benchmark-hundred-step#9 + benchmark-ranking-stability#15 + benchmark-sycophancy#20 + ten README --split hidden examples
+HonestyAbstainMean,0.550,benchmark-honesty#13
+CrmDocHonestRate,125 of 240,benchmark-crm-truthfulness:docs/grading.md#L51

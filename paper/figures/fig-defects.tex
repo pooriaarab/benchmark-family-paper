@@ -1,0 +1,22 @@
+\begin{figure}[t]
+\centering
+\pgfplotstableset{col sep=comma}
+\begin{tikzpicture}
+\begin{axis}[
+  font=\small,
+  ybar, bar width=8pt,
+  width=\textwidth, height=0.52\textwidth,
+  symbolic x coords={unsolvable-tasks,violation-not-penalised,blind-strategy-credit,honest-answer-rejected,hidden-split-not-hidden,task-list-cache,dropped-breakdowns,forged-report-rows,evaluator-escape,docs-ahead-of-code,generator-bugs,lexical-detector-miss,prompt-looser-than-grader},
+  xtick=data,
+  x tick label style={rotate=55,anchor=east,font=\scriptsize},
+  ylabel={packages affected (at least)},
+  ymin=0, ymax=\defectFigYmax, ytick={0,4,8,12},
+  nodes near coords, nodes near coords style={font=\scriptsize},
+  axis y line*=left, axis x line*=bottom,
+]
+\addplot[fill=okblue, draw=black] table[x=class,y=at_least,col sep=comma] {generated/defects-plot.csv};
+\end{axis}
+\end{tikzpicture}
+\caption{Strategies that ignored the task and still earned credit are the most common defect class, recorded in at least \defectBlindStrategyCredit{} of the \suitePackages{} packages. Bars are sourced minima from \texttt{paper/data/defects.csv} (Table~\ref{tab:defects}); the public record can hold more.}
+\label{fig:defects}
+\end{figure}
