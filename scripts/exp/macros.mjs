@@ -213,6 +213,15 @@ function analyse(input) {
   }
   const at = (pkg, ver) => headByKey.get(`${pkg}@${ver}`);
   const nonzero = (row) => row && !row.missing && row.best > 0;
+  const bestAt = (pkg, ver) => {
+    const row = at(pkg, ver);
+    return row && !row.missing ? row.best : undefined;
+  };
+  const groupMax = (values, label) => {
+    const measured = values.filter((value) => value !== undefined);
+    if (measured.length === 0) fail(`${label}: no measured best trivial score`);
+    return Math.max(0, ...measured);
+  };
   const releasedBest = releasedRows.map((row) => row.best);
   const maxBest = Math.max(...releasedBest);
   const headrooms = releasedRows.map((row) => row.headroom);
@@ -232,9 +241,9 @@ function analyse(input) {
     releasedMaxPkgs: releasedRows.filter((row) => row.best === maxBest).map((row) => row.pkg),
     releasedZero: releasedRows.filter((row) => row.best === 0).length,
     releasedNonzeroPkgs: releasedRows.filter(nonzero).map((row) => row.pkg),
-    wave1OldMax: Math.max(0, ...wave1.map(([pkg]) => at(pkg, "0.1.0")?.best ?? 0)),
-    wave1NewMax: Math.max(0, ...wave1.map(([pkg]) => at(pkg, "0.2.0")?.best ?? 0)),
-    wave2Max: Math.max(0, ...wave2.map(([pkg, ver]) => at(pkg, ver)?.best ?? 0)),
+    wave1OldMax: groupMax(wave1.map(([pkg]) => bestAt(pkg, "0.1.0")), "wave1@0.1.0"),
+    wave1NewMax: groupMax(wave1.map(([pkg]) => bestAt(pkg, "0.2.0")), "wave1@0.2.0"),
+    wave2Max: groupMax(wave2.map(([pkg, ver]) => bestAt(pkg, ver)), "wave2 released"),
     wave1OldNonzero: wave1.filter(([pkg]) => nonzero(at(pkg, "0.1.0"))).length,
     wave1NewNonzero: wave1.filter(([pkg]) => nonzero(at(pkg, "0.2.0"))).length,
     wave2Nonzero: wave2.filter(([pkg, ver]) => nonzero(at(pkg, ver))).length,

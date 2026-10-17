@@ -10,9 +10,11 @@ ROOT=$(git rev-parse --show-toplevel)
 cd "$ROOT"
 OUT=$(mktemp -d)
 cp paper/data/exp/trivial-reasons.csv "$OUT/reasons.bak"
+cp paper/data/exp/trivial-headroom.csv "$OUT/headroom.bak"
 cleanup() {
   rm -f paper/sections/__exp-check-probe.tex
   cp "$OUT/reasons.bak" paper/data/exp/trivial-reasons.csv
+  cp "$OUT/headroom.bak" paper/data/exp/trivial-headroom.csv
   rm -rf "$OUT"
 }
 trap cleanup EXIT
@@ -32,6 +34,20 @@ if node scripts/exp/macros.mjs --check; then
   exit 1
 fi
 cp "$OUT/reasons.bak" paper/data/exp/trivial-reasons.csv
+
+echo "== guard: a whole version arm with no measured best fails"
+awk -F, 'NR == FNR { if ($2 == "0.2.0") old[$1] = 1; next }
+         FNR == 1 { print; next }
+         ($1 in old) && $2 == "0.1.0" { print $1 "," $2 "," $3 "," $4 ",,"; next }
+         { print }' \
+  paper/data/exp/trivial-headroom.csv paper/data/exp/trivial-headroom.csv \
+  > "$OUT/headroom.csv"
+mv "$OUT/headroom.csv" paper/data/exp/trivial-headroom.csv
+if node scripts/exp/macros.mjs --check; then
+  echo "missing-arm guard did not fire"
+  exit 1
+fi
+cp "$OUT/headroom.bak" paper/data/exp/trivial-headroom.csv
 
 echo "== regenerate and check"
 node scripts/exp/macros.mjs
@@ -53,4 +69,4 @@ fi
 
 MACROS=$(grep -c 'newcommand' paper/generated/exp-macros.tex)
 sha256sum paper/generated/exp-macros.tex
-echo "$MACROS macros, both guards fire, both builds clean -> exp-macros, ok"
+echo "$MACROS macros, all guards fire, both builds clean -> exp-macros, ok"
