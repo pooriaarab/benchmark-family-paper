@@ -108,14 +108,15 @@ for pkg in pkgs:
     pub = {str(x) for p in suite["packages"] if p["id"] == pkg for x in p.get("publicSeeds") or []}
     def seed_check(text, resolve, where):  # 5. every seed named keeps the role its source gives it
         for clause in re.split(r"[.;()]", text):
+            bare = re.sub(r"\\pkg\w+\{\}", "", clause)  # role words come from prose, never a macro name
             for m in re.finditer(r"\bseeds?\s*-?\s*(?:at\s+|of\s+)?((?:\\pkg\w+\{\}|\d+)(?:\s*(?:,|and)\s*(?:\\pkg\w+\{\}|\d+))*)", clause):
                 for mac, num in re.findall(r"\\pkg(\w+)\{\}|(\d+)", m.group(1)):
                     for n in numbers(num or resolve.get(mac, "")):
                         if n in pub:
-                            if not re.search(r"split|public|generat", clause, re.I):
+                            if not re.search(r"split|public|generat", bare, re.I):
                                 bad.append(f"{pkg}: public-split seed {n} outside a split role ({where}): {clause.strip()[:60]}")
                         elif n in mock_seeds:
-                            if "mock" not in clause.lower():
+                            if "mock" not in bare.lower():
                                 bad.append(f"{pkg}: mock seed {n} outside a mock role ({where}): {clause.strip()[:60]}")
                         else: bad.append(f"{pkg}: seed {n} not a collect.mjs mock seed or suite publicSeed ({where}): {clause.strip()[:60]}")
     in_q = False  # 4. banned wording outside quotes ("Independent researcher" is the required affiliation)
