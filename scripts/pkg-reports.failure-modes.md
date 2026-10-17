@@ -4,7 +4,7 @@ Written before the generator: every way it can fail, and the response.
 
 ## Inputs and data
 1. **Unknown package.** Not `all` or a `zenodo-dois.json` key: fail
-   with the known list.
+   naming the argument.
 2. **Missing suite row.** `benchmark-core` has no `suite.json` row:
    fail naming the file and key.
 3. **Missing data row.** No row in `review-rounds.csv` or
@@ -15,10 +15,12 @@ Written before the generator: every way it can fail, and the response.
    cached `package.json` version differs from suite version: fail with
    both values, never pick one.
 5. **Cache stale or absent.** GitHub files land in `reports/.cache/`
-   with a `_fetchedAt` stamp; `--refresh` refetches; the cache date is
-   printed every run. `GITHUB_TOKEN`/`GH_TOKEN` authenticate.
+   with `_ref` and `_fetchedAt` stamps; `--refresh` refetches; the
+   cache date is printed every run. `GITHUB_TOKEN`/`GH_TOKEN`
+   authenticate.
 6. **Rate limit / network down.** A non-200 fetch fails naming URL
-   and status; a warm cache still generates.
+   and status. The git-trees listing is fetched on every run, so the
+   generator needs the network even when the file cache is warm.
 7. **README without a question line.** The first lead paragraph that
    says what the package measures or asks is quoted; if none qualifies
    or carries banned wording, fail. Never paraphrase.
@@ -37,9 +39,9 @@ Written before the generator: every way it can fail, and the response.
 
 ## Outputs
 
-11. **PDF overflow.** Overfull boxes are caught by `pdftoppm` review;
-    long verbatim lines get invisible `\allowbreak` breakpoints the
-    test strips before comparing.
+11. **PDF overflow.** Long verbatim lines get invisible `\allowbreak`
+    breakpoints the test strips before comparing, and the test fails a
+    printed code row that unescapes past the quote measure.
 12. **Abstract over 1920 or under 100.** Asserted before write;
     `paper-publish check` re-verifies against the PDF.
 13. **Title drift.** `meta.json` `title` must equal the page-1 title;
@@ -61,16 +63,19 @@ Written before the generator: every way it can fail, and the response.
 20. **Code lines merge into one line.** Code blocks set `\ttfamily`,
     each source line ended by `\\`; each rendered line must be
     verbatim.
-21. **Floats drift out of their section.** Tables use `[H]` (`float`),
-    captions above the tabular; `pdftoppm` review confirms each table
-    stays in its section and nothing touches the margin.
+21. **Floats drift out of their section.** Tables use `[H]` (`float`)
+    with captions above the tabular.
 22. **Seed attributed to the wrong run.** The public task split has a
     generator seed; `collect.mjs` runs the mock at its own seeds. A
     sentence that names one for the other misstates the record, so the
     report keeps separate macros (`\pkgMockSeedA`, `\pkgMockSeedB`
     sourced to `scripts/collect.mjs`, `\pkgPublicSeed` sourced to
-    `suite.json`) and the test checks that every `seed N` a report
-    prints is a number the matching source actually uses.
+    `suite.json`). The test joins each paragraph before it checks, so
+    a line break cannot hide a seed, and it binds the role word to
+    the segment that holds the seed: a public-split seed needs a
+    split or generation role, not just the word "public", and a mock
+    seed needs "mock". A package with no public seed prints a stated
+    absence, never a "seed none" placeholder.
 23. **Paid-provider command under an offline heading.** A README run
     line can name `--provider openrouter`; quoting it under "the
     offline run" implies a hosted model was run here. Offline quotes
@@ -104,8 +109,8 @@ Written before the generator: every way it can fail, and the response.
     then `$PATH`, then the owner path; if none is executable it prints
     the expected path and exits 2 instead of throwing a traceback.
 30. **Generator line over 200 characters.** Compressed templates are
-    unreviewable; shared text lives in `scripts/pkg-reports/` data
-    files and no generator line may exceed 200 characters.
+    unreviewable; repeated text is a named constant and no generator
+    line may exceed 200 characters.
 31. **A number written into prose.** Counts and versions that appear
     in sentences come from a data file or a generated macro with a
     `% source:` comment, never a literal.
@@ -125,8 +130,9 @@ Written before the generator: every way it can fail, and the response.
     README commit. Sources are read from the `v<version>` tag that
     `paper/data/suite.json` records for the package and every link
     points at `blob/v<version>/`. A missing tag fails the fetch with
-    the URL and status. The cache records the ref it fetched and is
-    discarded when the ref changes.
+    the URL and status. The cache records the ref it fetched in a
+    `_ref` stamp and is discarded when the stamp is absent or holds
+    another ref; an unstamped cache can carry shifted locators.
 35. **Tree listing fails silently.** A non-200 from the git-trees API
     used to skip the docs fetch without a word, leaving stale or
     absent docs. It now fails naming the URL and status, the same as a
@@ -135,13 +141,18 @@ Written before the generator: every way it can fail, and the response.
     the escaped string length against 95 glyphs while the typewriter
     measure fits about 70, so lines of 71 to 95 glyphs ran past the
     margin. Width is now counted in rendered glyphs (each `\cmd{}`
-    escape is one glyph, `\hspace*{Nem}` is N/0.5, `-{}-` is two) and
-    wrapping uses the same 70-glyph width. The test fails when a
-    printed code row unescapes past 70 glyphs.
-37. **Relative markdown link dies in the PDF.** `[text](data/x.md)`
+    escape is one glyph, `\hspace*{Nem}` is N/0.5, `-{}-` is two). The
+    quote measure fits about 62 typewriter glyphs, so rows wrap at 60
+    and the `$\hookrightarrow$` continuation prefix counts toward the
+    width. The test fails when a printed code row unescapes past 62
+    glyphs.
+37. **Markdown link target dies in the PDF.** `[text](data/x.md)`
     used to emit `\href{data/x.md}`, a target no viewer can open.
-    Relative targets resolve against the quoted file's tagged blob URL
-    and the test fails on any `\href` that is not absolute.
+    Relative targets resolve against the quoted file's tagged blob
+    URL. The test fails on any `\href` or `\url` address that is not
+    absolute or that carries whitespace or a `\` escape such as
+    `\allowbreak`; a break inside the address leaks `\protect
+    \penalty` into the PDF `/URI` and the link 404s.
 38. **Header names a file outside the PR.** A comment pointing at a
     file that only exists in a later PR dangles for a reader of this
     PR alone. Headers name only what this tree ships.
@@ -194,5 +205,27 @@ Written before the generator: every way it can fail, and the response.
     memory-conflict question line has no other candidate. The ban
     reads whole words only: a banned word may not touch a letter,
     digit or hyphen on either side, so `cancel-first` passes while a
-    bare `first` still fails. The gate applies the same boundary to
-    authored prose.
+    bare `first` still fails. The gate's banned-word check uses the
+    same hyphen-aware boundary.
+47. **The prose wrapper splits a link address.** `wrapProse` treated
+    `\href{URL}{text}` as plain text and put `\allowbreak` plus a
+    newline inside the URL argument, so the PDF `/URI` carried TeX
+    internals and the link 404d. `\href{URL}{` and `\url{URL}` are
+    now single atoms: the address is never split, and a break cannot
+    land between `}` and `{`, where it would be read as the link
+    text.
+48. **`make reports` with no `PKG` builds the wrong report.** A
+    `PKG ?= benchmark-pelican` default silently generated pelican.
+    The target now requires `PKG=<package|all>` and exits 2 without
+    it.
+49. **Committed reports drift from the generator.** The gate
+    regenerated into a temp dir and never compared with the committed
+    `reports/<pkg>/` files, so a later generator change could leave
+    stale output in the tree. When the checkout holds a committed
+    `report.tex` or `meta.json` for the package, the test compares
+    it byte for byte with the regenerated file.
+50. **A link rots after the report ships.** A `blob/` URL that
+    resolved on generation day can 404 later; with `--links` the
+    gate curls every `\href` and `\url` target in the generated
+    reports and fails on a non-200. The e2e run passes `--links`
+    only when the network is present.
