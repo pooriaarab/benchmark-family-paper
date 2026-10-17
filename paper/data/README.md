@@ -9,7 +9,19 @@
   section, one row per class. `class` is a hyphenated id, `packages`
   lists the affected package ids without the `benchmark-` prefix
   (semicolon-separated), `at_least` is the sourced minimum count, and
-  `source` names the record kind. `locators` aligns with `packages`: the
+  `source` names the record kind. `score_material` is `yes` when a
+  defect in the class moves the score a grader emits: unsolvable tasks
+  and unpenalised violations corrupt every score, while blind-strategy
+  credit, honest-answer rejection, generator bugs, lexical detector
+  misses and prompts looser than the grader pay or reject submissions
+  they should not. It is `no` for hygiene and record-keeping classes
+  whose logged defects changed no score: hidden-split-not-hidden,
+  task-list-cache, dropped-breakdowns, forged-report-rows,
+  evaluator-escape and docs-ahead-of-code. The collector unions the
+  package lists of the `yes` classes into `\defectScoreMaterial`:
+  18 of 22 packages sit in at least one score-material class, and
+  cost-per-task, test-weakening, payment-delegation and latency-budget
+  do not. `locators` aligns with `packages`: the
   i-th semicolon-separated locator set sources the i-th package, with
   multiple references joined by ` + `. A locator is `<repo>#<n>` for an
   issue or pull request in `pooriaarab/<repo>`, or
