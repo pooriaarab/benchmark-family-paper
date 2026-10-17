@@ -2,8 +2,10 @@
 
 % Official DMLR style (dmlr2e.sty) adapted from jmlr2e.sty.
 % Fetched by scripts/fetch-dmlr-style.mjs into paper/dmlr/; never
-% committed. make dmlr adds paper/dmlr to TEXINPUTS. The preprint option
-% drops the volume/editor block a new submission does not have.
+% committed. \input@path below adds paper/dmlr to the search path so
+% \usepackage{dmlr2e} resolves without committing the style. The
+% preprint option drops the volume/editor block a new submission does
+% not have.
 % dmlr2e loads natbib, graphicx, epsfig, amssymb and hyperref itself;
 % do not load them again here.
 \makeatletter\def\input@path{{dmlr/}}\makeatother
