@@ -50,7 +50,8 @@ dmlr-supplement: dmlr-style
 dmlr-source: dmlr dmlr-supplement
 	cd paper && tar czf dmlr-source.tar.gz \
 		main-dmlr.tex supplement-dmlr.tex refs.bib \
-		dmlr/dmlr2e.sty sections figures generated data/zenodo-dois.json
+		dmlr/dmlr2e.sty sections figures generated \
+		data/zenodo-dois.json data/suite.json data/suite.txt
 
 dmlr-test:
 	bash scripts/dmlr.test.sh
