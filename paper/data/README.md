@@ -70,7 +70,10 @@
   approval standing behind a defect a later review found: one row per
   case with the pull request, the approved commit and time, the defect,
   who found it, the fix commit, and the merged head. `collect.mjs`
-  counts the rows into `\approvalDefectCases`.
+  counts the rows into `\approvalDefectCases`. `fix_commit` is blank
+  when the fix landed in a later pull request: pelican's pull request
+  12 ([BPEL-8]) closed unmerged, and its fix commit d2023a1 reached
+  main inside pull request 36's stack.
 - `trivial.csv` is the preregistered study's first result: per first-wave
   package, the best trivial-policy mean at 0.1.0 (`old`) and 0.2.0
   (`new`) and the winning policy. The registered plan and the deviation
