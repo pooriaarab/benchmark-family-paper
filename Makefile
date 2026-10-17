@@ -99,3 +99,10 @@ hidden-audit-test:
 # stale-output and missing-macro guards fire, rebuild both PDFs.
 exp-macros-test:
 	bash scripts/exp/macros.test.sh
+
+.PHONY: reasons-test
+
+# Figure F6 (why blind-policy rows score 0): regenerate the figure CSV,
+# rebuild both PDFs, and render the figure pages for review.
+reasons-test:
+	bash scripts/exp/trivial-reasons-plot.test.sh
