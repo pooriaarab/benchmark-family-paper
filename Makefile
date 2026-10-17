@@ -113,3 +113,12 @@ reasons-test:
 # inputs twice, rebuild both PDFs, and render the figure pages.
 probe-heatmap-test:
 	bash scripts/exp/probe-heatmap.test.sh
+
+.PHONY: layers-test
+
+# C3 verification-layers section and F1 redraw: rebuild both PDFs, fail
+# on undefined references or a "??", check the figure label and inputs,
+# fail on a hand-typed numeral in the new prose, render the figure
+# pages, and build twice to prove the sha256 repeats.
+layers-test:
+	bash scripts/verification-layers.test.sh
