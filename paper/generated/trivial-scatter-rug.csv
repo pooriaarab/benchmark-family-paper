@@ -1,0 +1,11 @@
+package,x,label
+exploit-resistance,0.0000,7 at 0 - 0.1.0 only
+latency-budget,0.0000,
+crm-truthfulness,0.0000,
+instruction-hierarchy,0.0667,instruction-hierarchy
+memory-conflict,0.0000,
+accessibility-fix,0.0000,
+silent-constraints,0.0000,
+rollback-recovery,0.1667,rollback-recovery
+schema-mutation,0.0000,
+payment-delegation,0.4000,payment-delegation
