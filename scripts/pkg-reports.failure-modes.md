@@ -235,7 +235,13 @@ Written before the generator: every way it can fail, and the response.
     number token"). A summary that matches `BANNED` is dropped: the
     report says so and names the data file in place of the quote,
     and the sentence is never rewritten to hide the rule.
-52. **A grader summary trips the slogan rule instead.** The same
+52. **A count of one prints a plural noun.** The abstract and the
+    council-record sentence fixed their nouns, so a singular count
+    read "1 defect classes", "1 were approved" or "1 requests"
+    (exploit-resistance, latency-budget, pelican). The noun now
+    comes from the count at generation time, and the committed
+    report the fix changes is regenerated in the same change.
+53. **A grader summary trips the slogan rule instead.** The same
     sentence fails the `, not ` slogan check when the summary itself
     carries that shape (rollback-recovery: "tool call, not free
     text"). The drop applies to either wording rule.
