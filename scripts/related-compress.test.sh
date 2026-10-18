@@ -28,23 +28,16 @@ for f in paper/main.pdf paper/main-dmlr.pdf; do
 done
 
 pages=$(pdfinfo paper/main.pdf | awk '/^Pages/ {print $2}')
-# Drain pdftotext into a string before grep: piping into grep -q lets an
-# early match SIGPIPE the extractor and pipefail reads it as a miss.
-page_has() { # $1 = pdf, $2 = page, $3 = pattern
-  local text
-  text=$(pdftotext -f "$2" -l "$2" "$1" - 2>/dev/null)
-  grep -q "$3" <<< "$text"
-}
 start=""
 for i in $(seq 1 "$pages"); do
-  if page_has paper/main.pdf "$i" "Related work"; then
+  if pdftotext -f "$i" -l "$i" paper/main.pdf - 2>/dev/null | grep -q "Related work"; then
     start=$i; break
   fi
 done
 [ -n "$start" ] || { echo "Related work heading not found"; exit 1; }
 end="$start"
 for i in $(seq "$start" "$pages"); do
-  if page_has paper/main.pdf "$i" "Limitations and what this does not show"; then
+  if pdftotext -f "$i" -l "$i" paper/main.pdf - 2>/dev/null | grep -q "Limitations and what this does not show"; then
     end=$i; break
   fi
   end=$i

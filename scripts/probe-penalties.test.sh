@@ -106,8 +106,7 @@ grep -q '^y,fails,designed$' "$GEN/probe-heatmap-fails.csv" \
   || { echo "fails file lost the designed column"; exit 1; }
 barf=$(awk -F, 'NR>1 {s+=$2} END{print s+0}' "$GEN/probe-heatmap-fails.csv")
 bard=$(awk -F, 'NR>1 {s+=$3} END{print s+0}' "$GEN/probe-heatmap-fails.csv")
-# The figure keeps only the released version per package (issue #221,
-# M5), so the expected bars count fails on those rows only.
+# Expected bars count fails on the released rows only (issue #221, M5).
 wantf=$(printf '%s\n' "$released" | while IFS=, read -r pkg ver; do
     awk -F, -v p="$pkg" -v v="$ver" 'NR>1 && $1==p && $2==v && $5=="fail" && $3!="atk-dup-tool-calls"' paper/data/exp/contract-probes.csv
   done | wc -l)
@@ -135,8 +134,7 @@ wdefoff=$(grep -boF 'shipped in two waves' "$S4" | head -1 | cut -d: -f1)
 wuseoff=$(grep -boE 'wave-[12]' "$S4" | head -1 | cut -d: -f1)
 { [ -n "$wdefoff" ] && { [ -z "$wuseoff" ] || [ "$wdefoff" -lt "$wuseoff" ]; }; } \
   || { echo "wave-N used before the wave sentence"; exit 1; }
-# The fix-brief sentence moved out of Section 4 entirely (issue #221,
-# M6), so the term must not appear there undefined.
+# fix-brief moved out of Section 4 (issue #221, M6): no undefined use.
 if grep -ni 'fix.brief' "$S4"; then
   echo "fix-brief used in $S4 without a gloss"; exit 1
 fi

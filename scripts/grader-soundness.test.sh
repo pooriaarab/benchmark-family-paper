@@ -45,8 +45,8 @@ for m in paper/main.tex paper/main-dmlr.tex; do
   grep -q "input{figures/fig-probe-heatmap" "$m" \
     || { echo "$m no longer inputs figures/fig-probe-heatmap"; exit 1; }
 done
-# F8 moved to the results appendix (issue #221, M5): input exactly once
-# across the tree, and that once lives inside app-results.tex.
+# F8 moved to the results appendix (issue #221, M5): input once, inside
+# app-results.tex.
 n=$(grep -rcF 'input{figures/fig-hidden-audit.tex}' paper/main.tex \
     paper/main-dmlr.tex paper/sections | awk -F: '{s+=$2} END{print s}')
 [ "$n" = "1" ] || { echo "fig-hidden-audit is input $n times, want 1"; exit 1; }
