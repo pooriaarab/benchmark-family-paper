@@ -27,6 +27,7 @@ const CLASSES = join(ROOT, "scripts/exp/reason-classes.json");
 const PROBES = join(ROOT, "scripts/exp/probes.json");
 const OUT = join(ROOT, "paper/generated/exp-macros.tex");
 const VERDICTS_OUT = join(ROOT, "paper/generated/exploit-verdicts.tex");
+const POLICY_ONLY_OUT = join(ROOT, "paper/generated/exploit-policy-only.tex");
 const PAPER = join(ROOT, "paper");
 const REASON_CLASSES = ["format-gate", "contract-violation", "wrong-answer", "abort", "unclassified"];
 const PROBE_RESULTS = ["pass", "fail", "exploratory", "not-runnable", "outside-contract"];
@@ -227,7 +228,7 @@ function loadInputs() {
     ["package", "locator", "measured_state", "record_value", "measured_value", "clause", "record_holds", "postfix_holds", "status", "notes"]);
   const runtimes = readCsv(SOURCES[17].path,
     ["experiment", "script", "artifacts", "cells", "wall_seconds", "measured_at"]);
-  return { versions, pinned, waveOf, released, cells, headroom, reasons, probeIds, probeType, contract, seeds, audit, census, overlap, detConfig, determinism, exploits, explA, explB, explC, runtimes };
+  return { versions, pinned, waveOf, released, classes, cells, headroom, reasons, probeIds, probeType, contract, seeds, audit, census, overlap, detConfig, determinism, exploits, explA, explB, explC, runtimes };
 }
 
 // A `;`-joined list where `none` means empty; an empty entry after a
@@ -243,7 +244,7 @@ function listLen(rel, row, field) {
 }
 
 function analyse(input) {
-  const { pinned, waveOf, released, cells, headroom, reasons, probeIds, probeType, contract, seeds, audit, census, overlap, detConfig, determinism, exploits, explA, explB, explC, runtimes } = input;
+  const { pinned, waveOf, released, classes, cells, headroom, reasons, probeIds, probeType, contract, seeds, audit, census, overlap, detConfig, determinism, exploits, explA, explB, explC, runtimes } = input;
   const artifacts = new Set();
   const policies = new Set();
   const seenCell = new Set();
@@ -790,6 +791,30 @@ function analyse(input) {
     if (stat.movedFail > 0) movedFailPkgs.push(pkg);
   }
 
+  // Frozen-list shapes for Appendix J: declared reason classes and
+  // their regex-rule count, probe counts by kind, and the frozen
+  // exploit rows no run could reach (the reviewer's unreleased
+  // policies), each with its line number for the r<n> citation.
+  const reasonClassCount = Object.keys(classes.classMeanings ?? {}).length;
+  const reasonClassRules =
+    (classes.shared ?? []).length +
+    Object.values(classes.packages ?? {}).reduce((sum, rules) => sum + rules.length, 0);
+  const reasonClassPkgs = Object.keys(classes.packages ?? {}).length;
+  let probesHonest = 0;
+  let probesAttack = 0;
+  let probesExploratory = 0;
+  for (const kind of probeIds.values()) {
+    if (kind === "honest-variant") probesHonest += 1;
+    else if (kind === "attack") probesAttack += 1;
+    else probesExploratory += 1;
+  }
+  const policyOnlyRows = exploits
+    .map((row, index) => ({ row, line: index + 2 }))
+    .filter(({ row }) => row.reproducibility === "needs-reviewer-policy");
+  if (policyOnlyRows.length !== explPolicyOnly) {
+    fail("needs-reviewer-policy rows disagree with the unrun-row count");
+  }
+
   const releasedBest = releasedRows.map((row) => row.best);
   const maxBest = Math.max(...releasedBest);
   const headrooms = releasedRows.map((row) => row.headroom);
@@ -928,6 +953,19 @@ function analyse(input) {
     explNotReplicatedList,
     runtimeBatteryMin,
     runtimeProbesSec,
+    reasonClassCount,
+    reasonClassRules,
+    reasonClassPkgs,
+    probesHonest,
+    probesAttack,
+    probesExploratory,
+    policyOnlyRows,
+    runtimeExplASec: runtimeSec(runtimes, "E2a"),
+    runtimeExplBSec: runtimeSec(runtimes, "E2b"),
+    runtimeExplCSec: runtimeSec(runtimes, "E2c"),
+    runtimeAuditSec: runtimeSec(runtimes, "E5a"),
+    runtimeOverlapSec: runtimeSec(runtimes, "E5b"),
+    runtimeDeterminismSec: runtimeSec(runtimes, "E6"),
   };
 }
 
@@ -1063,6 +1101,18 @@ function generate(stats) {
     `\\newcommand{\\expExplAtkMedianNewPaired}{${fmt(stats.explAtkMedianNewPaired)}}`,
     `\\newcommand{\\expExplAtkNewOnly}{${stats.explAtkNewOnly}}`,
     `\\newcommand{\\expExplNotReplicatedList}{${stats.explNotReplicatedList}}`,
+    `\\newcommand{\\expReasonClasses}{${stats.reasonClassCount}}`,
+    `\\newcommand{\\expReasonClassRules}{${stats.reasonClassRules}}`,
+    `\\newcommand{\\expReasonClassPkgs}{${stats.reasonClassPkgs}}`,
+    `\\newcommand{\\expProbesHonest}{${stats.probesHonest}}`,
+    `\\newcommand{\\expProbesAttack}{${stats.probesAttack}}`,
+    `\\newcommand{\\expProbesExploratory}{${stats.probesExploratory}}`,
+    `\\newcommand{\\expRuntimeExplASec}{${stats.runtimeExplASec}}`,
+    `\\newcommand{\\expRuntimeExplBSec}{${stats.runtimeExplBSec}}`,
+    `\\newcommand{\\expRuntimeExplCSec}{${stats.runtimeExplCSec}}`,
+    `\\newcommand{\\expRuntimeAuditSec}{${stats.runtimeAuditSec}}`,
+    `\\newcommand{\\expRuntimeOverlapSec}{${stats.runtimeOverlapSec}}`,
+    `\\newcommand{\\expRuntimeDeterminismSec}{${stats.runtimeDeterminismSec}}`,
     ...["a", "b", "c"].flatMap((part) => [
       `\\newcommand{\\expExpl${part.toUpperCase()}Clauses}{${stats.explPartClauses[part]}}`,
       ...Object.keys(stats.explCounts[part]).map(
@@ -1087,6 +1137,40 @@ function shortLocator(locator) {
   const blob = locator.match(/\/blob\/[0-9a-f]{40}\/([^#]+?)(?:#L(\d+))?$/);
   if (blob) return `${blob[1].split("/").pop()}${blob[2] ? ` L${blob[2]}` : ""}`;
   fail(`locator does not shorten: ${locator}`);
+}
+
+// Escape free text from the frozen exploit list for a table cell.
+function texCell(text) {
+  return String(text)
+    .replace(/\\/g, "\\textbackslash{}")
+    .replace(/[&%#_]/g, (ch) => `\\${ch}`)
+    .replace(/\^/g, "\\textasciicircum{}")
+    .replace(/~/g, "\\textasciitilde{}");
+}
+
+// The frozen rows no run could reach: every needs-reviewer-policy row
+// of exploits.csv as a table body, so the appendix list cannot drift
+// from the list it describes. r<n> is the row's line number, the same
+// citation Table T3 uses.
+function policyOnlyTex(stats) {
+  const rows = stats.policyOnlyRows
+    .map(
+      ({ row, line }) =>
+        `r${line} & ${ttId(row.package)} & \\texttt{${shortLocator(row.locator)}} & ${texCell(row.why)} \\\\`,
+    )
+    .join("\n");
+  return `% Generated by scripts/exp/macros.mjs. Do not edit.
+% The needs-reviewer-policy rows of paper/data/exp/exploits.csv: the
+% frozen exploit rows no run could measure because the record does not
+% pin the reviewer's policy enough to rebuild it identically.
+\\begin{tabular}{@{}r>{\\raggedright\\arraybackslash}p{0.18\\textwidth}>{\\raggedright\\arraybackslash}p{0.16\\textwidth}>{\\raggedright\\arraybackslash}p{0.48\\textwidth}@{}}
+\\toprule
+row & package & locator & why no run reached it \\\\
+\\midrule
+${rows}
+\\bottomrule
+\\end{tabular}
+`;
 }
 
 const EXPL_PART_LABEL = {
@@ -1197,15 +1281,18 @@ const input = loadInputs();
 const stats = analyse(input);
 const expected = generate(stats);
 const verdicts = verdictsFloat(stats);
+const policyOnly = policyOnlyTex(stats);
 
 if (process.argv.includes("--check")) {
   const defined = check(expected);
   checkFresh(VERDICTS_OUT, verdicts);
+  checkFresh(POLICY_ONLY_OUT, policyOnly);
   console.log(`exp-macros.mjs: ${defined} macros defined, all \\exp* uses covered, generated files fresh`);
 } else {
   mkdirSync(dirname(OUT), { recursive: true });
   writeFileSync(OUT, expected);
   writeFileSync(VERDICTS_OUT, verdicts);
+  writeFileSync(POLICY_ONLY_OUT, policyOnly);
   console.log(`packages=${stats.packages} artifacts=${stats.artifacts} cells=${stats.cells} failed=${stats.failedCells} rows=${stats.batteryRows}`);
   console.log(`released best-trivial max=${fmt(stats.releasedMax)} zero=${stats.releasedZero}/${stats.packages} headroom ${fmt(stats.headroomMin)}..${fmt(stats.headroomMax)} (median ${fmt(stats.headroomMedian)})`);
   console.log(`zero rows=${stats.zeroRows} format-gate=${stats.classCounts["format-gate"]} (${pct(stats.classCounts["format-gate"], stats.zeroRows)}% of zeros)`);
