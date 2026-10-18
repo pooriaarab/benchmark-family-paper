@@ -31,7 +31,7 @@
   table[x=x,y=y,meta=count] {generated/hidden-audit-leaks.csv};
 \addplot[only marks, mark=none, nodes near coords,
   point meta=explicit symbolic,
-  every node near coord/.append style={font=\tiny, text=black}]
+  every node near coord/.append style={font=\tiny, text=black, anchor=center}]
   table[x=x,y=y,meta=count] {generated/hidden-audit-leaks.csv};
 \pgfmathsetmacro{\wavebound}{\auditWaveRows-0.5}
 \draw[black!35, dashed] (axis cs:-0.5,\wavebound) -- (axis cs:\auditCols-0.5,\wavebound);
@@ -45,12 +45,12 @@
   ymin=0, ymax=105,
   xtick={0,...,\auditQualMax},
   xticklabels from table={generated/hidden-audit-qrows.csv}{label},
-  x tick label style={rotate=30,anchor=east,font=\tiny},
+  x tick label style={rotate=30,anchor=east,font=\tiny,yshift=-3pt},
   ylabel={exact overlap (\%)},
   y tick label style={font=\tiny},
   axis x line*=bottom, axis y line*=left,
-  legend style={at={(0.5,-0.30)},anchor=north,font=\tiny,
-    legend columns=-1, draw=none},
+  legend style={at={(xticklabel* cs:0.5)},anchor=north,font=\tiny,
+    legend columns=-1, draw=none, yshift=-2pt},
 ]
 \addplot[only marks, mark=*, mark size=1.4pt, color=okblue]
   table[x=xj,y=prompt] {generated/hidden-audit-overlap.csv};

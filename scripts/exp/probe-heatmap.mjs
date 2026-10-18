@@ -145,6 +145,11 @@ released.forEach((a, y) => {
       const pattern = row.result === "outside-contract" ? "north east lines" : "crosshatch";
       hatch.push(`\\fill[pattern=${pattern}, pattern color=black!55] (axis cs:${x - 0.5},${y - 0.5}) rectangle (axis cs:${x + 0.5},${y + 0.5});`);
     }
+    // Genuine fails get a pale diagonal overlay so they stay distinct
+    // from pass cells when the figure prints in grayscale (issue #223, M7).
+    if (row.result === "fail" && !designed) {
+      hatch.push(`\\fill[pattern=north west lines, pattern color=white!80] (axis cs:${x - 0.5},${y - 0.5}) rectangle (axis cs:${x + 0.5},${y + 0.5});`);
+    }
   });
   fails.push(`${y},${failCount},${designedCount}`);
 });
