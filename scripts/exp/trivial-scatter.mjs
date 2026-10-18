@@ -124,6 +124,13 @@ w2rows.forEach((row) => {
 });
 if (w2zeros.length) w2zeros[0].label = `${w2zeros.length} at 0 - 0.1.0 only`;
 
+// Labels anchored west at a point near the origin sweep right through
+// the y=x line's visible segment (the axis clips it at x = 0.06).
+// Those notes go to their own file so the .tex can shift them right of
+// the line instead of crossing it (issue #229, M7 residue).
+const online = notes.filter((row) => row.x < 0.06);
+const offline = notes.filter((row) => row.x >= 0.06);
+
 mkdirSync(OUT_DIR, { recursive: true });
 writeFileSync(join(OUT_DIR, "trivial-scatter.csv"), [
   "package,x,y",
@@ -135,7 +142,11 @@ writeFileSync(join(OUT_DIR, "trivial-scatter-rug.csv"), [
 ].join("\n") + "\n");
 writeFileSync(join(OUT_DIR, "trivial-scatter-notes.csv"), [
   "x,y,label",
-  ...notes.map((row) => `${fmt(row.x)},${fmt(row.y)},${row.label}`),
+  ...offline.map((row) => `${fmt(row.x)},${fmt(row.y)},${row.label}`),
+].join("\n") + "\n");
+writeFileSync(join(OUT_DIR, "trivial-scatter-online.csv"), [
+  "x,y,label",
+  ...online.map((row) => `${fmt(row.x)},${fmt(row.y)},${row.label}`),
 ].join("\n") + "\n");
 
 console.log(`wave1=${w1rows.length} wave2=${w2rows.length} notes=${notes.length} -> trivial-scatter csvs, ok`);
