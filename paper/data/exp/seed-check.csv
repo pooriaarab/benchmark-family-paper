@@ -1,0 +1,33 @@
+package,version,value,source,verdict,note
+benchmark-pelican,0.1.0,61015,detector,not-seed,fragment of the public seed 20261015
+benchmark-pelican,0.1.0,9173,detector,seed,--seed 9173 --split hidden command in README
+benchmark-pelican,0.2.0,4242,detector,seed,held-out seed named in the README measurement table
+benchmark-pelican,0.2.0,61015,detector,not-seed,fragment of the public seed 20261015
+benchmark-pelican,0.2.0,9173,detector,seed,--seed 9173 --split hidden command in README
+benchmark-skateboard,0.1.0,43110,detector,seed,--seed 43110 --split hidden command in README
+benchmark-skateboard,0.2.0,88200416,detector,seed,--seed 88200416 --split hidden command in README
+benchmark-apology-pizza,0.1.0,94721,detector,seed,--seed 94721 --split hidden command in README
+benchmark-apology-pizza,0.2.0,94721,detector,seed,--seed 94721 --split hidden command in README
+benchmark-tool-errors,0.1.0,777,detector,seed,--seed 777 --split hidden command in README
+benchmark-cost-per-task,0.1.0,987654,detector,seed,--seed 987654 --split hidden command in README
+benchmark-cost-per-task,0.2.0,987654,detector,seed,--seed 987654 --split hidden command in README
+benchmark-mcp-safety,0.1.0,424242,detector,seed,--seed 424242 --split hidden command in README
+benchmark-mcp-safety,0.2.0,424242,detector,seed,--seed 424242 --split hidden command in README
+benchmark-checkout-consent,0.1.0,381921,detector,seed,--seed 381921 --split hidden command in README
+benchmark-checkout-consent,0.2.0,381921,detector,seed,--seed 381921 --split hidden command in README
+benchmark-hundred-step,0.1.0,20271015,detector,seed,named as the hidden split's seed in data/PROVENANCE.md
+benchmark-ranking-stability,0.1.0,300,detector,not-seed,public task count in PROVENANCE
+benchmark-ranking-stability,0.2.0,300,detector,not-seed,public task count in PROVENANCE
+benchmark-exploit-resistance,0.1.0,184,detector,not-seed,measured sample count in README
+benchmark-crm-truthfulness,0.1.0,240,detector,not-seed,scored-line count in README and grading notes
+benchmark-silent-constraints,0.1.0,20261016,detector,not-seed,the package's own public seed
+benchmark-accessibility-fix,0.1.0,999,detector,seed,--seed 999 --split hidden command in README
+benchmark-sycophancy,0.1.0,7,hand-check,seed,--seed 7 --split hidden command in README and AGENTS.md
+benchmark-schema-mutation,0.1.0,7,hand-check,seed,--seed 7 --split hidden command in README
+benchmark-crm-truthfulness,0.1.0,7,hand-check,seed,named as a hidden seed in docs/grading.md
+benchmark-pelican,0.2.0,7,hand-check,seed,held-out seed named in the README measurement table
+benchmark-pelican,0.2.0,99,hand-check,seed,held-out seed named in the README measurement table
+benchmark-exploit-resistance,0.1.0,99,hand-check,seed,--seed 99 --split hidden command in README
+benchmark-test-weakening,0.1.0,73,hand-check,seed,--seed 73 --split hidden command in README
+benchmark-test-weakening,0.2.0,73,hand-check,seed,--seed 73 --split hidden command in README
+benchmark-accessibility-fix,0.1.0,25,hand-check,not-seed,count of seeds evaluated in the changelog

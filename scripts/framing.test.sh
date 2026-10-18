@@ -23,9 +23,10 @@ fi
 
 echo "== both abstracts carry the required evidence"
 for f in "$MAIN" "$DMLR"; do
-  for macro in expExplFixFails expProbesFailedCells expProbesReleasedCells \
-      expProbesForgedAccepted approvalDefectCases councilMergedApproved \
-      trivialSignN expTrivialReleasedMax expTrivialReleasedMaxPkgs; do
+  for macro in expExplFixFails expExplFixHoldsWeak expProbesCreditFailCells \
+      expProbesCreditFailPkgCount expProbesForgedAccepted approvalDefectCases \
+      councilMergedApproved trivialSignN expTrivialReleasedMax \
+      expTrivialReleasedMaxPkgs; do
     grep -qF "\\$macro" "$f" || { echo "$f: \\$macro missing"; exit 1; }
   done
   grep -qF 'flagged a published hidden seed' "$f" \

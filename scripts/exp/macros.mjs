@@ -37,6 +37,11 @@ const FORGED_RE = /^atk-forged-/;
 // A bare four-digit year is not a seed value; the hidden-seed recount
 // drops years along with the public seed itself (issue #212, M9).
 const YEAR_RE = /^(19|20)\d{2}$/;
+// A generated .tex must hold no control character: a bare "\ref" inside
+// a JavaScript template literal once wrote a carriage return into the
+// committed T3 caption and it printed as "Table eftab:..." (issue
+// #225, N4). Line feed is the only byte below 0x20 a .tex may carry.
+const CONTROL_CHAR_RE = /[\x00-\x09\x0B-\x1F\x7F]/;
 
 const SOURCES = [
   { key: "versions", path: VERSIONS, rel: "scripts/exp/versions.json" },
@@ -57,6 +62,7 @@ const SOURCES = [
   { key: "explB", path: join(ROOT, "paper/data/exp/exploit-results-b.csv"), rel: "paper/data/exp/exploit-results-b.csv" },
   { key: "explC", path: join(ROOT, "paper/data/exp/exploit-results-c.csv"), rel: "paper/data/exp/exploit-results-c.csv" },
   { key: "runtimes", path: join(ROOT, "paper/data/exp/runtimes.csv"), rel: "paper/data/exp/runtimes.csv" },
+  { key: "seedCheck", path: join(ROOT, "paper/data/exp/seed-check.csv"), rel: "paper/data/exp/seed-check.csv" },
 ];
 
 function fail(message) {
@@ -153,7 +159,7 @@ function ttId(id) {
 
 function pkgList(ids) {
   const sorted = [...ids].sort();
-  return sorted.length === 0 ? "\\emph{none}" : sorted.map(ttId).join(", ");
+  return sorted.length === 0 ? "\\emph{none}" : andList(sorted.map(ttId));
 }
 
 // English list for short numeric grids: "2", "1 and 2", "1, 4 and 16".
@@ -235,7 +241,9 @@ function loadInputs() {
     ["package", "locator", "measured_state", "record_value", "measured_value", "clause", "record_holds", "postfix_holds", "status", "notes"]);
   const runtimes = readCsv(SOURCES[17].path,
     ["experiment", "script", "artifacts", "cells", "wall_seconds", "measured_at"]);
-  return { versions, pinned, waveOf, released, classes, cells, headroom, reasons, probeIds, probeType, contract, seeds, publicSeed, audit, census, overlap, detConfig, determinism, exploits, explA, explB, explC, runtimes };
+  const seedCheck = readCsv(SOURCES[18].path,
+    ["package", "version", "value", "source", "verdict", "note"]);
+  return { versions, pinned, waveOf, released, classes, cells, headroom, reasons, probeIds, probeType, contract, seeds, publicSeed, audit, census, overlap, detConfig, determinism, exploits, explA, explB, explC, runtimes, seedCheck };
 }
 
 // A `;`-joined list where `none` means empty; an empty entry after a
@@ -366,6 +374,63 @@ function analyse(input) {
         .filter((v) => v !== publicSeed && !YEAR_RE.test(v)).length;
     }
   }
+
+  // The seed hand-check (issue #225, N6): paper/data/exp/seed-check.csv
+  // lists every detector "other" value with a hand verdict, plus the
+  // printed hidden seeds the detector cannot see (it reads only values
+  // of three or more digits). Every detector row must appear in the
+  // audit's "other" set and vice versa; a hand-check row must not
+  // duplicate a detector row.
+  const detectorEntries = new Map(); // "pkg@ver|value" -> audit row
+  for (const row of audit) {
+    const key = keyOf(row.package, row.version);
+    if (row.doc_hidden_seed_examples.trim() === "none") continue;
+    for (const v of row.doc_hidden_seed_examples.split(";")) {
+      if (v === publicSeed || YEAR_RE.test(v)) continue;
+      detectorEntries.set(`${key}|${v}`, row);
+    }
+  }
+  const checkSeen = new Set();
+  const seedChecked = { detectorSeeds: new Map(), handSeeds: new Map(), nonseedValues: new Set() };
+  for (const row of input.seedCheck) {
+    const key = keyOf(row.package, row.version);
+    if (!pinned.get(row.package)?.has(row.version)) {
+      fail(`seed-check.csv: unpinned artifact ${key}`);
+    }
+    if (!/^\d+$/.test(row.value)) fail(`seed-check.csv: ${key} bad value ${row.value}`);
+    if (!["detector", "hand-check"].includes(row.source)) {
+      fail(`seed-check.csv: ${key} bad source ${row.source}`);
+    }
+    if (!["seed", "not-seed"].includes(row.verdict)) {
+      fail(`seed-check.csv: ${key} bad verdict ${row.verdict}`);
+    }
+    const cell = `${key}|${row.value}`;
+    if (checkSeen.has(cell)) fail(`seed-check.csv: duplicate ${cell}`);
+    checkSeen.add(cell);
+    if (row.source === "detector") {
+      if (!detectorEntries.has(cell)) {
+        fail(`seed-check.csv: detector row ${cell} is not an "other" audit value`);
+      }
+      detectorEntries.delete(cell);
+    } else if (detectorEntries.has(cell)) {
+      fail(`seed-check.csv: hand-check row ${cell} duplicates a detector value`);
+    }
+    if (row.verdict === "seed") {
+      const map = row.source === "detector" ? seedChecked.detectorSeeds : seedChecked.handSeeds;
+      if (!map.has(row.value)) map.set(row.value, new Set());
+      map.get(row.value).add(row.package);
+    } else if (row.source === "detector") {
+      seedChecked.nonseedValues.add(row.value);
+    }
+  }
+  if (detectorEntries.size) {
+    fail(`seed-check.csv: missing hand verdicts for ${[...detectorEntries.keys()].join(", ")}`);
+  }
+  const seedDetectorPkgs = new Set([...seedChecked.detectorSeeds.values()].flatMap((s) => [...s]));
+  const seedHandPkgs = [...new Set([...seedChecked.handSeeds.values()].flatMap((s) => [...s]))]
+    .filter((p) => !seedDetectorPkgs.has(p));
+  const seedDistinct = new Set(
+    input.seedCheck.filter((r) => r.source === "detector").map((r) => r.value));
   for (const row of census) {
     const key = keyOf(row.package, row.version);
     if (!pinned.get(row.package)?.has(row.version)) fail(`hidden-census.csv: unpinned artifact ${key}`);
@@ -383,6 +448,7 @@ function analyse(input) {
 
   const seedSet = new Set(seeds.map(String));
   const overlapCells = new Set();
+  const overlapArtifacts = new Set(); // qualified keys with any nonzero overlap
   let maxPromptPct = 0;
   let maxExpectedPct = 0;
   let maxIdSuffixPct = 0;
@@ -400,6 +466,10 @@ function analyse(input) {
       }
       return (n / den) * 100;
     };
+    if (["prompt_exact_overlap", "expected_exact_overlap", "id_exact_overlap", "id_suffix_overlap"]
+      .some((field) => num(SOURCES[10].rel, row, field) > 0)) {
+      overlapArtifacts.add(key);
+    }
     const promptPairs = num(SOURCES[10].rel, row, "prompt_pairs");
     const expectedPairs = num(SOURCES[10].rel, row, "expected_pairs");
     const idDen = Math.min(num(SOURCES[10].rel, row, "hidden_tasks"), num(SOURCES[10].rel, row, "public_tasks"));
@@ -552,6 +622,8 @@ function analyse(input) {
   const fixFailHonestPkgs = new Set();
   const explBadRows = [];
   let explFixHoldsWeak = 0; // fix-holds whose only bound is "below 0.1.0"
+  const explWeakByPart = { a: 0, b: 0, c: 0 };
+  const weakHolds = []; // {line, pkg, version, measured} of the weak holds
   for (const [part, rows] of [["a", explA], ["b", explB]]) {
     for (const row of rows) {
       const line = Number(row.row);
@@ -584,7 +656,12 @@ function analyse(input) {
         fixFailPkgs.add(row.package);
         (attack ? fixFailAttackPkgs : fixFailHonestPkgs).add(row.package);
       }
-      if (row.verdict === "fix-holds" && rel === "below 0.1.0") explFixHoldsWeak += 1;
+      if (row.verdict === "fix-holds" && rel === "below 0.1.0") {
+        explFixHoldsWeak += 1;
+        explWeakByPart[part] += 1;
+        weakHolds.push({ line, pkg: row.package, version: row.version,
+          measured: num(`exploit-results-${part}.csv`, row, "measured") });
+      }
       if (row.verdict === "not-replicated" || row.verdict === "fix-fails") {
         explBadRows.push({ row: line, pkg: row.package, locator: row.locator, where: row.version, verdict: row.verdict, attack, rel, vs: relVs(rel, `exploit-results-${part}.csv`), measured: row.measured, record: row.record_value });
       }
@@ -945,6 +1022,7 @@ function analyse(input) {
     probesDupCallCells,
     probesWrapCells,
     probesCreditFailPkgs: creditFailPkgs,
+    probesCreditFailPkgCount: creditFailPkgs.length,
     probesMovedFailPkgCount: movedFailPkgs.length,
     probesDupCallPkgs: dupCallPkgs,
     probesDupCallPkgCount: dupCallPkgs.length,
@@ -952,8 +1030,17 @@ function analyse(input) {
     probesWrapPkgCount: wrapPkgs.length,
     auditArtifacts: auditKeys.size,
     auditLeaksFound: leaksFound,
+    auditOverlapArtifacts: overlapArtifacts.size,
     auditSeedExamples: seedExamples,
     auditSeedExamplesOther: seedExamplesOther,
+    auditSeedDistinct: seedDistinct.size,
+    auditSeedRealDistinct: seedChecked.detectorSeeds.size,
+    auditSeedRealPkgs: seedDetectorPkgs.size,
+    auditSeedNonseed: seedChecked.nonseedValues.size,
+    auditSeedHandValues: seedChecked.handSeeds.size,
+    auditSeedHandPkgs: seedHandPkgs.length,
+    auditSeedTotalDistinct: seedChecked.detectorSeeds.size + seedChecked.handSeeds.size,
+    auditSeedTotalPkgs: seedDetectorPkgs.size + seedHandPkgs.length,
     auditCensusQualified: qualified.size,
     auditSeedlessQualified: seedlessQualified,
     auditSeeds: seedSet.size,
@@ -1004,6 +1091,9 @@ function analyse(input) {
     explFixFailsAttackPkgs: [...fixFailAttackPkgs],
     explFixFailsHonestPkgs: [...fixFailHonestPkgs],
     explFixHoldsWeak,
+    explWeakByPart,
+    explWeakMcpSafety: Math.max(
+      ...weakHolds.filter((w) => w.pkg === "mcp-safety").map((w) => w.measured)),
     explAtkPairs: atkPairs.length,
     explAtkMedianOldPaired: median(atkPairs.map((d) => d.old)),
     explAtkMedianNewPaired: median(atkPairs.map((d) => d.new)),
@@ -1108,6 +1198,7 @@ function generate(stats) {
     `\\newcommand{\\expProbesCreditFailCells}{${stats.probesCreditFailCells}}`,
     `\\newcommand{\\expProbesMovedFailCells}{${stats.probesMovedFailCells}}`,
     `\\newcommand{\\expProbesCreditFailPkgs}{${pkgList(stats.probesCreditFailPkgs)}}`,
+    `\\newcommand{\\expProbesCreditFailPkgCount}{${stats.probesCreditFailPkgCount}}`,
     `\\newcommand{\\expProbesMovedFailPkgCount}{${stats.probesMovedFailPkgCount}}`,
     `\\newcommand{\\expProbesDupCallCells}{${stats.probesDupCallCells}}`,
     `\\newcommand{\\expProbesDupCallPkgs}{${pkgList(stats.probesDupCallPkgs)}}`,
@@ -1117,8 +1208,17 @@ function generate(stats) {
     `\\newcommand{\\expProbesWrapPkgCount}{${stats.probesWrapPkgCount}}`,
     `\\newcommand{\\expAuditArtifacts}{${stats.auditArtifacts}}`,
     `\\newcommand{\\expAuditLeaksFound}{${stats.auditLeaksFound}}`,
+    `\\newcommand{\\expAuditOverlapArtifacts}{${stats.auditOverlapArtifacts}}`,
     `\\newcommand{\\expAuditSeedExamples}{${stats.auditSeedExamples}}`,
     `\\newcommand{\\expAuditSeedExamplesOther}{${stats.auditSeedExamplesOther}}`,
+    `\\newcommand{\\expAuditSeedDistinct}{${stats.auditSeedDistinct}}`,
+    `\\newcommand{\\expAuditSeedRealDistinct}{${stats.auditSeedRealDistinct}}`,
+    `\\newcommand{\\expAuditSeedRealPkgs}{${stats.auditSeedRealPkgs}}`,
+    `\\newcommand{\\expAuditSeedNonseed}{${stats.auditSeedNonseed}}`,
+    `\\newcommand{\\expAuditSeedHandValues}{${stats.auditSeedHandValues}}`,
+    `\\newcommand{\\expAuditSeedHandPkgs}{${stats.auditSeedHandPkgs}}`,
+    `\\newcommand{\\expAuditSeedTotalDistinct}{${stats.auditSeedTotalDistinct}}`,
+    `\\newcommand{\\expAuditSeedTotalPkgs}{${stats.auditSeedTotalPkgs}}`,
     `\\newcommand{\\expAuditCensusQualified}{${stats.auditCensusQualified}}`,
     `\\newcommand{\\expAuditSeedlessQual}{${stats.auditSeedlessQualified}}`,
     `\\newcommand{\\expAuditSeeds}{${stats.auditSeeds}}`,
@@ -1166,6 +1266,7 @@ function generate(stats) {
     `\\newcommand{\\expExplFixFailsAttackPkgs}{${pkgList(stats.explFixFailsAttackPkgs)}}`,
     `\\newcommand{\\expExplFixFailsHonestPkgs}{${pkgList(stats.explFixFailsHonestPkgs)}}`,
     `\\newcommand{\\expExplFixHoldsWeak}{${stats.explFixHoldsWeak}}`,
+    `\\newcommand{\\expExplWeakMcpSafety}{${fmt(stats.explWeakMcpSafety)}}`,
     `\\newcommand{\\expExplAtkPairs}{${stats.explAtkPairs}}`,
     `\\newcommand{\\expExplAtkMedianOldPaired}{${fmt(stats.explAtkMedianOldPaired)}}`,
     `\\newcommand{\\expExplAtkMedianNewPaired}{${fmt(stats.explAtkMedianNewPaired)}}`,
@@ -1260,7 +1361,7 @@ const EXPL_PART_LABEL = {
 // softened.
 function verdictsFloat(stats) {
   const countLine = (part) =>
-    `${EXPL_PART_LABEL[part]} & ${stats.explPartClauses[part]} & ${stats.explCounts[part].replicated} & ${stats.explCounts[part]["not-replicated"]} & ${stats.explCounts[part]["fix-holds"]} & ${stats.explCounts[part]["fix-fails"]} & ${stats.explCounts[part]["not-runnable"]} \\\\`;
+    `${EXPL_PART_LABEL[part]} & ${stats.explPartClauses[part]} & ${stats.explCounts[part].replicated} & ${stats.explCounts[part]["not-replicated"]} & ${stats.explCounts[part]["fix-holds"]} & ${stats.explWeakByPart[part]} & ${stats.explCounts[part]["fix-fails"]} & ${stats.explCounts[part]["not-runnable"]} \\\\`;
   const verdictCell = (r) => `${r.verdict.replace("-", " ")}${r.attack ? "" : " (honest)"}`;
   return `% Generated by scripts/exp/macros.mjs. Do not edit.
 % Table T3: clause verdicts on the exploit re-measurement, from
@@ -1268,18 +1369,18 @@ function verdictsFloat(stats) {
 % paper/data/exp/exploits.csv.
 \\begin{table}[!tbp]
 \\centering
-\\caption{Verdicts on the \\expExplClauses{} clauses the re-measurement runs evaluated over the \\expExplFrozen{} frozen exploit rows, by run part (Appendix~\\ref{app:experiments}). A clause pairs a target, a released version or a pinned commit, with the relation the measured score must satisfy there. A replicated clause re-measured the logged number or bound; fix-holds and fix-fails judge the post-fix state against the frozen relation, so a fix-fails on an attack row means the shipped fix still pays the exploit, while on an honest re-check row (an \\emph{equals oracle} clause, marked \\emph{honest}) it means the grader still rejects the honest answer. The single not-runnable row is a locator-coverage row outside the run plan. Table~\\ref{tab:exploit-verdicts-low} in the appendix lists every clause that did not replicate and every post-fix clause that failed. A further \\expExplPolicyOnly{} frozen rows need the reviewer's unreleased policy and produced no clause.}
+\\caption{Verdicts on the \\expExplClauses{} clauses the re-measurement runs evaluated over the \\expExplFrozen{} frozen exploit rows, by run part (Appendix~\\ref{app:experiments}). A clause pairs a target, a released version or a pinned commit, with the relation the measured score must satisfy there. A replicated clause re-measured the logged number or bound; fix-holds and fix-fails judge the post-fix state against the frozen relation, so a fix-fails on an attack row means the shipped fix still pays the exploit, while on an honest re-check row (an \\emph{equals oracle} clause, marked \\emph{honest}) it means the grader still rejects the honest answer. A hold counts as strict when its frozen relation bounds the score itself (an empty, cap, oracle or record bound); the weak column counts the holds whose only relation is \\emph{below 0.1.0}, which asks the new mean to sit under the old one with no margin. The single not-runnable row is a locator-coverage row outside the run plan. Table~\\ref{tab:exploit-verdicts-low} in the appendix lists every clause that did not replicate and every post-fix clause that failed. A further \\expExplPolicyOnly{} frozen rows need the reviewer's unreleased policy and produced no clause.}
 \\label{tab:exploit-verdicts}
-{\\small
-\\begin{tabular}{@{}lrrrrrr@{}}
+{\\footnotesize\\setlength{\\tabcolsep}{4pt}
+\\begin{tabular}{@{}lrrrrrrr@{}}
 \\toprule
-run part & clauses & replicated & not repl. & fix holds & fix fails & not run. \\\\
+run part & clauses & repl. & not repl. & fix holds & of which weak & fix fails & not run. \\\\
 \\midrule
 ${countLine("a")}
 ${countLine("b")}
 ${countLine("c")}
 \\midrule
-total & ${stats.explClauses} & ${stats.explTotals.replicated} & ${stats.explTotals["not-replicated"]} & ${stats.explTotals["fix-holds"]} & ${stats.explTotals["fix-fails"]} & ${stats.explTotals["not-runnable"]} \\\\
+total & ${stats.explClauses} & ${stats.explTotals.replicated} & ${stats.explTotals["not-replicated"]} & ${stats.explTotals["fix-holds"]} & ${stats.explFixHoldsWeak} & ${stats.explTotals["fix-fails"]} & ${stats.explTotals["not-runnable"]} \\\\
 \\bottomrule
 \\end{tabular}
 }
@@ -1340,8 +1441,21 @@ function checkFresh(path, expected) {
   }
 }
 
+// No generated .tex may carry a control character (N4): the committed
+// files are scanned, and the strings about to be written are checked
+// the same way so a fresh offender fails before it lands.
+function checkControlChars(name, text) {
+  const at = text.search(CONTROL_CHAR_RE);
+  if (at !== -1) {
+    fail(`${name}: control character 0x${text.charCodeAt(at).toString(16)} at byte ${at}`);
+  }
+}
+
 function check(expected) {
   checkFresh(OUT, expected);
+  for (const file of texFiles(dirname(OUT))) {
+    checkControlChars(file.slice(ROOT.length + 1), readFileSync(file, "utf8"));
+  }
   const defined = new Set(
     [...expected.matchAll(/\\newcommand\{\\(exp[A-Z][A-Za-z0-9]*)\}/g)].map((m) => m[1]),
   );
@@ -1379,6 +1493,10 @@ if (process.argv.includes("--check")) {
   checkFresh(POLICY_ONLY_OUT, policyOnly);
   console.log(`exp-macros.mjs: ${defined} macros defined, all \\exp* uses covered, generated files fresh`);
 } else {
+  checkControlChars(OUT.slice(ROOT.length + 1), expected);
+  checkControlChars(VERDICTS_OUT.slice(ROOT.length + 1), verdicts);
+  checkControlChars(VERDICTS_LOW_OUT.slice(ROOT.length + 1), verdictsLow);
+  checkControlChars(POLICY_ONLY_OUT.slice(ROOT.length + 1), policyOnly);
   mkdirSync(dirname(OUT), { recursive: true });
   writeFileSync(OUT, expected);
   writeFileSync(VERDICTS_OUT, verdicts);
