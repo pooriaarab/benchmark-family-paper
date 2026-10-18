@@ -87,3 +87,47 @@ which guard catches it.
   lines and the prefix is reserved for this generator, so a
   hand-defined `\exp*` elsewhere surfaces as a TeX error in the
   build step.
+
+E2 exploit macros (`\expExpl*`, added with the F3/T3 PR):
+
+- A result row that cannot join the frozen list: a/b rows cite an
+  `exploits.csv` line number whose package and locator must match;
+  part-c rows consume one frozen row per
+  (package, locator, measured_state, record_value) key because the
+  six crm-truthfulness issue-9 rows share the first three. A dangling
+  row fails by name.
+- A verdict outside the frozen sets: `replicated`, `not-replicated`,
+  `fix-holds`, `fix-fails`, `not-runnable` for a and b; `replicated`,
+  `not-replicated`, `not-runnable` for c, whose `postfix_holds` must
+  stay `n/a`.
+- A wave-2 row at a version it never had: wave-2 packages released
+  only 0.1.0, so a wave-2 result at 0.2.0 fails instead of entering
+  the after-fix counts.
+- A duplicate or missing measurement: the same (frozen row, version)
+  pair twice fails; a frozen row that produced no result and is not
+  `needs-reviewer-policy` fails too, so the `\expExplPolicyOnly`
+  count cannot hide a skipped run.
+- An honest re-check counted as an attack: the record-value rule in
+  `exploits-clauses.mjs` splits attack rows from honest-answer
+  re-checks (positive record, zero record, or a `not stated` record
+  with an `equals oracle` clause), so the attack medians
+  (`\expExplAtkMedianOld`, `\expExplAtkMedianNew`, the `\expExplAtk*`
+  maxima) never mix the two kinds.
+- A record value that does not parse: `parseRecordValue` throws on a
+  form it does not know, so a new record style stops the run rather
+  than entering a median as zero.
+
+T3 (`exploit-verdicts.tex`, emitted beside the macros):
+
+- A dropped or miscounted clause: the bad-rows block lists every
+  not-replicated and fix-fails clause with package, locator, version
+  and measured number, sorted by frozen line. A duplicated result row
+  trips the duplicate-measurement guard (`macros.test.sh` doctors
+  `exploit-results-a.csv` and expects the run to fail); a frozen row
+  with no result at all trips the coverage guard unless it is a
+  `needs-reviewer-policy` row.
+- A fix-fails row softened: the block prints the verdict verbatim
+  from the CSV, and `\expExplFixFails` counts them in the caption.
+- The float unwired: `macros.test.sh` requires exactly one
+  `\input{generated/exploit-verdicts.tex}` in each main file, and
+  `--check` flags a stale or missing file.

@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 // Experiment macros: turn the committed experiment CSVs into
 // paper/generated/exp-macros.tex so no number is ever typed into a
-// .tex file. The released version per package is the highest version
-// pinned in scripts/exp/versions.json (0.2.0 for wave 1, 0.1.0 for
-// wave 2), so wave-2 packages land in the released-version macros.
+// .tex file. Also emits paper/generated/exploit-verdicts.tex, the T3
+// float for the E2 re-measurement (verdict counts by run part and the
+// list of every not-replicated and fix-fails clause). The released
+// version per package is the highest version pinned in
+// scripts/exp/versions.json (0.2.0 for wave 1, 0.1.0 for wave 2), so
+// wave-2 packages land in the released-version macros.
 //
 //   node scripts/exp/macros.mjs           # regenerate the file
 //   node scripts/exp/macros.mjs --check   # fail on stale output or on
@@ -16,12 +19,14 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { isAttackRow, parseRecordValue } from "./exploits-clauses.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const VERSIONS = join(ROOT, "scripts/exp/versions.json");
 const CLASSES = join(ROOT, "scripts/exp/reason-classes.json");
 const PROBES = join(ROOT, "scripts/exp/probes.json");
 const OUT = join(ROOT, "paper/generated/exp-macros.tex");
+const VERDICTS_OUT = join(ROOT, "paper/generated/exploit-verdicts.tex");
 const PAPER = join(ROOT, "paper");
 const REASON_CLASSES = ["format-gate", "contract-violation", "wrong-answer", "abort", "unclassified"];
 const PROBE_RESULTS = ["pass", "fail", "exploratory", "not-runnable", "outside-contract"];
@@ -42,6 +47,10 @@ const SOURCES = [
   { key: "hiddenOverlap", path: join(ROOT, "paper/data/exp/hidden-overlap.csv"), rel: "paper/data/exp/hidden-overlap.csv" },
   { key: "detConfig", path: join(ROOT, "scripts/exp/determinism.json"), rel: "scripts/exp/determinism.json" },
   { key: "determinism", path: join(ROOT, "paper/data/exp/determinism.csv"), rel: "paper/data/exp/determinism.csv" },
+  { key: "exploits", path: join(ROOT, "paper/data/exp/exploits.csv"), rel: "paper/data/exp/exploits.csv" },
+  { key: "explA", path: join(ROOT, "paper/data/exp/exploit-results-a.csv"), rel: "paper/data/exp/exploit-results-a.csv" },
+  { key: "explB", path: join(ROOT, "paper/data/exp/exploit-results-b.csv"), rel: "paper/data/exp/exploit-results-b.csv" },
+  { key: "explC", path: join(ROOT, "paper/data/exp/exploit-results-c.csv"), rel: "paper/data/exp/exploit-results-c.csv" },
 ];
 
 function fail(message) {
@@ -207,7 +216,15 @@ function loadInputs() {
   const detConfig = JSON.parse(readFileSync(SOURCES[11].path, "utf8"));
   const determinism = readCsv(SOURCES[12].path,
     ["package", "version", "path", "seed", "concurrency", "repeat", "rows", "mean", "sha256", "status", "uniform", "node_version"]);
-  return { versions, pinned, waveOf, released, cells, headroom, reasons, probeIds, probeType, contract, seeds, audit, census, overlap, detConfig, determinism };
+  const exploits = readQuotedCsv(SOURCES[13].path,
+    ["package", "locator", "policy", "record_value", "record_quote", "value_kind", "measured_state", "versions", "reproducibility", "comparison", "scope", "why"]);
+  const explA = readQuotedCsv(SOURCES[14].path,
+    ["package", "locator", "row", "version", "clause", "tasks", "measured", "baseline", "record_value", "verdict", "detail"]);
+  const explB = readQuotedCsv(SOURCES[15].path,
+    ["package", "locator", "row", "version", "clause", "tasks", "measured", "baseline", "record_value", "verdict", "detail"]);
+  const explC = readQuotedCsv(SOURCES[16].path,
+    ["package", "locator", "measured_state", "record_value", "measured_value", "clause", "record_holds", "postfix_holds", "status", "notes"]);
+  return { versions, pinned, waveOf, released, cells, headroom, reasons, probeIds, probeType, contract, seeds, audit, census, overlap, detConfig, determinism, exploits, explA, explB, explC };
 }
 
 // A `;`-joined list where `none` means empty; an empty entry after a
@@ -223,7 +240,7 @@ function listLen(rel, row, field) {
 }
 
 function analyse(input) {
-  const { pinned, waveOf, released, cells, headroom, reasons, probeIds, probeType, contract, seeds, audit, census, overlap, detConfig, determinism } = input;
+  const { pinned, waveOf, released, cells, headroom, reasons, probeIds, probeType, contract, seeds, audit, census, overlap, detConfig, determinism, exploits, explA, explB, explC } = input;
   const artifacts = new Set();
   const policies = new Set();
   const seenCell = new Set();
@@ -466,6 +483,129 @@ function analyse(input) {
     return !detDrift.has(key.split("@")[0]);
   }).length;
 
+  // E2 exploit re-measurement: the frozen list keyed by its 1-based
+  // line number is what the a/b `row` column cites; each result row
+  // must join back to it on package and locator. Part c joins on
+  // package + locator + measured_state because it has no `row` field.
+  const VERDICTS = ["replicated", "not-replicated", "fix-holds", "fix-fails", "not-runnable"];
+  const REPRO_CLASSES = new Set([
+    "re-measurable-before-and-after",
+    "re-measurable-after-only",
+    "needs-source-checkout",
+    "needs-reviewer-policy",
+  ]);
+  const frozen = new Map();
+  exploits.forEach((row, index) => {
+    const line = index + 2;
+    if (!REPRO_CLASSES.has(row.reproducibility)) {
+      fail(`exploits.csv line ${line}: bad reproducibility ${row.reproducibility}`);
+    }
+    frozen.set(line, row);
+  });
+  const explCounts = { a: {}, b: {}, c: {} };
+  for (const part of ["a", "b", "c"]) {
+    for (const v of VERDICTS) explCounts[part][v] = 0;
+  }
+  const explRowsRun = new Set();
+  const explPair = new Set();
+  const atkOld = []; // wave-1 attack means at 0.1.0
+  const atkNew = []; // wave-1 attack means at 0.2.0
+  const atkRel = []; // attack means at the released version, both waves
+  const atkW2Rel = [];
+  const fixFailPkgs = new Set();
+  const explBadRows = [];
+  for (const [part, rows] of [["a", explA], ["b", explB]]) {
+    for (const row of rows) {
+      const line = Number(row.row);
+      const ref = frozen.get(line);
+      if (!ref) fail(`exploit-results-${part}.csv: no frozen row at line ${row.row}`);
+      if (row.package !== ref.package || row.locator !== ref.locator) {
+        fail(`exploit-results-${part}.csv: line ${line} package/locator mismatch with exploits.csv`);
+      }
+      if (!VERDICTS.includes(row.verdict)) {
+        fail(`exploit-results-${part}.csv: line ${line} bad verdict ${row.verdict}`);
+      }
+      const pkgName = `benchmark-${row.package}`;
+      if (!pinned.get(pkgName)?.has(row.version)) {
+        fail(`exploit-results-${part}.csv: ${row.package}@${row.version} is not a pinned artifact`);
+      }
+      if (waveOf.get(pkgName) === 2 && row.version !== "0.1.0") {
+        fail(`exploit-results-${part}.csv: wave-2 ${row.package} measured at ${row.version}`);
+      }
+      const pair = `${line}|${row.version}`;
+      if (explPair.has(pair)) fail(`exploit-results-${part}.csv: duplicate measurement ${pair}`);
+      explPair.add(pair);
+      explRowsRun.add(line);
+      explCounts[part][row.verdict] += 1;
+      if (row.verdict === "fix-fails") fixFailPkgs.add(row.package);
+      if (row.verdict === "not-replicated" || row.verdict === "fix-fails") {
+        explBadRows.push({ row: line, pkg: row.package, locator: row.locator, where: row.version, verdict: row.verdict, measured: row.measured, record: row.record_value });
+      }
+      if (row.measured !== "") {
+        const m = num(`exploit-results-${part}.csv`, row, "measured");
+        if (m < 0 || m > 1) fail(`exploit-results-${part}.csv: line ${line} measured ${m} outside [0,1]`);
+        if (isAttackRow(ref)) {
+          if (waveOf.get(pkgName) === 1) {
+            if (row.version === "0.1.0") atkOld.push(m);
+            if (row.version === "0.2.0") atkNew.push(m);
+          } else {
+            atkW2Rel.push(m);
+          }
+          if (row.version === released.get(pkgName)) atkRel.push(m);
+        }
+      }
+    }
+  }
+  // Frozen rows can share package, locator and commit (the six
+  // crm-truthfulness issue-9 rows do), so part c joins on a queue
+  // keyed by record_value too: each result row consumes one frozen
+  // row of its key and fails when none is left. Two result rows may
+  // be byte-identical (the two record-1.0 crm rows are); that is real
+  // data, not a duplicate.
+  const cQueue = new Map();
+  for (const [line, ref] of frozen) {
+    const key = `${ref.package}|${ref.locator}|${ref.measured_state}|${ref.record_value}`;
+    if (!cQueue.has(key)) cQueue.set(key, []);
+    cQueue.get(key).push(line);
+  }
+  for (const row of explC) {
+    if (!["replicated", "not-replicated", "not-runnable"].includes(row.status)) {
+      fail(`exploit-results-c.csv: bad status ${row.status}`);
+    }
+    if (row.postfix_holds !== "n/a") {
+      fail(`exploit-results-c.csv: postfix_holds ${row.postfix_holds} must be n/a`);
+    }
+    const key = `${row.package}|${row.locator}|${row.measured_state}|${row.record_value}`;
+    const queue = cQueue.get(key) ?? [];
+    if (queue.length === 0) fail(`exploit-results-c.csv: no frozen row for ${row.package} record ${row.record_value}`);
+    const cLine = queue.shift();
+    explRowsRun.add(cLine);
+    explCounts.c[row.status] += 1;
+    if (row.status !== "replicated") {
+      explBadRows.push({ row: cLine, pkg: row.package, locator: row.locator, where: "commit", verdict: row.status, measured: row.measured_value, record: row.record_value });
+    }
+  }
+  // Every frozen row either ran (a/b/c) or is a needs-reviewer-policy
+  // row that never could: count the second group, fail on anything else.
+  const explPolicyOnly = exploits.filter(
+    (row, index) => !explRowsRun.has(index + 2) && row.reproducibility === "needs-reviewer-policy",
+  ).length;
+  const explUnaccounted = exploits.filter(
+    (row, index) => !explRowsRun.has(index + 2) && row.reproducibility !== "needs-reviewer-policy",
+  );
+  if (explUnaccounted.length) {
+    fail(`exploits.csv: ${explUnaccounted.length} runnable rows produced no result rows`);
+  }
+  const explTotals = {};
+  for (const v of VERDICTS) explTotals[v] = explCounts.a[v] + explCounts.b[v] + explCounts.c[v];
+  const explClauses = explA.length + explB.length + explC.length;
+  const explRecordClauses = explTotals.replicated + explTotals["not-replicated"];
+  const explPostfixClauses = explTotals["fix-holds"] + explTotals["fix-fails"];
+  const explAtkRows = new Set(
+    [...explPair].map((pair) => Number(pair.split("|")[0])).filter((line) => isAttackRow(frozen.get(line))),
+  ).size;
+  explBadRows.sort((p, q) => p.row - q.row);
+
   const releasedRows = [];
   for (const [pkg, ver] of released) {
     const row = headByKey.get(`${pkg}@${ver}`);
@@ -669,6 +809,23 @@ function analyse(input) {
     detFailedRuns,
     detIdentical,
     detDriftPkgs,
+    explFrozen: exploits.length,
+    explRunRows: explRowsRun.size,
+    explPolicyOnly,
+    explClauses,
+    explRecordClauses,
+    explPostfixClauses,
+    explTotals,
+    explCounts,
+    explPartClauses: { a: explA.length, b: explB.length, c: explC.length },
+    explAtkRows,
+    explBadRows,
+    explAtkMedianOld: median(atkOld),
+    explAtkMedianNew: median(atkNew),
+    explAtkMaxNew: Math.max(...atkNew),
+    explAtkW2Max: atkW2Rel.length ? Math.max(...atkW2Rel) : 0,
+    explAtkMaxRel: atkRel.length ? Math.max(...atkRel) : 0,
+    explFixFailPkgs: [...fixFailPkgs],
   };
 }
 
@@ -753,9 +910,101 @@ function generate(stats) {
     `\\newcommand{\\expDetFailedRuns}{${stats.detFailedRuns}}`,
     `\\newcommand{\\expDetIdentical}{${stats.detIdentical}}`,
     `\\newcommand{\\expDetDriftPkgs}{${pkgList(stats.detDriftPkgs)}}`,
+    `\\newcommand{\\expExplFrozen}{${stats.explFrozen}}`,
+    `\\newcommand{\\expExplRunRows}{${stats.explRunRows}}`,
+    `\\newcommand{\\expExplPolicyOnly}{${stats.explPolicyOnly}}`,
+    `\\newcommand{\\expExplClauses}{${stats.explClauses}}`,
+    `\\newcommand{\\expExplRecordClauses}{${stats.explRecordClauses}}`,
+    `\\newcommand{\\expExplPostfixClauses}{${stats.explPostfixClauses}}`,
+    `\\newcommand{\\expExplReplicated}{${stats.explTotals.replicated}}`,
+    `\\newcommand{\\expExplNotReplicated}{${stats.explTotals["not-replicated"]}}`,
+    `\\newcommand{\\expExplFixHolds}{${stats.explTotals["fix-holds"]}}`,
+    `\\newcommand{\\expExplFixFails}{${stats.explTotals["fix-fails"]}}`,
+    `\\newcommand{\\expExplNotRunnable}{${stats.explTotals["not-runnable"]}}`,
+    `\\newcommand{\\expExplAtkRows}{${stats.explAtkRows}}`,
+    `\\newcommand{\\expExplAtkMedianOld}{${fmt(stats.explAtkMedianOld)}}`,
+    `\\newcommand{\\expExplAtkMedianNew}{${fmt(stats.explAtkMedianNew)}}`,
+    `\\newcommand{\\expExplAtkMaxNew}{${fmt(stats.explAtkMaxNew)}}`,
+    `\\newcommand{\\expExplAtkWaveTwoMax}{${fmt(stats.explAtkW2Max)}}`,
+    `\\newcommand{\\expExplAtkMaxRel}{${fmt(stats.explAtkMaxRel)}}`,
+    `\\newcommand{\\expExplFixFailsPkgs}{${pkgList(stats.explFixFailPkgs)}}`,
+    ...["a", "b", "c"].flatMap((part) => [
+      `\\newcommand{\\expExpl${part.toUpperCase()}Clauses}{${stats.explPartClauses[part]}}`,
+      ...Object.keys(stats.explCounts[part]).map(
+        (v) => `\\newcommand{\\expExpl${part.toUpperCase()}${camel(v)}}{${stats.explCounts[part][v]}}`,
+      ),
+    ]),
     "",
   );
   return `${lines.join("\n")}`;
+}
+
+// A GitHub locator shortens for the T3 bad-rows list:
+// .../issues/8 -> issue 8, .../pull/12 -> PR 12,
+// .../blob/<sha>/<path>#L7 -> <basename> L7, .../commit/<sha> -> commit <8>.
+function shortLocator(locator) {
+  const issue = locator.match(/\/issues\/(\d+)$/);
+  if (issue) return `issue ${issue[1]}`;
+  const pull = locator.match(/\/pull\/(\d+)$/);
+  if (pull) return `PR ${pull[1]}`;
+  const commit = locator.match(/\/commit\/([0-9a-f]{40})$/);
+  if (commit) return `commit ${commit[1].slice(0, 8)}`;
+  const blob = locator.match(/\/blob\/[0-9a-f]{40}\/([^#]+?)(?:#L(\d+))?$/);
+  if (blob) return `${blob[1].split("/").pop()}${blob[2] ? ` L${blob[2]}` : ""}`;
+  fail(`locator does not shorten: ${locator}`);
+}
+
+const EXPL_PART_LABEL = {
+  a: "a (single answers, tarballs)",
+  b: "b (episodes, tarballs)",
+  c: "c (source checkouts)",
+};
+
+// Table T3: verdict counts by run part and in total, then the compact
+// list of every not-replicated and every fix-fails clause with
+// package, locator and the measured number. A fix-fails clause means
+// the shipped fix still gives the exploit credit: it is reported as
+// found, never softened.
+function verdictsFloat(stats) {
+  const countLine = (part) =>
+    `${EXPL_PART_LABEL[part]} & ${stats.explPartClauses[part]} & ${stats.explCounts[part].replicated} & ${stats.explCounts[part]["not-replicated"]} & ${stats.explCounts[part]["fix-holds"]} & ${stats.explCounts[part]["fix-fails"]} & ${stats.explCounts[part]["not-runnable"]} \\\\`;
+  return `% Generated by scripts/exp/macros.mjs. Do not edit.
+% Table T3: clause verdicts on the E2 re-measurement, from
+% paper/data/exp/exploit-results-{a,b,c}.csv over the frozen list
+% paper/data/exp/exploits.csv.
+\\begin{table}[!tbp]
+\\centering
+\\caption{Verdicts on the \\expExplClauses{} clauses the E2 runs evaluated over the \\expExplFrozen{} frozen exploit rows, by run part (data: \\texttt{exploit-results-}\\allowbreak\\texttt{\\{a,b,c\\}.csv}). A replicated clause re-measures the logged number or bound; fix-holds and fix-fails judge the post-fix state against the frozen clause; the single not-runnable row is a locator-coverage row outside the E2 plan. The lower block lists every clause that did not replicate and every post-fix clause that still gives the exploit credit; \\texttt{r<n>} is the row's line in \\texttt{paper/data/exp/exploits.csv}. \\expExplPolicyOnly{} further frozen rows need the reviewer's unreleased policy and produced no clause.}
+\\label{tab:exploit-verdicts}
+{\\small
+\\begin{tabular}{@{}lrrrrrr@{}}
+\\toprule
+run part & clauses & replicated & not repl. & fix holds & fix fails & not run. \\\\
+\\midrule
+${countLine("a")}
+${countLine("b")}
+${countLine("c")}
+\\midrule
+total & ${stats.explClauses} & ${stats.explTotals.replicated} & ${stats.explTotals["not-replicated"]} & ${stats.explTotals["fix-holds"]} & ${stats.explTotals["fix-fails"]} & ${stats.explTotals["not-runnable"]} \\\\
+\\bottomrule
+\\end{tabular}
+
+\\vspace{1.5ex}
+\\begin{tabular}{@{}lllllrr@{}}
+\\toprule
+row & package & locator & verdict & where & measured & record \\\\
+\\midrule
+${stats.explBadRows
+  .map(
+    (r) =>
+      `r${r.row} & ${ttId(r.pkg)} & \\texttt{${shortLocator(r.locator)}} & ${r.verdict.replace("-", " ")} & ${r.where} & ${r.measured} & ${r.record.replace("%", "\\%")} \\\\`,
+  )
+  .join("\n")}
+\\bottomrule
+\\end{tabular}
+}
+\\end{table}
+`;
 }
 
 function texFiles(dir) {
@@ -772,11 +1021,15 @@ function texFiles(dir) {
   return out;
 }
 
-function check(expected) {
-  if (!existsSync(OUT)) fail(`${OUT} does not exist; run node scripts/exp/macros.mjs`);
-  if (readFileSync(OUT, "utf8") !== expected) {
-    fail("paper/generated/exp-macros.tex is stale; run node scripts/exp/macros.mjs");
+function checkFresh(path, expected) {
+  if (!existsSync(path)) fail(`${path.slice(ROOT.length + 1)} does not exist; run node scripts/exp/macros.mjs`);
+  if (readFileSync(path, "utf8") !== expected) {
+    fail(`${path.slice(ROOT.length + 1)} is stale; run node scripts/exp/macros.mjs`);
   }
+}
+
+function check(expected) {
+  checkFresh(OUT, expected);
   const defined = new Set(
     [...expected.matchAll(/\\newcommand\{\\(exp[A-Z][A-Za-z0-9]*)\}/g)].map((m) => m[1]),
   );
@@ -803,14 +1056,18 @@ function check(expected) {
 const input = loadInputs();
 const stats = analyse(input);
 const expected = generate(stats);
+const verdicts = verdictsFloat(stats);
 
 if (process.argv.includes("--check")) {
   const defined = check(expected);
-  console.log(`exp-macros.mjs: ${defined} macros defined, all \\exp* uses covered, generated file fresh`);
+  checkFresh(VERDICTS_OUT, verdicts);
+  console.log(`exp-macros.mjs: ${defined} macros defined, all \\exp* uses covered, generated files fresh`);
 } else {
   mkdirSync(dirname(OUT), { recursive: true });
   writeFileSync(OUT, expected);
+  writeFileSync(VERDICTS_OUT, verdicts);
   console.log(`packages=${stats.packages} artifacts=${stats.artifacts} cells=${stats.cells} failed=${stats.failedCells} rows=${stats.batteryRows}`);
   console.log(`released best-trivial max=${fmt(stats.releasedMax)} zero=${stats.releasedZero}/${stats.packages} headroom ${fmt(stats.headroomMin)}..${fmt(stats.headroomMax)} (median ${fmt(stats.headroomMedian)})`);
-  console.log(`zero rows=${stats.zeroRows} format-gate=${stats.classCounts["format-gate"]} (${pct(stats.classCounts["format-gate"], stats.zeroRows)}% of zeros) -> ${OUT.slice(ROOT.length + 1)}, ok`);
+  console.log(`zero rows=${stats.zeroRows} format-gate=${stats.classCounts["format-gate"]} (${pct(stats.classCounts["format-gate"], stats.zeroRows)}% of zeros)`);
+  console.log(`exploit clauses=${stats.explClauses} replicated=${stats.explTotals.replicated} fix-fails=${stats.explTotals["fix-fails"]} -> ${OUT.slice(ROOT.length + 1)} + exploit-verdicts.tex, ok`);
 }
