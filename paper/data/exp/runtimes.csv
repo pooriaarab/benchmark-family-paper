@@ -1,3 +1,9 @@
 experiment,script,artifacts,cells,wall_seconds,measured_at
 E1,trivial-battery.mjs,34,272,339,2026-10-18
 E4,contract-probes.mjs,34,578,22,2026-10-18
+E2a,exploits-run-a.mjs,12,44,2,2026-10-18
+E2b,exploits-run-b.mjs,15,41,2,2026-10-18
+E2c,exploits-run-c.mjs,7,18,34,2026-10-18
+E5a,tarball-audit.mjs,34,34,1,2026-10-18
+E5b,hidden-overlap.mjs,4,20,1,2026-10-18
+E6,determinism.mjs,22,462,128,2026-10-18
