@@ -5,8 +5,10 @@ type: software
 authors:
   - family-names: Arab
     given-names: Pooria
+    orcid: "https://orcid.org/0009-0005-9964-6841"
 # The paper text is CC BY 4.0; the tooling under hf/ and scripts/ is MIT.
 license: CC-BY-4.0
+doi: 10.5281/zenodo.23428801
 repository-code: https://github.com/pooriaarab/benchmark-family-paper
 url: "https://aibenchmarkindex.com"
 abstract: "Paper, Hugging Face publishing tools and arXiv packet for the benchmark-* family of AI benchmarks."
@@ -21,3 +23,7 @@ preferred-citation:
   authors:
     - family-names: Arab
       given-names: Pooria
+      orcid: "https://orcid.org/0009-0005-9964-6841"
+  year: 2026
+  doi: 10.5281/zenodo.23428801
+  url: "https://aibenchmarkindex.com"
