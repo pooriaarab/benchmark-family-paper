@@ -47,14 +47,14 @@
 
 \begin{document}
 
-\title{Agents Can Build Benchmarks. Approvals Missed What Probing Found: 22 Cases}
+\title{Agents Can Build Benchmarks. Approvals Missed What Probing Found: \suitePackages{} Cases}
 \author{\name Pooria Arab \email papers@aibenchmarkindex.com \\
        \addr Independent researcher}
 
 \maketitle
 
 \begin{abstract}
-Coding agents built a suite of \suitePackages{} benchmark packages holding \suiteTasks{} tasks on one shared engine, and the public record shows \councilMergedApproved{} of the \councilMergedFeature{} merged feature pull requests carried an LLM approval with no test job failing at a merge commit. Probing the shipped packages still found defects that needed a fix round in every one of them (median \reviewRoundsMedian{}, maximum \reviewRoundsMax{}), across \defectClasses{} defect classes, and at least \defectBlindStrategyCredit{} packages paid credit to a strategy that ignored the task. Re-running the logged exploits on the published tarballs replicates \expExplReplicated{} of \expExplRecordClauses{} record clauses, and the median attack score falls from \expExplAtkMedianOld{} before the fixes to \expExplAtkMedianNew{} after. The check the benchmark literature prescribes caught almost none of it: under the preregistered design the best of \trivialPolicies{} generic blind policies scored higher before the fixes in only \trivialHigherOld{} of \trivialPackages{} packages ($p = \trivialSignP{}$), and the best blind score on any released grader is \expTrivialReleasedMax{}. The difference is review depth: approvals read diffs while these defects lived in graders and held-out splits that only running the artifact exposes. We release the engine, the packages, the probing protocol, the defect record and the scripts behind every number, and we condense the classes into five checks to run before an agent-built benchmark ships. No real model was run and no leaderboard is kept; the registered real-model arm is unfinished.
+Coding agents built a suite of \suitePackages{} benchmark packages holding \suiteTasks{} tasks on one shared engine, and the public record shows \councilMergedApproved{} of the \councilMergedFeature{} merged feature pull requests carried an LLM approval with no test job failing at a merge commit. Probing the shipped packages still found defects that needed a fix round in every one of them (median \reviewRoundsMedian{}, maximum \reviewRoundsMax{}), across \defectClasses{} defect classes, and at least \defectBlindStrategyCredit{} packages paid credit to a strategy that ignored the task. Re-running the logged exploits replicates \expExplReplicated{} of \expExplRecordClauses{} record clauses, \expExplReplReleased{} of \expExplRecordReleased{} measured on the published tarballs and \expExplReplCommit{} of \expExplRecordCommit{} on the unreleased commits the record cited, and the median attack score over the \expExplAtkPairs{} paired wave-1 rows falls from \expExplAtkMedianOldPaired{} before the fixes to \expExplAtkMedianNewPaired{} after. The check the benchmark literature prescribes caught almost none of it: under the preregistered design the best of \trivialPolicies{} generic blind policies scored higher before the fixes in only \trivialHigherOld{} of \trivialPackages{} packages ($p = \trivialSignP{}$), and the best blind score on any released grader is \expTrivialReleasedMax{}. The difference is review depth: approvals read diffs while these defects lived in graders and held-out splits that only running the artifact exposes. We release the engine, the packages, the probing protocol, the defect record and the scripts behind every number, and we condense the classes into five checks to run before an agent-built benchmark ships. No real model was run and no leaderboard is kept; the registered real-model arm is unfinished.
 \end{abstract}
 
 \begin{keywords}
@@ -65,7 +65,7 @@ benchmarks, coding agents, approval review, probing review, evaluation
 \input{sections/intro.tex}
 \input{figures/fig-system.tex}
 
-\section{Setting: 22 agent-built packages}
+\section{Setting: \suitePackages{} agent-built packages}
 \label{sec:setting}
 \input{sections/engine.tex}
 \input{generated/suite-table.tex}
