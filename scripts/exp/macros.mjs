@@ -1009,6 +1009,7 @@ function analyse(input) {
     explAtkMedianNewPaired: median(atkPairs.map((d) => d.new)),
     explAtkNewOnly,
     explAtkOldOnly,
+    explNotReplicatedPkgs: [...new Set(explBadRows.filter((r) => r.verdict === "not-replicated").map((r) => r.pkg))],
     explNotReplicatedList,
     runtimeBatteryMin,
     runtimeProbesSec,
@@ -1169,6 +1170,7 @@ function generate(stats) {
     `\\newcommand{\\expExplAtkMedianOldPaired}{${fmt(stats.explAtkMedianOldPaired)}}`,
     `\\newcommand{\\expExplAtkMedianNewPaired}{${fmt(stats.explAtkMedianNewPaired)}}`,
     `\\newcommand{\\expExplAtkNewOnly}{${stats.explAtkNewOnly}}`,
+    `\\newcommand{\\expExplNotReplicatedPkgs}{${pkgList(stats.explNotReplicatedPkgs)}}`,
     `\\newcommand{\\expExplNotReplicatedList}{${stats.explNotReplicatedList}}`,
     `\\newcommand{\\expReasonClasses}{${stats.reasonClassCount}}`,
     `\\newcommand{\\expReasonClassRules}{${stats.reasonClassRules}}`,
@@ -1266,7 +1268,7 @@ function verdictsFloat(stats) {
 % paper/data/exp/exploits.csv.
 \\begin{table}[!tbp]
 \\centering
-\\caption{Verdicts on the \\expExplClauses{} clauses the re-measurement runs evaluated over the \\expExplFrozen{} frozen exploit rows, by run part (data: \\texttt{exploit-results-}\\allowbreak\\texttt{\\{a,b,c\\}.csv}). A clause pairs a target, a released version or a pinned commit, with the relation the measured score must satisfy there. A replicated clause re-measured the logged number or bound; fix-holds and fix-fails judge the post-fix state against the frozen relation, so a fix-fails on an attack row means the shipped fix still pays the exploit, while on an honest re-check row (an \\emph{equals oracle} clause, marked \\emph{honest}) it means the grader still rejects the honest answer. The single not-runnable row is a locator-coverage row outside the run plan. Table~\ref{tab:exploit-verdicts-low} in the appendix lists every clause that did not replicate and every post-fix clause that failed. A further \\expExplPolicyOnly{} frozen rows need the reviewer's unreleased policy and produced no clause.}
+\\caption{Verdicts on the \\expExplClauses{} clauses the re-measurement runs evaluated over the \\expExplFrozen{} frozen exploit rows, by run part (Appendix~\\ref{app:experiments}). A clause pairs a target, a released version or a pinned commit, with the relation the measured score must satisfy there. A replicated clause re-measured the logged number or bound; fix-holds and fix-fails judge the post-fix state against the frozen relation, so a fix-fails on an attack row means the shipped fix still pays the exploit, while on an honest re-check row (an \\emph{equals oracle} clause, marked \\emph{honest}) it means the grader still rejects the honest answer. The single not-runnable row is a locator-coverage row outside the run plan. Table~\ref{tab:exploit-verdicts-low} in the appendix lists every clause that did not replicate and every post-fix clause that failed. A further \\expExplPolicyOnly{} frozen rows need the reviewer's unreleased policy and produced no clause.}
 \\label{tab:exploit-verdicts}
 {\\small
 \\begin{tabular}{@{}lrrrrrr@{}}
