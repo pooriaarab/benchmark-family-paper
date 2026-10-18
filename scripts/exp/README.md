@@ -74,6 +74,15 @@ fail; read it before changing anything.
   per frozen row.
 - `exploits-run-a.test.sh` — runs the part twice, diffs the two CSVs,
   prints their sha256.
+- `exploits-run-b.failure-modes.md` — every way the part-b run fails;
+  read first.
+- `exploits-run-b.mjs` — runs the part-b exploit rows
+  (re-measurable-before-and-after for tool-errors, mcp-safety,
+  checkout-consent, honesty, sycophancy, hundred-step) against the
+  pinned tarballs through each package's SDK and writes
+  `paper/data/exp/exploit-results-b.csv`; one builder per frozen row.
+- `exploits-run-b.test.sh` — runs the part twice, diffs the two CSVs,
+  prints their sha256.
 - `macros.mjs` — turns the E1 CSVs (`trivial-battery-cells`,
   `trivial-headroom`, `trivial-reasons`), `versions.json` and
   `reason-classes.json` into `paper/generated/exp-macros.tex`;
