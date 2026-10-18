@@ -149,4 +149,4 @@ sha256sum "$OUT"/*.png
 echo "== dmlr clean-checkout check"
 bash scripts/dmlr.test.sh
 
-echo "s4-wording: re-measurement p$RM/p$RD, T3 p$T3M/p$T3D, ladder p$LM/p$LD -> ok"
+echo "re-measurement p$RM/p$RD, T3 p$T3M/p$T3D, ladder p$LM/p$LD -> s4-wording, ok"
