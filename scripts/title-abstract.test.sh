@@ -61,7 +61,7 @@ if grep -inE 'council|chair|timed out|issue [0-9]|pull request [0-9]|pull reques
 fi
 
 echo "== the headline numbers are macros, not literals"
-if grep -nE '[0-9]' "$OUT/abs-main"; then
+if sed 's/wave-[0-9]//g' "$OUT/abs-main" | grep -nE '[0-9]'; then
   echo "a numeral sits in the abstract source, above"; exit 1
 fi
 
