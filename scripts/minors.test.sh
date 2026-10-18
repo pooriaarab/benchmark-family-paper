@@ -102,8 +102,8 @@ figpage() {
   done
   echo "fragment '$2' not found in $1" >&2; exit 1
 }
-CM=$(figpage paper/main.pdf "Four of the checks")
-CD=$(figpage paper/main-dmlr.pdf "Four of the checks")
+CM=$(figpage paper/main.pdf "of the checks already run")
+CD=$(figpage paper/main-dmlr.pdf "of the checks already run")
 DM=$(figpage paper/main.pdf "Data availability")
 DD=$(figpage paper/main-dmlr.pdf "Data availability")
 for spec in "main.pdf|1|orcid-main" "main-dmlr.pdf|1|orcid-dmlr" \
