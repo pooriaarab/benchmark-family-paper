@@ -12,11 +12,13 @@ OUT=$(mktemp -d)
 cp paper/data/exp/trivial-reasons.csv "$OUT/reasons.bak"
 cp paper/data/exp/trivial-headroom.csv "$OUT/headroom.bak"
 cp paper/data/exp/contract-probes.csv "$OUT/probes.bak"
+cp paper/data/exp/exploit-results-a.csv "$OUT/expla.bak"
 cleanup() {
   rm -f paper/sections/__exp-check-probe.tex
   cp "$OUT/reasons.bak" paper/data/exp/trivial-reasons.csv
   cp "$OUT/headroom.bak" paper/data/exp/trivial-headroom.csv
   cp "$OUT/probes.bak" paper/data/exp/contract-probes.csv
+  cp "$OUT/expla.bak" paper/data/exp/exploit-results-a.csv
   rm -rf "$OUT"
 }
 trap cleanup EXIT
@@ -112,6 +114,15 @@ node scripts/exp/macros.mjs
 cp "$OUT/probes.bak" paper/data/exp/contract-probes.csv
 node scripts/exp/macros.mjs
 
+echo "== guard: a duplicated exploit result row fails"
+sed -i '2{p}' paper/data/exp/exploit-results-a.csv
+if node scripts/exp/macros.mjs --check > "$OUT/err" 2>&1; then
+  echo "exploit-duplicate guard did not fire"
+  exit 1
+fi
+grep -q "duplicate measurement" "$OUT/err" || { cat "$OUT/err"; exit 1; }
+cp "$OUT/expla.bak" paper/data/exp/exploit-results-a.csv
+
 echo "== regenerate and check"
 node scripts/exp/macros.mjs
 node scripts/exp/macros.mjs --check
@@ -125,11 +136,15 @@ for target in pdf dmlr; do
   fi
 done
 
-if [ -n "$(git status --porcelain paper/generated/exp-macros.tex)" ]; then
+if [ -n "$(git status --porcelain paper/generated/exp-macros.tex paper/generated/exploit-verdicts.tex)" ]; then
   echo "regeneration left uncommitted output"
   exit 1
 fi
+for m in paper/main.tex paper/main-dmlr.tex; do
+  n=$(grep -cF 'input{generated/exploit-verdicts.tex}' "$m")
+  [ "$n" = "1" ] || { echo "$m inputs exploit-verdicts.tex $n times, want 1"; exit 1; }
+done
 
 MACROS=$(grep -c 'newcommand' paper/generated/exp-macros.tex)
-sha256sum paper/generated/exp-macros.tex
+sha256sum paper/generated/exp-macros.tex paper/generated/exploit-verdicts.tex
 echo "$MACROS macros, all guards fire, both builds clean -> exp-macros, ok"
