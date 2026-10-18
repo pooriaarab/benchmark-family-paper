@@ -15,7 +15,7 @@
   name=probes,
   font=\small,
   scale only axis,
-  width=0.52\textwidth, height=0.82\textwidth,
+  width=0.52\textwidth, height=0.56\textwidth,
   y dir=reverse,
   xmin=-0.5, xmax=\probesCols-0.5,
   ymin=-0.5, ymax=\probesRows-0.5,
@@ -45,7 +45,7 @@
   font=\small,
   scale only axis,
   xbar, bar width=0.5,
-  width=0.10\textwidth, height=0.82\textwidth,
+  width=0.10\textwidth, height=0.56\textwidth,
   y dir=reverse,
   xmin=0, xmax=\probesFailAxisMax,
   ymin=-0.5, ymax=\probesRows-0.5,
@@ -73,6 +73,6 @@
 \fill[pattern=crosshatch, pattern color=black!55, draw=black!40] ([yshift=-3.55cm,xshift=8.6cm]probes.south west) rectangle ++(0.16,0.16);
 \node[anchor=west, font=\tiny] at ([yshift=-3.47cm,xshift=8.82cm]probes.south west) {not runnable};
 \end{tikzpicture}
-\caption{Contract probes on the \expArtifacts{} pinned artifacts, generated from \texttt{paper/data/exp/}\allowbreak\texttt{contract-probes.csv}. Rows are the \expPackages{} packages (wave 1 shows both pinned versions above the dashed rule, wave 2 below it), columns the \expProbes{} frozen probes: the \texttt{hv-} honest variants left of the first dashed rule, the single unpromised exploratory probe between the rules, and the \texttt{atk-} attacks right of it. A cell passes when the artifact's frozen expected rule held, and outside-contract or not-runnable cells are hatched rather than read as pass or fail. The orange \texttt{atk-dup-tool-calls} cells are expected penalties: those graders score a repeated side effect zero by design, so the margin bars count each row's genuine fails in black and stack the expected penalties on top in orange.}
+\caption{Contract probes at each package's released version, generated from \texttt{paper/data/exp/}\allowbreak\texttt{contract-probes.csv}. Rows are the \expPackages{} packages (wave 1 at 0.2.0 above the dashed rule, wave 2 at its only 0.1.0 release below it), columns the \expProbes{} frozen probes: the \texttt{hv-} honest variants left of the first dashed rule, the single unpromised exploratory probe between the rules, and the \texttt{atk-} attacks right of it. A cell passes when the artifact's frozen expected rule held, and outside-contract or not-runnable cells are hatched rather than read as pass or fail. The orange \texttt{atk-dup-tool-calls} cells are expected penalties: those graders score a repeated side effect zero by design, so the margin bars count each row's genuine fails in black and stack the expected penalties on top in orange.}
 \label{fig:probes}
 \end{figure}
