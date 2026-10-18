@@ -149,3 +149,10 @@ layers-test:
 # figure inputs twice, rebuild both PDFs, and render the figure pages.
 hidden-audit-plot-test:
 	bash scripts/exp/hidden-audit-plot.test.sh
+
+.PHONY: exploits-plot-test
+
+# Figure F3 (record vs re-measured dumbbell): regenerate the figure
+# inputs twice, rebuild both PDFs twice, and render the figure page.
+exploits-plot-test:
+	bash scripts/exp/exploits-plot.test.sh
