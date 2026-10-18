@@ -1,0 +1,42 @@
+% Figure F4: the best score each policy tier earns per package at the
+% package's released version. Points come from
+% generated/policy-ladder-*.csv, built by
+% scripts/exp/policy-ladder.mjs out of
+% paper/data/exp/trivial-headroom.csv and
+% exploit-results-{a,b}.csv over the frozen list exploits.csv.
+\begin{figure}[!tbp]
+\centering
+\input{generated/policy-ladder-macros.tex}
+\pgfplotstableset{col sep=comma}
+\begin{tikzpicture}
+\begin{axis}[
+  font=\small,
+  scale only axis,
+  width=0.68\textwidth, height=0.68\textheight,
+  y dir=reverse,
+  xmin=-0.02, xmax=1.04,
+  ymin=-0.5, ymax=\policyLadderRows-0.5,
+  clip=false,
+  xlabel={score},
+  ytick=data,
+  yticklabels from table={generated/policy-ladder-labels.csv}{label},
+  y tick label style={font=\scriptsize},
+  xtick={0,0.2,0.4,0.6,0.8,1.0},
+  tick label style={font=\scriptsize},
+  axis x line*=bottom, axis y line*=left,
+]
+\input{generated/policy-ladder-stems.tex}
+\addplot[only marks, mark=*, mark size=1.6pt, color=okblue, forget plot]
+  table[x=x,y=y] {generated/policy-ladder-blind.csv};
+\addplot[only marks, mark=diamond*, mark size=2.4pt, color=okverm, forget plot]
+  table[x=x,y=y] {generated/policy-ladder-taskaware.csv};
+\addplot[only marks, mark=square*, mark size=1.6pt, color=black, forget plot]
+  table[x=x,y=y] {generated/policy-ladder-oracle.csv};
+\pgfmathsetmacro{\wbound}{\policyLadderWaveOneRows-0.5}
+\draw[black!40, dashed] (axis cs:-0.02,\wbound) -- (axis cs:1.04,\wbound);
+\node[font=\tiny, anchor=south west] at (axis cs:0.30,\wbound) {wave 2 below this rule: 0.1.0 only, exploratory};
+\end{axis}
+\end{tikzpicture}
+\caption{The best score each policy tier earns per package at the package's released version (0.2.0 for the \policyLadderWaveOneRows{} wave-1 packages, the only release for wave 2), generated from \texttt{trivial-headroom.csv} and \texttt{exploit-results-}\allowbreak\texttt{\{a,b\}.csv}. Filled circles are the best of the \expPolicies{} prompt-blind policies in the E1 battery; filled diamonds are the best E2 attack row re-measured on the released tarball over the \policyLadderTaskAware{} packages that have one, and the \policyLadderNoData{} packages with no attack row in the frozen list carry a \emph{no E2 row} mark at the row's middle, not a zero. Filled squares are the mock oracle mean defined per package in \texttt{oracle-definition.csv}. The prompt-reading rung does not appear: E3 was not run. Wave-2 packages below the dashed rule have a single release and are exploratory.}
+\label{fig:ladder}
+\end{figure}
