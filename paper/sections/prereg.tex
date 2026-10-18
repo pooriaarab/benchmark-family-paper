@@ -18,6 +18,7 @@ Figure~\ref{fig:trivial-reasons} sorts the \expZeroRows{} zero-score rows into t
 \paragraph{Still running.}
 H2 and H3 concern real models: the per-model mean score difference between 0.1.0 and 0.2.0 with a bootstrap interval over packages, and the Kendall tau between model orderings per package. Both hypotheses are still running at the time of writing, and this paper reports no model numbers.
 
-% Figure F4 sits here until the Section-5 rewrite writes the
-% paragraph that walks it (plan C4).
 \input{figures/fig-ladder.tex}
+
+\paragraph{The ladder.}
+Figure~\ref{fig:ladder} puts the three measured tiers side by side at each package's released version: the best prompt-blind policy from the E1 battery, the best E2 attack builder re-measured on the shipped tarball, and the mock oracle mean. The blind rung sits at or near zero on \expTrivialReleasedZero{} of the \expPackages{} packages; the task-aware rung tops out at \expExplAtkMaxRel{}, and the \emph{no E2 row} marks in the figure cover the packages with no attack row in the frozen exploit list at all. What the ladder cannot show is a detection rate: the attack builders are post hoc, written against defects the record already named, so the gap between the rungs measures the shipped defects rather than how fast each tier would have found them.
