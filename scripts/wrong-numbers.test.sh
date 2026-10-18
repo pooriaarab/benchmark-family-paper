@@ -209,7 +209,9 @@ figpage() { # $1 = pdf path, $2 = unique text fragment
   # SIGPIPE pdftotext and pipefail would read a match as a miss.
   local pages; pages=$(pdfinfo "$1" | awk '/^Pages/ {print $2}')
   for i in $(seq 1 "$pages"); do
-    if grep -q "$2" <<< "$(pdftotext -f "$i" -l "$i" "$1" - 2>/dev/null)"; then
+    # Collapse whitespace: a phrase can wrap across pdftotext lines.
+    if grep -q "$2" <<< "$(pdftotext -f "$i" -l "$i" "$1" - 2>/dev/null \
+        | tr -s '[:space:]' ' ')"; then
       echo "$i"; return
     fi
   done
@@ -218,8 +220,8 @@ figpage() { # $1 = pdf path, $2 = unique text fragment
 }
 ABM=$(figpage paper/main.pdf "paired wave-1 rows")
 ABD=$(figpage paper/main-dmlr.pdf "paired wave-1 rows")
-S4M=$(figpage paper/main.pdf "a publishing leak and a grading-note claim")
-S4D=$(figpage paper/main-dmlr.pdf "a publishing leak and a grading-note claim")
+S4M=$(figpage paper/main.pdf "approvals standing behind defects")
+S4D=$(figpage paper/main-dmlr.pdf "approvals standing behind defects")
 GSM=$(figpage paper/main.pdf "seed-like values")
 GSD=$(figpage paper/main-dmlr.pdf "seed-like values")
 CLM=$(figpage paper/main.pdf "Probing found defects")
