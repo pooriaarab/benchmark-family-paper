@@ -1,6 +1,33 @@
 \section{The engine}
 \label{app:engine}
 
+A benchmark is a call to \texttt{defineBenchmark}. The required pieces are an id, display metadata, tasks or a \texttt{loadTasks} function, a \texttt{grade} function, a provenance array, and a grading-method string. Task ids must be unique. Each task has kind \texttt{single} or kind \texttt{episode}. The returned score must be finite and inside the unit interval, and the reason must be non-empty. The snippet below is the shape from the engine's own documentation. It is not one of the \suitePackages{} packages.
+
+\begin{verbatim}
+import { defineBenchmark, exactMatch } from "benchmark-core";
+
+const benchmark = defineBenchmark({
+  id: "benchmark-colors",
+  name: "Color recall",
+  tagline: "Checks exact color recall.",
+  tags: ["science"],
+  category: "memory",
+  whatItMeasures: "Exact recall of a named color.",
+  version: "0.1.0",
+  status: "alpha",
+  tasks: [{
+    id: "sky",
+    kind: "single",
+    prompt: "Name the sky color.",
+    expected: "blue",
+  }],
+  grade: (task, submission) =>
+    exactMatch(task.expected, submission.answer ?? ""),
+  provenance: [/* name, kind, licence, howToGet, ... */],
+  gradingMethod: "Exact string match.",
+});
+\end{verbatim}
+
 The runner keeps task order and uses bounded concurrency. Each row stores attempts, latency, score, reason, and usage. Episode rows also store the transcript, the tool log, the final state, and an abort reason when a turn budget, a tool-call budget, or a dollar budget trips. A timeout stops the wait. It cannot force a provider that ignores the abort signal to stop spending.
 
 The 95 percent interval is a seeded bootstrap. The default in \texttt{bootstrapCI} is 2{,}000 resamples. The same scores and the same seed give the same interval. That is the interval in Table~\ref{tab:mock}.

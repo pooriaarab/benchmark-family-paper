@@ -53,25 +53,28 @@ fi
 nd=$(grep -c 'no attack row' "$GEN/policy-ladder-stems.tex")
 [ "$nd" -gt 0 ] || { echo "no 'no attack row' marks in the ladder stems"; exit 1; }
 
-echo "== T3 shows the honest re-check"
+echo "== T3 keeps the honest re-check in its lower block"
 grep -qF 'equals oracle' "$GEN/exploit-verdicts.tex" \
   || { echo "T3 lost the equals-oracle wording"; exit 1; }
-grep -qF 'fix fails (honest)' "$GEN/exploit-verdicts.tex" \
-  || { echo "T3 does not mark the honest re-check row"; exit 1; }
-grep -qF '& vs &' "$GEN/exploit-verdicts.tex" \
-  || { echo "T3 lost the vs column header"; exit 1; }
-grep -qF 'fix fails (honest) & 0.2.0 & oracle' "$GEN/exploit-verdicts.tex" \
-  || { echo "T3 does not show the honest row compares against the oracle"; exit 1; }
-grep -q 'intermediate commits' "$S4" \
+grep -qF 'fix fails (honest)' "$GEN/exploit-verdicts-low.tex" \
+  || { echo "the low block does not mark the honest re-check row"; exit 1; }
+grep -qF '& vs &' "$GEN/exploit-verdicts-low.tex" \
+  || { echo "the low block lost the vs column header"; exit 1; }
+grep -qF 'fix fails (honest) & 0.2.0 & oracle' "$GEN/exploit-verdicts-low.tex" \
+  || { echo "the low block does not show the honest row compares against the oracle"; exit 1; }
+grep -q 'pinned commits' "$S4" \
   || { echo "$S4 lost the commit-artifact split"; exit 1; }
 
 echo "== required macros are used in the rewritten text"
-for m in expExplReleasedRows expExplCommitRows expExplReplCommit \
-    expExplNotReplCommit expExplFixFailsAttackPkgs expExplFixFailsHonestPkgs \
+for m in expExplReplCommit expExplFixFailsAttackPkgs expExplFixFailsHonestPkgs \
     expExplAtkMedianOldPaired expExplAtkMedianNewPaired expExplAtkPairs \
-    expExplNotReplicatedList expExplFixHoldsWeak defectScoreMaterial \
-    defectNoClassPackages; do
+    expExplNotReplicatedList defectScoreMaterial defectNoClassPackages; do
   grep -q "\\$m" "$S4" || { echo "\\$m missing from $S4"; exit 1; }
+done
+for m in expExplReleasedRows expExplCommitRows expExplNotReplCommit \
+    expExplFixHoldsWeak; do
+  grep -q "\\$m" paper/sections/app-experiments.tex \
+    || { echo "\\$m missing from app-experiments.tex"; exit 1; }
 done
 for m in noteSilentTicketTasks noteHiddenSeedReadmes noteApologyForgedMean \
     noteTestWeakeningPoolSize noteTestWeakeningPoolLine noteCrmDocHonestPct \

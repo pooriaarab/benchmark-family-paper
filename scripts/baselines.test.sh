@@ -14,14 +14,20 @@ trap 'rm -rf "$OUT"' EXIT
 
 SECTION=paper/sections/prereg.tex
 
-# Float wiring: both mains input the section, and the table and the two
-# figures are input exactly once per main.
+# Float wiring: mains input the section and table; the two figures
+# moved to the results appendix (review M5) and stay input once.
 for m in paper/main.tex paper/main-dmlr.tex; do
-  for f in sections/prereg.tex generated/trivial.tex \
-           figures/fig-trivial-scatter.tex figures/fig-trivial-reasons.tex; do
+  for f in sections/prereg.tex generated/trivial.tex; do
     n=$(grep -cF "input{$f}" "$m")
     [ "$n" = "1" ] || { echo "$m inputs $f $n times, want 1"; exit 1; }
   done
+done
+for f in figures/fig-trivial-scatter.tex figures/fig-trivial-reasons.tex; do
+  n=$(grep -rcF "input{$f}" paper/main.tex paper/main-dmlr.tex paper/sections \
+      | awk -F: '{s+=$2} END{print s}')
+  [ "$n" = "1" ] || { echo "$f is input $n times, want 1"; exit 1; }
+  grep -qF "input{$f}" paper/sections/app-results.tex \
+    || { echo "$f not inside app-results.tex"; exit 1; }
 done
 grep -q 'label{tab:trivial}' paper/generated/trivial.tex \
   || { echo 'generated/trivial.tex lost \label{tab:trivial}'; exit 1; }
