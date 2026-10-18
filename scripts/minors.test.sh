@@ -20,10 +20,11 @@ MAIN=paper/main.tex
 DMLR=paper/main-dmlr.tex
 TOUCHED="$CON $CLO $PRE $DEV $REP $MAIN $DMLR"
 
-echo "== the check count names four"
-grep -qF 'Four of the checks' "$CON" || { echo "count not corrected"; exit 1; }
-if grep -nF 'Three of the checks' "$CON"; then
-  echo "'Three of the checks' survived"; exit 1
+echo "== the check count names four without a numeral"
+grep -qF 'All but the first of the checks' "$CON" \
+  || { echo "count not corrected"; exit 1; }
+if grep -nF 'Three of the checks' "$CON" || grep -nF 'Four of the checks' "$CON"; then
+  echo "a typed check count survived"; exit 1
 fi
 
 echo "== the disclosure names both appendices"
