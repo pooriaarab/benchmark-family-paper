@@ -164,3 +164,11 @@ exploits-plot-test:
 # render the figure page.
 policy-ladder-test:
 	bash scripts/exp/policy-ladder.test.sh
+
+.PHONY: probing-section-test
+
+# Section 4 rewrite (taxonomy + E2 re-measurement) and the F4 ladder
+# paragraph: run the generator checks, rebuild both PDFs twice, and
+# render the rewritten pages.
+probing-section-test:
+	bash scripts/probing-section.test.sh
