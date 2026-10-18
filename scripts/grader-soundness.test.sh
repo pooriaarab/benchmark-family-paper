@@ -42,11 +42,16 @@ for m in paper/main.tex paper/main-dmlr.tex; do
     echo "$m still carries an F7/F8 placeholder comment"
     exit 1
   fi
-  for fig in fig-probe-heatmap fig-hidden-audit; do
-    grep -q "input{figures/$fig" "$m" \
-      || { echo "$m no longer inputs figures/$fig"; exit 1; }
-  done
+  grep -q "input{figures/fig-probe-heatmap" "$m" \
+    || { echo "$m no longer inputs figures/fig-probe-heatmap"; exit 1; }
 done
+# F8 moved to the results appendix (issue #221, M5): input exactly once
+# across the tree, and that once lives inside app-results.tex.
+n=$(grep -rcF 'input{figures/fig-hidden-audit.tex}' paper/main.tex \
+    paper/main-dmlr.tex paper/sections | awk -F: '{s+=$2} END{print s}')
+[ "$n" = "1" ] || { echo "fig-hidden-audit is input $n times, want 1"; exit 1; }
+grep -qF 'input{figures/fig-hidden-audit.tex}' paper/sections/app-results.tex \
+  || { echo 'fig-hidden-audit not inside app-results.tex'; exit 1; }
 grep -q 'label{fig:probes}' paper/figures/fig-probe-heatmap.tex \
   || { echo 'fig-probe-heatmap.tex lost \label{fig:probes}'; exit 1; }
 grep -q 'label{fig:hiddenaudit}' paper/figures/fig-hidden-audit.tex \
@@ -123,7 +128,8 @@ diff "$OUT/hashes.first" "$OUT/hashes.second" \
 # an early match can SIGPIPE the extractor.
 page_has() { # $1 = pdf, $2 = page, $3 = pattern
   local text
-  text=$(pdftotext -f "$2" -l "$2" "$1" - 2>/dev/null)
+  # Collapse whitespace: a phrase can wrap across pdftotext lines.
+  text=$(pdftotext -f "$2" -l "$2" "$1" - 2>/dev/null | tr -s '[:space:]' ' ')
   grep -q "$3" <<< "$text"
 }
 pages=$(pdfinfo paper/main.pdf | awk '/^Pages/ {print $2}')
@@ -153,7 +159,7 @@ figpage() { # $1 = pdf path, $2 = caption fragment; prints the page
   echo "caption '$2' not found in $1" >&2
   exit 1
 }
-for pair in 'Contract probes on the:f7' 'Hidden-split hygiene on the:f8'; do
+for pair in 'Contract probes at each:f7' 'Hidden-split hygiene on the:f8'; do
   frag=${pair%%:*}; tag=${pair##*:}
   MP=$(figpage paper/main.pdf "$frag")
   DP=$(figpage paper/main-dmlr.pdf "$frag")
