@@ -20,7 +20,11 @@ const AUDIT_HEADER = ["package", "version", "wave", "files", "tasks_file", "publ
 const CENSUS_HEADER = ["package", "version", "wave", "generator", "split_flag", "seed_flag", "output_flag", "hidden_default", "hidden_needs_seed", "tasks_flag", "qualifies"];
 const OVERLAP_HEADER = ["package", "version", "wave", "seed", "generator", "hidden_tasks", "public_tasks", "prompt_pairs", "prompt_exact_overlap", "prompt_norm_overlap", "expected_pairs", "expected_exact_overlap", "expected_norm_overlap", "id_exact_overlap", "id_suffix_overlap"];
 const NAME_RE = /^[a-z0-9][a-z0-9-]*$/;
-const LEAK_COLS = ["hidden files", "answer files", "seed examples"];
+// A bare four-digit year is not a seed value; the seed-examples
+// column counts only values that are neither the public seed nor a
+// year, the same recount macros.mjs applies (issue #212, M9).
+const YEAR_RE = /^(19|20)\d{2}$/;
+const LEAK_COLS = ["hidden files", "answer files", "other seed values"];
 const JITTER = 0.14;
 
 function fail(message) {
@@ -55,14 +59,16 @@ function int(path, row, field) {
 
 // A `;`-joined list where `none` means empty; anything else must be
 // non-empty entries, so a formatting drift can never pass as a count.
-function listCount(path, row, field) {
+// `filter` drops the public seed and bare years before counting, the
+// recount the seed-examples column applies (issue #212, M9).
+function listCount(path, row, field, filter) {
   const value = row[field].trim();
   if (value === "none") return 0;
   const parts = value.split(";");
   if (parts.some((part) => part.trim() === "")) {
     fail(`${path}: empty ${field} entry in ${row.package}@${row.version}`);
   }
-  return parts.length;
+  return filter ? parts.filter(filter).length : parts.length;
 }
 
 const doc = JSON.parse(readFileSync(VERSIONS, "utf8"));
@@ -80,8 +86,11 @@ for (const a of artifacts) {
 const keyOf = (pkg, ver) => `${pkg}@${ver}`;
 const waveOf = new Map(artifacts.map((a) => [keyOf(a.pkg, a.ver), a.wave]));
 
-const frozenSeeds = JSON.parse(readFileSync(SEEDS, "utf8")).seeds ?? [];
+const seedsDoc = JSON.parse(readFileSync(SEEDS, "utf8"));
+const frozenSeeds = seedsDoc.seeds ?? [];
 if (frozenSeeds.length === 0) fail("hidden-seeds.json lists no seeds");
+const publicSeed = String(seedsDoc.publicSeed ?? "");
+if (!/^\d+$/.test(publicSeed)) fail("hidden-seeds.json lists no publicSeed");
 const seedSet = new Set(frozenSeeds.map(String));
 
 const auditRows = readCsv(AUDIT, AUDIT_HEADER);
@@ -113,7 +122,8 @@ for (const row of auditBy.values()) {
   row.leaks = {
     hidden: listCount(AUDIT, row, "hidden_named_files"),
     answer: listCount(AUDIT, row, "answer_bearing_files"),
-    seeds: listCount(AUDIT, row, "doc_hidden_seed_examples"),
+    seeds: listCount(AUDIT, row, "doc_hidden_seed_examples",
+      (v) => v !== publicSeed && !YEAR_RE.test(v)),
   };
 }
 for (const [key, row] of censusBy) {

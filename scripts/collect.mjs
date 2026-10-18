@@ -490,6 +490,7 @@ function defectsMacrosTex() {
     `\\newcommand{\\defectFigYmax}{${fmtInt(max + 1.5)}}`,
     `\\newcommand{\\defectScoreMaterialClasses}{${rows.filter((row) => row.score_material === "yes").length}}`,
     `\\newcommand{\\defectScoreMaterial}{${scorePackages.size}}`,
+    `\\newcommand{\\defectClassedPackages}{${allPackages.size}}`,
     `\\newcommand{\\defectNoClassPackages}{${noClass.map((id) => ttId(`benchmark-${id}`)).join(", ") || "\\emph{none}"}}`,
   ];
   for (const row of rows) {
@@ -659,8 +660,26 @@ function reviewDataMacrosTex() {
   const topAgent = agents.reduce((a, b) => (Number(b.total) > Number(a.total) ? b : a));
   const council = readCsv(reviewersPath).find((row) => row.account === "claude");
   if (!council) fail("reviewers.csv has no claude row");
-  const approvalCases = readCsv(approvalDefectsPath).length;
+  const approvalRows = readCsv(approvalDefectsPath);
+  const approvalCases = approvalRows.length;
   if (!approvalCases) fail("approval-defects.csv is empty");
+  // The approval locators the text cites must come from the record,
+  // never a typed numeral (issue #212); the pelican defect is logged
+  // under its tracker issue inside the defect text.
+  const approvalByRepo = new Map(approvalRows.map((row) => [row.repo, row]));
+  const approvalPr = (repo) => {
+    const row = approvalByRepo.get(`benchmark-${repo}`);
+    if (!row) fail(`approval-defects.csv has no ${repo} row`);
+    if (!/^\d+$/.test(row.pr)) fail(`approval-defects.csv: bad pr ${row.pr}`);
+    return row.pr;
+  };
+  const approvalIssue = (repo) => {
+    const row = approvalByRepo.get(`benchmark-${repo}`);
+    if (!row) fail(`approval-defects.csv has no ${repo} row`);
+    const match = row.defect.match(/\(issue (\d+)\)/);
+    if (!match) fail(`approval-defects.csv: ${repo} defect names no issue`);
+    return match[1];
+  };
   const c = councilMetrics();
   const need = (key) => {
     if (!c.has(key)) fail(`council.csv is missing ${key}; run scripts/council.mjs`);
@@ -702,6 +721,9 @@ function reviewDataMacrosTex() {
     `\\newcommand{\\councilSeverityPrsRead}{${need("prs_with_severity_read")}}`,
     `\\newcommand{\\councilSampleSize}{${need("sample_size")}}`,
     `\\newcommand{\\approvalDefectCases}{${approvalCases}}`,
+    `\\newcommand{\\approvalPelicanPr}{${approvalPr("pelican")}}`,
+    `\\newcommand{\\approvalPelicanIssue}{${approvalIssue("pelican")}}`,
+    `\\newcommand{\\approvalSycophancyPr}{${approvalPr("sycophancy")}}`,
   ];
   for (const row of readCsv(notesPath)) {
     lines.push(`\\newcommand{\\note${row.key}}{${tex(row.value)}}`);
