@@ -51,6 +51,7 @@ const SOURCES = [
   { key: "explA", path: join(ROOT, "paper/data/exp/exploit-results-a.csv"), rel: "paper/data/exp/exploit-results-a.csv" },
   { key: "explB", path: join(ROOT, "paper/data/exp/exploit-results-b.csv"), rel: "paper/data/exp/exploit-results-b.csv" },
   { key: "explC", path: join(ROOT, "paper/data/exp/exploit-results-c.csv"), rel: "paper/data/exp/exploit-results-c.csv" },
+  { key: "runtimes", path: join(ROOT, "paper/data/exp/runtimes.csv"), rel: "paper/data/exp/runtimes.csv" },
 ];
 
 function fail(message) {
@@ -224,7 +225,9 @@ function loadInputs() {
     ["package", "locator", "row", "version", "clause", "tasks", "measured", "baseline", "record_value", "verdict", "detail"]);
   const explC = readQuotedCsv(SOURCES[16].path,
     ["package", "locator", "measured_state", "record_value", "measured_value", "clause", "record_holds", "postfix_holds", "status", "notes"]);
-  return { versions, pinned, waveOf, released, cells, headroom, reasons, probeIds, probeType, contract, seeds, audit, census, overlap, detConfig, determinism, exploits, explA, explB, explC };
+  const runtimes = readCsv(SOURCES[17].path,
+    ["experiment", "script", "artifacts", "cells", "wall_seconds", "measured_at"]);
+  return { versions, pinned, waveOf, released, cells, headroom, reasons, probeIds, probeType, contract, seeds, audit, census, overlap, detConfig, determinism, exploits, explA, explB, explC, runtimes };
 }
 
 // A `;`-joined list where `none` means empty; an empty entry after a
@@ -240,7 +243,7 @@ function listLen(rel, row, field) {
 }
 
 function analyse(input) {
-  const { pinned, waveOf, released, cells, headroom, reasons, probeIds, probeType, contract, seeds, audit, census, overlap, detConfig, determinism, exploits, explA, explB, explC } = input;
+  const { pinned, waveOf, released, cells, headroom, reasons, probeIds, probeType, contract, seeds, audit, census, overlap, detConfig, determinism, exploits, explA, explB, explC, runtimes } = input;
   const artifacts = new Set();
   const policies = new Set();
   const seenCell = new Set();
@@ -822,6 +825,9 @@ function analyse(input) {
     }
   }
 
+  const runtimeBatteryMin = (runtimeSec(runtimes, "E1") / 60).toFixed(1);
+  const runtimeProbesSec = runtimeSec(runtimes, "E4");
+
   return {
     packages: pinned.size,
     artifacts: artifacts.size,
@@ -920,7 +926,24 @@ function analyse(input) {
     explAtkNewOnly,
     explAtkOldOnly,
     explNotReplicatedList,
+    runtimeBatteryMin,
+    runtimeProbesSec,
   };
+}
+
+// Wall-clock seconds for a scripted experiment, read from the measured
+// runtimes.csv. The conclusion quotes these as the cost of the scripted
+// checks, so a missing or implausible row fails the build.
+function runtimeSec(runtimes, experiment) {
+  const rows = runtimes.filter((row) => row.experiment === experiment);
+  if (rows.length !== 1) {
+    fail(`runtimes.csv: ${rows.length} rows for ${experiment}, want 1`);
+  }
+  const sec = Number(rows[0].wall_seconds);
+  if (!Number.isFinite(sec) || sec <= 0) {
+    fail(`runtimes.csv: bad wall_seconds for ${experiment}`);
+  }
+  return sec;
 }
 
 function generate(stats) {
@@ -969,6 +992,8 @@ function generate(stats) {
     `\\newcommand{\\expFormatGateAllPct}{${pct(c["format-gate"], stats.batteryRows)}}`,
     `\\newcommand{\\expFormatGateAllPkgs}{${pkgList(stats.formatGateAllPkgs)}}`,
     `\\newcommand{\\expFormatGateNone}{${stats.formatGateNone}}`,
+    `\\newcommand{\\expRuntimeBatteryMin}{${stats.runtimeBatteryMin}}`,
+    `\\newcommand{\\expRuntimeProbesSec}{${stats.runtimeProbesSec}}`,
     `\\newcommand{\\expProbes}{${stats.probes}}`,
     `\\newcommand{\\expProbeCells}{${stats.probeCells}}`,
     `\\newcommand{\\expProbesHonestAccepted}{${stats.probesHonestAccepted}}`,
