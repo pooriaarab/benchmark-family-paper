@@ -33,7 +33,7 @@ echo "== wave, tier and no-data checks"
 rows=$(($(wc -l < "$GEN/policy-ladder-labels.csv") - 1))
 w1=$(sed -n 's/.*policyLadderWaveOneRows}{\([0-9]*\)}.*/\1/p' "$GEN/policy-ladder-macros.tex")
 ta=$(($(wc -l < "$GEN/policy-ladder-taskaware.csv") - 1))
-nd=$(grep -c 'no E2 row' "$GEN/policy-ladder-stems.tex")
+nd=$(grep -c 'no attack row' "$GEN/policy-ladder-stems.tex")
 [ "$rows" -gt 0 ] && [ -n "$w1" ] && [ "$w1" -lt "$rows" ] \
   || { echo "rows $rows / wave-1 rows $w1 look wrong"; exit 1; }
 [ $((ta + nd)) = "$rows" ] \

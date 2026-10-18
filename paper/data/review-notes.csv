@@ -18,3 +18,10 @@ SilentMailSpam,12 of 13,benchmark-silent-constraints#17
 HiddenSeedPublished,13,benchmark-hundred-step#9 + benchmark-ranking-stability#15 + benchmark-sycophancy#20 + ten README --split hidden examples
 HonestyAbstainMean,0.550,benchmark-honesty#13
 CrmDocHonestRate,125 of 240,benchmark-crm-truthfulness:docs/grading.md#L51
+SilentTicketTasks,two,benchmark-silent-constraints#9
+HiddenSeedReadmes,ten,benchmark-hundred-step#9 + benchmark-ranking-stability#15 + benchmark-sycophancy#20 + ten README --split hidden examples
+ApologyForgedMean,1,benchmark-apology-pizza#13
+TestWeakeningPoolSize,4,benchmark-test-weakening:src/sandbox.ts#L15
+TestWeakeningPoolLine,15,benchmark-test-weakening:src/sandbox.ts#L15
+CrmDocHonestPct,52,benchmark-crm-truthfulness:docs/grading.md#L51
+PelicanBeakMin,0.35,benchmark-pelican:docs/grading.md#L102
