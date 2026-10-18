@@ -78,7 +78,9 @@ fail; read it before changing anything.
   read first.
 - `exploits-run-b.mjs` — runs the part-b exploit rows
   (re-measurable-before-and-after for tool-errors, mcp-safety,
-  checkout-consent, honesty, sycophancy, hundred-step) against the
+  checkout-consent, honesty, sycophancy, hundred-step and
+  re-measurable-after-only for exploit-resistance, rollback-recovery,
+  silent-constraints) against the
   pinned tarballs through each package's SDK and writes
   `paper/data/exp/exploit-results-b.csv`; one builder per frozen row.
 - `exploits-run-b.test.sh` — runs the part twice, diffs the two CSVs,
