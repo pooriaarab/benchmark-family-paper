@@ -142,8 +142,8 @@ defoff=$(grep -boF 'a clause is a single checkable relation' "$S4" | head -1 | c
 cntoff=$(grep -boF 'record clauses replicate' "$S4" | head -1 | cut -d: -f1)
 { [ -n "$defoff" ] && [ -n "$cntoff" ] && [ "$defoff" -lt "$cntoff" ]; } \
   || { echo "the clause counts still precede their definition"; exit 1; }
-grep -qF 'r$n$ below cites a row of that list' "$S4" \
-  || { echo "r<n> gloss missing in $S4"; exit 1; }
+grep -qF 'r<n>} is the row' paper/generated/exploit-verdicts-low.tex \
+  || { echo "r<n> gloss missing from exploit-verdicts-low.tex"; exit 1; }
 grep -qF 'asks that the new mean sit under the old one' paper/sections/app-experiments.tex \
   || { echo "the loose bound is unexplained in app-experiments.tex"; exit 1; }
 grep -qF 'review council, several reviewer sessions' "$VL" \
@@ -159,8 +159,8 @@ grep -qF 'type-B fails on' "$GS" && grep -qF "the probe score to equal the oracl
   || { echo "type-B rule not defined in $GS"; exit 1; }
 grep -qF 'type-A fails on' "$GS" && grep -qF 'scores above an empty submission' "$GS" \
   || { echo "type-A rule not defined in $GS"; exit 1; }
-grep -qF 'the machine-readable catalogue record' "$GEN/suite-table.tex" \
-  || { echo "index-entry gloss missing from the suite-table caption"; exit 1; }
+grep -qF 'the machine-readable catalogue record' "$GEN/suite-table-full.tex" \
+  || { echo "index-entry gloss missing from the suite-table-full caption"; exit 1; }
 
 echo "== the garbled sentence is gone"
 if grep -nF 'pays the exploit on \expExplFixFailsAttackPkgs{}, where' "$S4"; then
@@ -188,6 +188,7 @@ for f in $TOUCHED; do
         -e 's/0\.[0-9]\.[0-9]//g' \
         -e 's/\b[HL][0-9]\b//g' \
         -e 's/r\$n\$//g' \
+        -e 's/\br[0-9][0-9]*\b//g' \
         -e 's/atk-[a-z-]+//g' \
         -e 's/hv-[a-z-]+//g' \
         -e 's/CC(-| )?BY(-SA)? ?[0-9.]*//g' \

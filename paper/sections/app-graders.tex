@@ -1,7 +1,7 @@
 \section{Per-package graders}
 \label{app:suite}
 
-Table~\ref{tab:suite} is the measured catalogue. Table~\ref{tab:graders} quotes the index entry, so the paragraphs below do not restate it. Each paragraph names the failure the grader was written to catch and the end-to-end guard that watches it. Those guards live in the package repositories. They are not model scores.
+Table~\ref{tab:suite-full} is the measured catalogue. Table~\ref{tab:graders} quotes the index entry, so the paragraphs below do not restate it. Each paragraph names the failure the grader was written to catch and the end-to-end guard that watches it. Those guards live in the package repositories. They are not model scores.
 
 \paragraph{Pelican.}
 The canonical item is Simon Willison's prompt ``Generate an SVG of a pelican riding a bicycle'', used since October 2024 as a quick look at whether a model can draw~\cite{willison2024pelican}. A seeded grid then varies the animal and the bicycle so the package covers more than one meme. The grader never renders pixels. It rejects active content, then checks the parts the task prompt names, measured in wheel radii so the canvas size cannot move a threshold. The score is multiplicative: a shared-structure gate times a task-specific fit, so one memorised drawing scores at most \notePelicanMemoCap{} on a task it was not drawn for. The end-to-end script submits the generated reference drawings, which must score exactly 1 on their own task, a mismatched-pair attack, which must stay low, and the usual empty, random, and constant submissions. A structural check can still pass an abstract drawing a person would reject, and the package says so.
