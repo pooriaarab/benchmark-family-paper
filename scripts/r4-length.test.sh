@@ -51,7 +51,7 @@ grep -q 'Package & Ver. & Kind & Tasks & Wave & Fix rds. & Category & Data & Lic
 grep -q 'label{tab:suite-full}' paper/generated/suite-table-full.tex || exit 1
 
 echo "== the repetition rules hold"
-count() { grep -l "$1" paper/sections/intro.tex paper/sections/engine.tex paper/sections/verification-layers.tex paper/sections/adversarial.tex paper/sections/prereg.tex paper/sections/grader-soundness.tex paper/sections/related.tex paper/sections/closing.tex paper/sections/conclusion.tex paper/figures/*.tex 2>/dev/null | wc -l; }
+count() { grep -oh "$1" paper/sections/intro.tex paper/sections/engine.tex paper/sections/verification-layers.tex paper/sections/adversarial.tex paper/sections/prereg.tex paper/sections/grader-soundness.tex paper/sections/related.tex paper/sections/closing.tex paper/sections/conclusion.tex paper/figures/*.tex 2>/dev/null | wc -l; }
 [ "$(count 'both directions')" -le 1 ] \
   || { echo "'both directions' repeated in the main matter"; exit 1; }
 # the approval coverage claim is said once outside the abstract
