@@ -34,9 +34,16 @@
   point meta=explicit symbolic,
   nodes near coords, nodes near coords style={font=\tiny,anchor=west,rotate=20,text=black!70}]
   table[x=x,y=y,meta=label] {generated/trivial-scatter-notes.csv};
+% Labels near the origin would sweep through the y = x segment, so the
+% generator splits them out (trivial-scatter-online.csv) and they sit
+% right of the line's visible end at x = 0.06 (issue #229).
+\addplot[only marks, mark=none,
+  point meta=explicit symbolic,
+  nodes near coords, nodes near coords style={font=\tiny,anchor=west,text=black!70,xshift=32pt}]
+  table[x=x,y=y,meta=label] {generated/trivial-scatter-online.csv};
 \legend{wave 1, wave 2 (0.1.0 only)}
 \end{axis}
 \end{tikzpicture}
-\caption{Best trivial-policy score per package at 0.1.0 against 0.2.0, generated from \texttt{paper/data/trivial.csv} and the extended battery (\texttt{trivial-headroom.csv}). Points below the dashed $y = x$ line lost their blind-policy credit after the fix wave; the \reviewWaveOne{} registered packages are the circles. The wave-2 packages (triangles) have no 0.2.0 release and sit in the lane below the axis at their 0.1.0 value, outside the registered comparison.}
+\caption{Best trivial-policy score per package at 0.1.0 against 0.2.0, generated from \texttt{paper/data/trivial.csv} and the extended battery (\texttt{trivial-headroom.csv}). Points below the dashed $y = x$ line lost their blind-policy credit after the fix wave; the labels near the origin sit right of the line's visible end so they do not cross it; the \reviewWaveOne{} registered packages are the circles. The wave-2 packages (triangles) have no 0.2.0 release and sit in the lane below the axis at their 0.1.0 value, outside the registered comparison.}
 \label{fig:trivial-scatter}
 \end{figure}
