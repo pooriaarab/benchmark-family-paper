@@ -28,7 +28,9 @@ CELLS=$(($(wc -l < paper/generated/probe-heatmap.csv) - 1))
 ROWS=$(($(wc -l < paper/generated/probe-heatmap-rows.csv) - 1))
 COLS=$(($(wc -l < paper/generated/probe-heatmap-cols.csv) - 1))
 [ "$CELLS" = "$((ROWS * COLS))" ] || { echo "grid $ROWS x $COLS != $CELLS cells"; exit 1; }
-[ "$ROWS" = "34" ] || { echo "rows: $ROWS, want 34"; exit 1; }
+# Issue #221 (M5): the main-text figure keeps only the 22 released
+# rows, the newest pinned version per package.
+[ "$ROWS" = "22" ] || { echo "rows: $ROWS, want 22"; exit 1; }
 [ "$COLS" = "17" ] || { echo "cols: $COLS, want 17"; exit 1; }
 
 for target in pdf dmlr; do

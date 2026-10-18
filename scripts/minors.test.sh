@@ -34,7 +34,7 @@ echo "== the free-model run is described as not completed"
 if grep -rniE 'still running|still in progress|in progress at the time' paper/sections; then
   echo "'still running' wording survived above"; exit 1
 fi
-for f in "$DEV" "$PRE"; do
+for f in "$DEV" "$CLO"; do
   grep -qF 'was not completed' "$f" || { echo "$f lacks the not-completed wording"; exit 1; }
 done
 
