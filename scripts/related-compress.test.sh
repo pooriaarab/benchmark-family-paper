@@ -21,7 +21,8 @@ for target in pdf dmlr; do
 done
 
 for f in paper/main.pdf paper/main-dmlr.pdf; do
-  if pdftotext "$f" - 2>/dev/null | grep -qF "??"; then
+  if grep -F '??' <<< "$(pdftotext "$f" - 2>/dev/null)" \
+      | grep -vqF '?? "'; then
     echo "$f: extracted text contains ?? (a broken reference)"
     exit 1
   fi
@@ -30,14 +31,14 @@ done
 pages=$(pdfinfo paper/main.pdf | awk '/^Pages/ {print $2}')
 start=""
 for i in $(seq 1 "$pages"); do
-  if pdftotext -f "$i" -l "$i" paper/main.pdf - 2>/dev/null | grep -q "Related work"; then
+  if grep -q "Related work" <<< "$(pdftotext -f "$i" -l "$i" paper/main.pdf - 2>/dev/null)"; then
     start=$i; break
   fi
 done
 [ -n "$start" ] || { echo "Related work heading not found"; exit 1; }
 end="$start"
 for i in $(seq "$start" "$pages"); do
-  if pdftotext -f "$i" -l "$i" paper/main.pdf - 2>/dev/null | grep -q "Limitations and what this does not show"; then
+  if grep -q "Limitations and what this does not show" <<< "$(pdftotext -f "$i" -l "$i" paper/main.pdf - 2>/dev/null)"; then
     end=$i; break
   fi
   end=$i

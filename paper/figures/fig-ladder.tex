@@ -12,7 +12,7 @@
 \begin{axis}[
   font=\small,
   scale only axis,
-  width=0.68\textwidth, height=0.68\textheight,
+  width=0.68\textwidth, height=0.36\textheight,
   y dir=reverse,
   xmin=-0.02, xmax=1.04,
   ymin=-0.5, ymax=\policyLadderRows-0.5,
@@ -20,7 +20,7 @@
   xlabel={score},
   ytick=data,
   yticklabels from table={generated/policy-ladder-labels.csv}{label},
-  y tick label style={font=\scriptsize},
+  y tick label style={font=\tiny},
   xtick={0,0.2,0.4,0.6,0.8,1.0},
   tick label style={font=\scriptsize},
   axis x line*=bottom, axis y line*=left,
@@ -37,6 +37,6 @@
 \node[font=\tiny, anchor=south west, fill=white, inner sep=1pt] at (axis cs:0.30,\wbound) {wave 2 below this rule: 0.1.0 only, exploratory};
 \end{axis}
 \end{tikzpicture}
-\caption{The best score each policy tier earns per package at the package's released version (0.2.0 for the \policyLadderWaveOneRows{} wave-1 packages, the only release for wave 2), generated from \texttt{trivial-headroom.csv} and \texttt{exploit-results-}\allowbreak\texttt{\{a,b\}.csv}. Filled circles are the best of the \expPolicies{} prompt-blind policies in the extended battery; filled diamonds are the best attack row the re-measurement scored on the released tarball over the \policyLadderTaskAware{} packages that have one, and the \policyLadderNoData{} packages with no attack row in the frozen list carry a \emph{no attack row} mark at the row's middle where a diamond would sit. Filled squares are the mock oracle mean defined per package in \texttt{oracle-definition.csv}; on exploit-resistance the diamond and the square coincide. The prompt-reading rung does not appear: that tier was not run. Wave-2 packages below the dashed rule have a single release and are exploratory.}
+\caption{The best score each policy tier earns per package at the package's released version (0.2.0 for the \policyLadderWaveOneRows{} wave-1 packages, the only release for wave 2), generated from the run outputs (Appendix~\ref{app:experiments}). Filled circles are the best of the \expPolicies{} prompt-blind policies in the extended battery; filled diamonds are the best attack row the re-measurement scored on the released tarball over the \policyLadderTaskAware{} packages that have one, and the \policyLadderNoData{} packages with no attack row in the frozen list carry a \emph{no attack row} mark at the row's middle where a diamond would sit. Filled squares are the mock oracle mean defined per package in the pinned oracle list; on exploit-resistance the diamond and the square coincide. The prompt-reading rung does not appear: that tier was not run. Wave-2 packages below the dashed rule have a single release and are exploratory.}
 \label{fig:ladder}
 \end{figure}
