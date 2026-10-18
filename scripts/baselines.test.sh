@@ -14,15 +14,13 @@ trap 'rm -rf "$OUT"' EXIT
 
 SECTION=paper/sections/prereg.tex
 
-# Float wiring: mains input the section and table; the two figures
-# moved to the results appendix (review M5) and stay input once.
+# Float wiring: mains input the section; the table and the two figures
+# moved to the results appendix and stay input once.
 for m in paper/main.tex paper/main-dmlr.tex; do
-  for f in sections/prereg.tex generated/trivial.tex; do
-    n=$(grep -cF "input{$f}" "$m")
-    [ "$n" = "1" ] || { echo "$m inputs $f $n times, want 1"; exit 1; }
-  done
+  n=$(grep -cF "input{sections/prereg.tex}" "$m")
+  [ "$n" = "1" ] || { echo "$m inputs sections/prereg.tex $n times, want 1"; exit 1; }
 done
-for f in figures/fig-trivial-scatter.tex figures/fig-trivial-reasons.tex; do
+for f in generated/trivial.tex figures/fig-trivial-scatter.tex figures/fig-trivial-reasons.tex; do
   n=$(grep -rcF "input{$f}" paper/main.tex paper/main-dmlr.tex paper/sections \
       | awk -F: '{s+=$2} END{print s}')
   [ "$n" = "1" ] || { echo "$f is input $n times, want 1"; exit 1; }
@@ -36,14 +34,16 @@ grep -q 'label{fig:trivial-scatter}' paper/figures/fig-trivial-scatter.tex \
 grep -q 'label{fig:trivial-reasons}' paper/figures/fig-trivial-reasons.tex \
   || { echo 'fig-trivial-reasons.tex lost its label'; exit 1; }
 
-# The F4 ladder has no data yet: exactly one placeholder comment and no
-# live reference to a ladder figure anywhere in the paper sources.
-grep -q 'Placeholder placement for figure F4' "$SECTION" \
-  || { echo 'prereg.tex lost the F4 placeholder comment'; exit 1; }
-if grep -rniE 'ref{fig:(policy-)?ladder}|input{[^}]*ladder' paper/; then
-  echo 'a live ladder reference or input exists; F4 has no merged data'
-  exit 1
-fi
+# The ladder figure moved to the results appendix with merged data:
+# input once across the sources, inside app-results, label kept.
+n=$(grep -rcF 'input{figures/fig-ladder.tex}' \
+    paper/main.tex paper/main-dmlr.tex paper/sections \
+    | awk -F: '{s+=$2} END{print s}')
+[ "$n" = "1" ] || { echo "fig-ladder is input $n times, want 1"; exit 1; }
+grep -qF 'input{figures/fig-ladder.tex}' paper/sections/app-results.tex \
+  || { echo 'fig-ladder not inside app-results.tex'; exit 1; }
+grep -q 'label{fig:ladder}' paper/figures/fig-ladder.tex \
+  || { echo 'fig-ladder.tex lost \label{fig:ladder}'; exit 1; }
 
 # A counted number typed by hand: strip comments, \texttt groups (the
 # DOIs live there), ISO dates, version tokens and the designators the
