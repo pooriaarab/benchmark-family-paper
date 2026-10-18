@@ -15,8 +15,8 @@ The same \expPolicies{} policies then ran on every pinned artifact in the suite:
 \paragraph{Where blind policies die.}
 Figure~\ref{fig:trivial-reasons} sorts the \expZeroRows{} zero-score rows into the frozen reason classes. \expFormatGateZeroPct{} percent die at the format gate, rejected before substantive scoring; the rest reach the grader and lose there (\expClassWrongAnswer{} graded wrong answers, \expClassContractViolation{} contract violations, \expClassAbort{} aborts, \expClassUnclassified{} unclassified). Per package the dominant gate differs: \expFormatGateAllPkgs{} reject every blind row at the format gate, while \expFormatGateNone{} packages never show a format-gate row. Among the latter, apology-pizza, sycophancy and test-weakening score every blind submission zero inside the grader. The mechanism behind the null is therefore twofold: where a submission contract exists, a policy that cannot read the task usually fails to produce a parseable answer at all, and where the submission reaches the grader it earns nothing because the credit sits behind task-specific behaviour. Both gates end in the same place for a blind policy.
 
-\paragraph{Still running.}
-H2 and H3 concern real models: the per-model mean score difference between 0.1.0 and 0.2.0 with a bootstrap interval over packages, and the Kendall tau between model orderings per package. Both hypotheses are still running at the time of writing, and this paper reports no model numbers.
+\paragraph{The unfinished arm.}
+H2 and H3 concern real models: the per-model mean score difference between 0.1.0 and 0.2.0 with a bootstrap interval over packages, and the Kendall tau between model orderings per package. Both hypotheses are unmeasured: the free-model run was not completed, no cells are vendored in this repository, and this paper reports no model numbers.
 
 \input{figures/fig-ladder.tex}
 
