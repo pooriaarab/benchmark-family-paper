@@ -106,8 +106,14 @@ grep -q '^y,fails,designed$' "$GEN/probe-heatmap-fails.csv" \
   || { echo "fails file lost the designed column"; exit 1; }
 barf=$(awk -F, 'NR>1 {s+=$2} END{print s+0}' "$GEN/probe-heatmap-fails.csv")
 bard=$(awk -F, 'NR>1 {s+=$3} END{print s+0}' "$GEN/probe-heatmap-fails.csv")
-wantf=$(awk -F, 'NR>1 && $5=="fail" && $3!="atk-dup-tool-calls"' paper/data/exp/contract-probes.csv | wc -l)
-wantd=$(awk -F, 'NR>1 && $5=="fail" && $3=="atk-dup-tool-calls"' paper/data/exp/contract-probes.csv | wc -l)
+# The figure keeps only the released version per package (issue #221,
+# M5), so the expected bars count fails on those rows only.
+wantf=$(printf '%s\n' "$released" | while IFS=, read -r pkg ver; do
+    awk -F, -v p="$pkg" -v v="$ver" 'NR>1 && $1==p && $2==v && $5=="fail" && $3!="atk-dup-tool-calls"' paper/data/exp/contract-probes.csv
+  done | wc -l)
+wantd=$(printf '%s\n' "$released" | while IFS=, read -r pkg ver; do
+    awk -F, -v p="$pkg" -v v="$ver" 'NR>1 && $1==p && $2==v && $5=="fail" && $3=="atk-dup-tool-calls"' paper/data/exp/contract-probes.csv
+  done | wc -l)
 [ "$barf" = "$wantf" ] || { echo "bar fails $barf != $wantf real fails"; exit 1; }
 [ "$bard" = "$wantd" ] || { echo "bar designed $bard != $wantd expected penalties"; exit 1; }
 orange=$(awk -F, 'NR>1 && $3==4' "$GEN/probe-heatmap.csv" | wc -l)
@@ -120,23 +126,28 @@ done
 echo "== terms are defined at first use"
 grep -qF 'shipped in two waves' "$S4" \
   || { echo "wave definition missing in $S4"; exit 1; }
-if grep -n 'wave-[12]' paper/sections/intro.tex paper/sections/engine.tex "$VL"; then
+# intro.tex is excluded: its headline "paired wave-1 rows" is approved
+# copy (issues #212, #219) that forward-references the Section 4 defn.
+if grep -n 'wave-[12]' paper/sections/engine.tex "$VL"; then
   echo "wave-N used before its definition above"; exit 1
 fi
 wdefoff=$(grep -boF 'shipped in two waves' "$S4" | head -1 | cut -d: -f1)
 wuseoff=$(grep -boE 'wave-[12]' "$S4" | head -1 | cut -d: -f1)
 { [ -n "$wdefoff" ] && { [ -z "$wuseoff" ] || [ "$wdefoff" -lt "$wuseoff" ]; }; } \
   || { echo "wave-N used before the wave sentence"; exit 1; }
-grep -qF 'the written findings a review round hands the builder' "$S4" \
-  || { echo "fix-brief gloss missing in $S4"; exit 1; }
+# The fix-brief sentence moved out of Section 4 entirely (issue #221,
+# M6), so the term must not appear there undefined.
+if grep -ni 'fix.brief' "$S4"; then
+  echo "fix-brief used in $S4 without a gloss"; exit 1
+fi
 defoff=$(grep -boF 'a clause is a single checkable relation' "$S4" | head -1 | cut -d: -f1)
-cntoff=$(grep -boF 'clauses that re-measure' "$S4" | head -1 | cut -d: -f1)
+cntoff=$(grep -boF 'record clauses replicate' "$S4" | head -1 | cut -d: -f1)
 { [ -n "$defoff" ] && [ -n "$cntoff" ] && [ "$defoff" -lt "$cntoff" ]; } \
   || { echo "the clause counts still precede their definition"; exit 1; }
 grep -qF 'r$n$ below cites a row of that list' "$S4" \
   || { echo "r<n> gloss missing in $S4"; exit 1; }
-grep -qF 'asks that the new mean sit under the old one' "$S4" \
-  || { echo "the loose bound is unexplained in $S4"; exit 1; }
+grep -qF 'asks that the new mean sit under the old one' paper/sections/app-experiments.tex \
+  || { echo "the loose bound is unexplained in app-experiments.tex"; exit 1; }
 grep -qF 'review council, several reviewer sessions' "$VL" \
   || { echo "council definition missing in $VL"; exit 1; }
 if grep -rn 'part-c' paper/sections paper/figures; then
