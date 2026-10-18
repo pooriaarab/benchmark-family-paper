@@ -285,3 +285,14 @@ constant, the memory-conflict option position, the honesty
 None-abstain wrapper and the schema-mutation ISO duration. The record
 does not pin them enough for two implementers to rebuild them
 identically.
+
+## Scripted-check runtimes
+
+`runtimes.csv` records the wall-clock cost of the scripted checks the
+conclusion quotes. One row per experiment: `experiment`, `script`,
+`artifacts`, `cells`, `wall_seconds`, `measured_at`. The numbers are
+single-machine timings from a fresh `.exp-cache` (E1 shares one
+trivial-policy-server across cells; E4 scores through the SDK), so
+they read as order-of-cost, not as a reproducible constant.
+`scripts/exp/macros.mjs` turns them into `\expRuntimeBatteryMin` and
+`\expRuntimeProbesSec`; a rerun of either script updates the row.
