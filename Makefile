@@ -156,3 +156,11 @@ hidden-audit-plot-test:
 # inputs twice, rebuild both PDFs twice, and render the figure page.
 exploits-plot-test:
 	bash scripts/exp/exploits-plot.test.sh
+
+.PHONY: policy-ladder-test
+
+# Figure F4 (the policy-tier ladder at the released versions):
+# regenerate the figure inputs twice, rebuild both PDFs twice, and
+# render the figure page.
+policy-ladder-test:
+	bash scripts/exp/policy-ladder.test.sh
