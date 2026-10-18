@@ -35,8 +35,8 @@ grep -qF 'anchor=center' "$AUD" \
   || { echo "count nodes not centred"; exit 1; }
 grep -qF 'yshift=-3pt' "$AUD" \
   || { echo "x tick labels not lowered"; exit 1; }
-grep -qF 'xticklabel* cs:0.5' "$AUD" \
-  || { echo "legend not attached to tick labels"; exit 1; }
+grep -qF 'at={(0.02,0.97)}' "$AUD" && grep -qF 'anchor=north west' "$AUD" \
+  || { echo "legend not in the corner"; exit 1; }
 
 echo "== probe heatmap stays legible in grayscale"
 sha256sum paper/generated/probe-heatmap* > "$OUT/ph.before"
