@@ -10,29 +10,29 @@
 \begin{axis}[
   font=\small,
   scale only axis,
-  width=0.50\textwidth, axis equal image,
-  xmin=-0.01, xmax=0.45,
-  ymin=-0.10, ymax=0.45,
+  width=0.62\textwidth, height=0.26\textwidth,
+  xmin=-0.01, xmax=0.62,
+  ymin=-0.13, ymax=0.06,
   clip=false,
   xlabel={best trivial score at 0.1.0},
   ylabel={best trivial score at 0.2.0},
   axis x line*=bottom, axis y line*=left,
   xtick={0,0.1,0.2,0.3,0.4},
-  ytick={0,0.1,0.2,0.3,0.4},
+  ytick={0,0.02,0.04},
   tick label style={font=\scriptsize},
   legend style={at={(0.98,0.98)}, anchor=north east, font=\scriptsize, draw=black!30, fill=white, fill opacity=0.9, text opacity=1},
 ]
-\addplot[black!40, dashed, domain=0:0.45, forget plot] {x};
-\draw[black!25, dotted] (axis cs:0,-0.05) -- (axis cs:0.45,-0.05);
+\addplot[black!40, dashed, domain=0:0.06, forget plot] {x};
+\draw[black!25, dotted] (axis cs:0,-0.012) -- (axis cs:0.62,-0.012);
 \addplot[only marks, mark=*, mark size=1.6pt, color=okblue]
   table[x=x,y=y] {generated/trivial-scatter.csv};
 \addplot[only marks, mark=triangle*, mark size=1.9pt, color=okverm,
   point meta=explicit symbolic,
   nodes near coords, nodes near coords style={font=\tiny,anchor=west,rotate=-60}]
-  table[x=x,y expr=-0.05,meta=label] {generated/trivial-scatter-rug.csv};
+  table[x=x,y expr=-0.025,meta=label] {generated/trivial-scatter-rug.csv};
 \addplot[only marks, mark=none,
   point meta=explicit symbolic,
-  nodes near coords, nodes near coords style={font=\tiny,anchor=west,rotate=60,text=black!70}]
+  nodes near coords, nodes near coords style={font=\tiny,anchor=west,rotate=20,text=black!70}]
   table[x=x,y=y,meta=label] {generated/trivial-scatter-notes.csv};
 \legend{wave 1, wave 2 (0.1.0 only)}
 \end{axis}

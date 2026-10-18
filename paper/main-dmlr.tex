@@ -22,6 +22,12 @@
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.17}
 \usetikzlibrary{arrows.meta, patterns, positioning}
+\usepackage{placeins}
+
+% dmlr2e loads natbib in author-year mode, where \cite renders like
+% \citet (no parentheses). The shared sections only use \cite, so route
+% it to the parenthetical form here (issue #223, M11).
+\let\cite\citep
 
 % Computer Modern is wider than the NeurIPS fonts; give long
 % \texttt runs slack instead of editing the shared sections.
@@ -40,8 +46,28 @@
 \input{generated/trivial-macros.tex}
 \input{generated/exp-macros.tex}
 
-% No OpenReview forum id exists before submission; link the venue.
-\def\openreview{\url{https://openreview.net/group?id=DMLR}}
+% dmlr2e's \@maketitle always prints an OpenReview review line, which
+% would be a false claim on an unreviewed preprint (issue #223, M11).
+% The style is sha256-pinned, so the block is overridden here verbatim
+% minus that clause until a forum id exists.
+\makeatletter
+\def\@maketitle{\vbox{\hsize\textwidth
+ \linewidth\hsize \vskip \beforetitskip
+ {\begin{center} \Large\bf \@title \par \end{center}} \vskip \aftertitskip
+ {\def\and{\unskip\enspace{\rm and}\enspace}%
+  \def\addr{\small\it}%
+  \def\email{\hfill\small\sc}%
+  \def\name{\normalsize\bf}%
+  \def\AND{\@endauthor\rm\hss \vskip \interauthorskip \@startauthor}
+  \@startauthor \@author\@endauthor}
+  \vskip \aftermaketitskip
+  \if@preprint
+  \else
+  \noindent \@starteditor \@editor \@endeditor
+  \vskip \aftermaketitskip
+  \fi
+}}
+\makeatother
 \ShortHeadings{Agents Can Build Benchmarks}{Arab}
 \firstpageno{1}
 
@@ -100,6 +126,7 @@ benchmarks, coding agents, approval review, probing review, evaluation
 
 \section{Limitations and what this does not show}
 \input{sections/closing.tex}
+\FloatBarrier
 
 \section{Conclusion}
 \label{sec:conclusion}
@@ -112,24 +139,31 @@ benchmarks, coding agents, approval review, probing review, evaluation
 \bibliography{refs}
 
 % Appendix order follows the v2 outline; the stubs hold the letters
-% for the sections later PRs fill.
+% for the sections later PRs fill. \FloatBarrier keeps each
+% appendix's floats from drifting past the next section (issue #223,
+% M11).
 \input{sections/appendix.tex}
 \input{sections/app-graders.tex}
 \input{generated/graders.tex}
 \input{sections/app-validity.tex}
 \input{sections/app-engine.tex}
 \input{sections/principles.tex}
+\FloatBarrier
 \input{sections/app-review-stats.tex}
 \input{generated/approval-defects.tex}
+\FloatBarrier
 \input{sections/app-builders.tex}
 \input{generated/builders.tex}
 \input{generated/defect-locators.tex}
+\FloatBarrier
 \input{sections/app-defect-classes.tex}
 \input{sections/app-validation.tex}
 \input{generated/mock-table.tex}
 \input{generated/summary.tex}
 \input{figures/fig-mock.tex}
+\FloatBarrier
 \input{sections/app-experiments.tex}
+\FloatBarrier
 \input{sections/app-reproducibility.tex}
 \input{sections/app-deviations.tex}
 
