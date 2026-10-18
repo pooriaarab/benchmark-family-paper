@@ -18,6 +18,7 @@
 %   paper/data/exp/exploit-results-b.csv: a098c057dafd
 %   paper/data/exp/exploit-results-c.csv: fbe6d5e0d4ac
 %   paper/data/exp/runtimes.csv: e773a8caeb58
+%   paper/data/exp/seed-check.csv: 91ed45a52f8e
 \newcommand{\expPackages}{22}
 \newcommand{\expArtifacts}{34}
 \newcommand{\expWaveOne}{12}
@@ -33,7 +34,7 @@
 \newcommand{\expTrivialReleasedMaxPkgs}{\texttt{payment}-\allowbreak\texttt{delegation}}
 \newcommand{\expTrivialReleasedZero}{18}
 \newcommand{\expTrivialReleasedNonzero}{4}
-\newcommand{\expTrivialReleasedNonzeroPkgs}{\texttt{instruction}-\allowbreak\texttt{hierarchy}, \texttt{payment}-\allowbreak\texttt{delegation}, \texttt{ranking}-\allowbreak\texttt{stability}, \texttt{rollback}-\allowbreak\texttt{recovery}}
+\newcommand{\expTrivialReleasedNonzeroPkgs}{\texttt{instruction}-\allowbreak\texttt{hierarchy}, \texttt{payment}-\allowbreak\texttt{delegation}, \texttt{ranking}-\allowbreak\texttt{stability} and \texttt{rollback}-\allowbreak\texttt{recovery}}
 \newcommand{\expWaveOneOldNonzero}{3}
 \newcommand{\expWaveOneNewNonzero}{1}
 \newcommand{\expWaveTwoNonzero}{3}
@@ -59,7 +60,7 @@
 \newcommand{\expClassUnclassified}{0}
 \newcommand{\expFormatGateZeroPct}{23.7}
 \newcommand{\expFormatGateAllPct}{22.6}
-\newcommand{\expFormatGateAllPkgs}{\texttt{honesty}, \texttt{latency}-\allowbreak\texttt{budget}, \texttt{pelican}, \texttt{schema}-\allowbreak\texttt{mutation}, \texttt{skateboard}}
+\newcommand{\expFormatGateAllPkgs}{\texttt{honesty}, \texttt{latency}-\allowbreak\texttt{budget}, \texttt{pelican}, \texttt{schema}-\allowbreak\texttt{mutation} and \texttt{skateboard}}
 \newcommand{\expFormatGateNone}{14}
 \newcommand{\expRuntimeBatteryMin}{5.7}
 \newcommand{\expRuntimeProbesSec}{22}
@@ -71,25 +72,35 @@
 \newcommand{\expProbesHonestCells}{30}
 \newcommand{\expProbesHonestHeld}{30}
 \newcommand{\expProbesForgedAccepted}{2}
-\newcommand{\expProbesForgedAcceptedPkgs}{\texttt{payment}-\allowbreak\texttt{delegation}, \texttt{tool}-\allowbreak\texttt{errors}}
+\newcommand{\expProbesForgedAcceptedPkgs}{\texttt{payment}-\allowbreak\texttt{delegation} and \texttt{tool}-\allowbreak\texttt{errors}}
 \newcommand{\expProbesFailedCells}{20}
 \newcommand{\expProbesReleasedCells}{374}
 \newcommand{\expProbesOutsideContract}{252}
 \newcommand{\expProbesNotRunnable}{3}
 \newcommand{\expProbesCreditFailCells}{7}
 \newcommand{\expProbesMovedFailCells}{13}
-\newcommand{\expProbesCreditFailPkgs}{\texttt{instruction}-\allowbreak\texttt{hierarchy}, \texttt{payment}-\allowbreak\texttt{delegation}, \texttt{ranking}-\allowbreak\texttt{stability}, \texttt{schema}-\allowbreak\texttt{mutation}, \texttt{tool}-\allowbreak\texttt{errors}}
+\newcommand{\expProbesCreditFailPkgs}{\texttt{instruction}-\allowbreak\texttt{hierarchy}, \texttt{payment}-\allowbreak\texttt{delegation}, \texttt{ranking}-\allowbreak\texttt{stability}, \texttt{schema}-\allowbreak\texttt{mutation} and \texttt{tool}-\allowbreak\texttt{errors}}
+\newcommand{\expProbesCreditFailPkgCount}{5}
 \newcommand{\expProbesMovedFailPkgCount}{12}
 \newcommand{\expProbesDupCallCells}{8}
-\newcommand{\expProbesDupCallPkgs}{\texttt{apology}-\allowbreak\texttt{pizza}, \texttt{checkout}-\allowbreak\texttt{consent}, \texttt{latency}-\allowbreak\texttt{budget}, \texttt{memory}-\allowbreak\texttt{conflict}, \texttt{payment}-\allowbreak\texttt{delegation}, \texttt{rollback}-\allowbreak\texttt{recovery}, \texttt{silent}-\allowbreak\texttt{constraints}, \texttt{tool}-\allowbreak\texttt{errors}}
+\newcommand{\expProbesDupCallPkgs}{\texttt{apology}-\allowbreak\texttt{pizza}, \texttt{checkout}-\allowbreak\texttt{consent}, \texttt{latency}-\allowbreak\texttt{budget}, \texttt{memory}-\allowbreak\texttt{conflict}, \texttt{payment}-\allowbreak\texttt{delegation}, \texttt{rollback}-\allowbreak\texttt{recovery}, \texttt{silent}-\allowbreak\texttt{constraints} and \texttt{tool}-\allowbreak\texttt{errors}}
 \newcommand{\expProbesDupCallPkgCount}{8}
 \newcommand{\expProbesWrapCells}{5}
-\newcommand{\expProbesWrapPkgs}{\texttt{accessibility}-\allowbreak\texttt{fix}, \texttt{instruction}-\allowbreak\texttt{hierarchy}, \texttt{pelican}, \texttt{ranking}-\allowbreak\texttt{stability}}
+\newcommand{\expProbesWrapPkgs}{\texttt{accessibility}-\allowbreak\texttt{fix}, \texttt{instruction}-\allowbreak\texttt{hierarchy}, \texttt{pelican} and \texttt{ranking}-\allowbreak\texttt{stability}}
 \newcommand{\expProbesWrapPkgCount}{4}
 \newcommand{\expAuditArtifacts}{34}
 \newcommand{\expAuditLeaksFound}{1}
+\newcommand{\expAuditOverlapArtifacts}{2}
 \newcommand{\expAuditSeedExamples}{49}
 \newcommand{\expAuditSeedExamplesOther}{23}
+\newcommand{\expAuditSeedDistinct}{16}
+\newcommand{\expAuditSeedRealDistinct}{11}
+\newcommand{\expAuditSeedRealPkgs}{9}
+\newcommand{\expAuditSeedNonseed}{5}
+\newcommand{\expAuditSeedHandValues}{3}
+\newcommand{\expAuditSeedHandPkgs}{5}
+\newcommand{\expAuditSeedTotalDistinct}{14}
+\newcommand{\expAuditSeedTotalPkgs}{14}
 \newcommand{\expAuditCensusQualified}{4}
 \newcommand{\expAuditSeedlessQual}{2}
 \newcommand{\expAuditSeeds}{5}
@@ -123,7 +134,7 @@
 \newcommand{\expExplAtkMaxNew}{0.7222}
 \newcommand{\expExplAtkWaveTwoMax}{0.2000}
 \newcommand{\expExplAtkMaxRel}{0.7222}
-\newcommand{\expExplFixFailsPkgs}{\texttt{checkout}-\allowbreak\texttt{consent}, \texttt{pelican}, \texttt{tool}-\allowbreak\texttt{errors}}
+\newcommand{\expExplFixFailsPkgs}{\texttt{checkout}-\allowbreak\texttt{consent}, \texttt{pelican} and \texttt{tool}-\allowbreak\texttt{errors}}
 \newcommand{\expExplReleasedRows}{54}
 \newcommand{\expExplCommitRows}{16}
 \newcommand{\expExplReplReleased}{31}
@@ -134,9 +145,10 @@
 \newcommand{\expExplRecordCommit}{16}
 \newcommand{\expExplFixFailsAttack}{4}
 \newcommand{\expExplFixFailsHonest}{1}
-\newcommand{\expExplFixFailsAttackPkgs}{\texttt{checkout}-\allowbreak\texttt{consent}, \texttt{tool}-\allowbreak\texttt{errors}}
+\newcommand{\expExplFixFailsAttackPkgs}{\texttt{checkout}-\allowbreak\texttt{consent} and \texttt{tool}-\allowbreak\texttt{errors}}
 \newcommand{\expExplFixFailsHonestPkgs}{\texttt{pelican}}
 \newcommand{\expExplFixHoldsWeak}{7}
+\newcommand{\expExplWeakMcpSafety}{0.6750}
 \newcommand{\expExplAtkPairs}{16}
 \newcommand{\expExplAtkMedianOldPaired}{0.7500}
 \newcommand{\expExplAtkMedianNewPaired}{0.0841}
