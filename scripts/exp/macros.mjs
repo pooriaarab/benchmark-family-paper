@@ -19,7 +19,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { isAttackRow, parseRecordValue } from "./exploits-clauses.mjs";
+import { isAttackRow, parseClauses, parseRecordValue } from "./exploits-clauses.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const VERSIONS = join(ROOT, "scripts/exp/versions.json");
@@ -502,18 +502,38 @@ function analyse(input) {
     }
     frozen.set(line, row);
   });
+  // One result clause is one (target, relation) pair; the T3 vs
+  // column prints the bound or reference the relation compares
+  // against, short so the table stays narrow.
+  const clauseRel = (clause, rel) => {
+    const parsed = parseClauses(clause);
+    if (parsed.length !== 1 || parsed[0].target === null) {
+      fail(`${rel}: cannot parse clause ${clause}`);
+    }
+    return parsed[0].rel;
+  };
+  const relVs = (rel, where) => {
+    const m = rel.match(/^(?:equals|below|<=|within [\d.]+ of)\s*(.*)$/);
+    if (!m) fail(`${where}: cannot shorten clause relation ${rel}`);
+    return m[1].replace(/^approximate$/, "approx. record");
+  };
   const explCounts = { a: {}, b: {}, c: {} };
   for (const part of ["a", "b", "c"]) {
     for (const v of VERDICTS) explCounts[part][v] = 0;
   }
   const explRowsRun = new Set();
   const explPair = new Set();
+  const explLinesAB = new Set(); // distinct frozen lines parts a/b ran (tarballs)
   const atkOld = []; // wave-1 attack means at 0.1.0
   const atkNew = []; // wave-1 attack means at 0.2.0
+  const atkByLine = new Map(); // wave-1 attack line -> {old, new}
   const atkRel = []; // attack means at the released version, both waves
   const atkW2Rel = [];
   const fixFailPkgs = new Set();
+  const fixFailAttackPkgs = new Set();
+  const fixFailHonestPkgs = new Set();
   const explBadRows = [];
+  let explFixHoldsWeak = 0; // fix-holds whose only bound is "below 0.1.0"
   for (const [part, rows] of [["a", explA], ["b", explB]]) {
     for (const row of rows) {
       const line = Number(row.row);
@@ -536,18 +556,28 @@ function analyse(input) {
       if (explPair.has(pair)) fail(`exploit-results-${part}.csv: duplicate measurement ${pair}`);
       explPair.add(pair);
       explRowsRun.add(line);
+      explLinesAB.add(line);
       explCounts[part][row.verdict] += 1;
-      if (row.verdict === "fix-fails") fixFailPkgs.add(row.package);
+      const attack = isAttackRow(ref);
+      const rel = ["fix-holds", "fix-fails", "not-replicated"].includes(row.verdict)
+        ? clauseRel(row.clause, `exploit-results-${part}.csv`)
+        : "";
+      if (row.verdict === "fix-fails") {
+        fixFailPkgs.add(row.package);
+        (attack ? fixFailAttackPkgs : fixFailHonestPkgs).add(row.package);
+      }
+      if (row.verdict === "fix-holds" && rel === "below 0.1.0") explFixHoldsWeak += 1;
       if (row.verdict === "not-replicated" || row.verdict === "fix-fails") {
-        explBadRows.push({ row: line, pkg: row.package, locator: row.locator, where: row.version, verdict: row.verdict, measured: row.measured, record: row.record_value });
+        explBadRows.push({ row: line, pkg: row.package, locator: row.locator, where: row.version, verdict: row.verdict, attack, rel, vs: relVs(rel, `exploit-results-${part}.csv`), measured: row.measured, record: row.record_value });
       }
       if (row.measured !== "") {
         const m = num(`exploit-results-${part}.csv`, row, "measured");
         if (m < 0 || m > 1) fail(`exploit-results-${part}.csv: line ${line} measured ${m} outside [0,1]`);
-        if (isAttackRow(ref)) {
+        if (attack) {
           if (waveOf.get(pkgName) === 1) {
-            if (row.version === "0.1.0") atkOld.push(m);
-            if (row.version === "0.2.0") atkNew.push(m);
+            if (!atkByLine.has(line)) atkByLine.set(line, {});
+            if (row.version === "0.1.0") { atkOld.push(m); atkByLine.get(line).old = m; }
+            if (row.version === "0.2.0") { atkNew.push(m); atkByLine.get(line).new = m; }
           } else {
             atkW2Rel.push(m);
           }
@@ -568,6 +598,15 @@ function analyse(input) {
     if (!cQueue.has(key)) cQueue.set(key, []);
     cQueue.get(key).push(line);
   }
+  // The text must not call every part-c row a published-artifact
+  // measurement: only a "… tarball" measured_state is a released
+  // artifact; an intermediate commit is unreleased source.
+  const cCommitLines = new Set(); // frozen lines measured on intermediate commits
+  const cTarballLines = new Set(); // frozen lines measured at a released tarball state
+  let replCommit = 0;
+  let notReplCommit = 0;
+  let replTarball = 0;
+  let notReplTarball = 0;
   for (const row of explC) {
     if (!["replicated", "not-replicated", "not-runnable"].includes(row.status)) {
       fail(`exploit-results-c.csv: bad status ${row.status}`);
@@ -581,8 +620,21 @@ function analyse(input) {
     const cLine = queue.shift();
     explRowsRun.add(cLine);
     explCounts.c[row.status] += 1;
+    const onCommit = row.measured_state.startsWith("intermediate commit ");
+    const onTarball = row.measured_state.endsWith(" tarball");
+    if (!onCommit && !onTarball) {
+      fail(`exploit-results-c.csv: unrecognised measured_state ${row.measured_state}`);
+    }
+    (onCommit ? cCommitLines : cTarballLines).add(cLine);
+    if (row.status === "replicated") {
+      if (onCommit) replCommit += 1; else replTarball += 1;
+    }
+    if (row.status === "not-replicated") {
+      if (onCommit) notReplCommit += 1; else notReplTarball += 1;
+    }
     if (row.status !== "replicated") {
-      explBadRows.push({ row: cLine, pkg: row.package, locator: row.locator, where: "commit", verdict: row.status, measured: row.measured_value, record: row.record_value });
+      const cRel = row.clause === "" ? "" : clauseRel(row.clause, "exploit-results-c.csv");
+      explBadRows.push({ row: cLine, pkg: row.package, locator: row.locator, where: onCommit ? "commit" : row.measured_state, verdict: row.status, attack: isAttackRow(frozen.get(cLine)), rel: cRel, vs: cRel === "" ? "" : relVs(cRel, "exploit-results-c.csv"), measured: row.measured_value, record: row.record_value });
     }
   }
   // Every frozen row either ran (a/b/c) or is a needs-reviewer-policy
@@ -605,6 +657,31 @@ function analyse(input) {
     [...explPair].map((pair) => Number(pair.split("|")[0])).filter((line) => isAttackRow(frozen.get(line))),
   ).size;
   explBadRows.sort((p, q) => p.row - q.row);
+
+  // The two attack medians pair only where a wave-1 attack row carries
+  // both versions: a row measured on one side alone stays outside.
+  const atkPairs = [...atkByLine.values()].filter((d) => d.old !== undefined && d.new !== undefined);
+  const explAtkNewOnly = [...atkByLine.values()].filter((d) => d.old === undefined && d.new !== undefined).length;
+  const explAtkOldOnly = [...atkByLine.values()].filter((d) => d.new === undefined && d.old !== undefined).length;
+
+  // The miss list the text cites: each not-replicated clause as
+  // "package r<n> (<measured> against <record>)", every number out of
+  // the result CSVs.
+  const missRecord = (s) => s.replace(/%/g, "\\%").replace(/^~/, "about ");
+  const explNotReplicatedList = andList(
+    explBadRows
+      .filter((r) => r.verdict === "not-replicated")
+      .map((r) => `${ttId(r.pkg)} r${r.row} (${r.measured} against ${missRecord(r.record)})`),
+  );
+
+  // Row-level artifact split: parts a and b ran on the released
+  // tarballs; part c split above. The two must account for every
+  // frozen row that ran.
+  const explReleasedRows = new Set([...explLinesAB, ...cTarballLines]).size;
+  const explCommitRows = cCommitLines.size;
+  if (explReleasedRows + explCommitRows !== explRowsRun.size) {
+    fail(`artifact split ${explReleasedRows}+${explCommitRows} != ${explRowsRun.size} run rows`);
+  }
 
   const releasedRows = [];
   for (const [pkg, ver] of released) {
@@ -826,6 +903,23 @@ function analyse(input) {
     explAtkW2Max: atkW2Rel.length ? Math.max(...atkW2Rel) : 0,
     explAtkMaxRel: atkRel.length ? Math.max(...atkRel) : 0,
     explFixFailPkgs: [...fixFailPkgs],
+    explReleasedRows,
+    explCommitRows,
+    explReplReleased: explCounts.a.replicated + explCounts.b.replicated + replTarball,
+    explReplCommit: replCommit,
+    explNotReplReleased: explCounts.a["not-replicated"] + explCounts.b["not-replicated"] + notReplTarball,
+    explNotReplCommit: notReplCommit,
+    explFixFailsAttack: explBadRows.filter((r) => r.verdict === "fix-fails" && r.attack).length,
+    explFixFailsHonest: explBadRows.filter((r) => r.verdict === "fix-fails" && !r.attack).length,
+    explFixFailsAttackPkgs: [...fixFailAttackPkgs],
+    explFixFailsHonestPkgs: [...fixFailHonestPkgs],
+    explFixHoldsWeak,
+    explAtkPairs: atkPairs.length,
+    explAtkMedianOldPaired: median(atkPairs.map((d) => d.old)),
+    explAtkMedianNewPaired: median(atkPairs.map((d) => d.new)),
+    explAtkNewOnly,
+    explAtkOldOnly,
+    explNotReplicatedList,
   };
 }
 
@@ -928,6 +1022,22 @@ function generate(stats) {
     `\\newcommand{\\expExplAtkWaveTwoMax}{${fmt(stats.explAtkW2Max)}}`,
     `\\newcommand{\\expExplAtkMaxRel}{${fmt(stats.explAtkMaxRel)}}`,
     `\\newcommand{\\expExplFixFailsPkgs}{${pkgList(stats.explFixFailPkgs)}}`,
+    `\\newcommand{\\expExplReleasedRows}{${stats.explReleasedRows}}`,
+    `\\newcommand{\\expExplCommitRows}{${stats.explCommitRows}}`,
+    `\\newcommand{\\expExplReplReleased}{${stats.explReplReleased}}`,
+    `\\newcommand{\\expExplReplCommit}{${stats.explReplCommit}}`,
+    `\\newcommand{\\expExplNotReplReleased}{${stats.explNotReplReleased}}`,
+    `\\newcommand{\\expExplNotReplCommit}{${stats.explNotReplCommit}}`,
+    `\\newcommand{\\expExplFixFailsAttack}{${stats.explFixFailsAttack}}`,
+    `\\newcommand{\\expExplFixFailsHonest}{${stats.explFixFailsHonest}}`,
+    `\\newcommand{\\expExplFixFailsAttackPkgs}{${pkgList(stats.explFixFailsAttackPkgs)}}`,
+    `\\newcommand{\\expExplFixFailsHonestPkgs}{${pkgList(stats.explFixFailsHonestPkgs)}}`,
+    `\\newcommand{\\expExplFixHoldsWeak}{${stats.explFixHoldsWeak}}`,
+    `\\newcommand{\\expExplAtkPairs}{${stats.explAtkPairs}}`,
+    `\\newcommand{\\expExplAtkMedianOldPaired}{${fmt(stats.explAtkMedianOldPaired)}}`,
+    `\\newcommand{\\expExplAtkMedianNewPaired}{${fmt(stats.explAtkMedianNewPaired)}}`,
+    `\\newcommand{\\expExplAtkNewOnly}{${stats.explAtkNewOnly}}`,
+    `\\newcommand{\\expExplNotReplicatedList}{${stats.explNotReplicatedList}}`,
     ...["a", "b", "c"].flatMap((part) => [
       `\\newcommand{\\expExpl${part.toUpperCase()}Clauses}{${stats.explPartClauses[part]}}`,
       ...Object.keys(stats.explCounts[part]).map(
@@ -962,19 +1072,23 @@ const EXPL_PART_LABEL = {
 
 // Table T3: verdict counts by run part and in total, then the compact
 // list of every not-replicated and every fix-fails clause with
-// package, locator and the measured number. A fix-fails clause means
-// the shipped fix still gives the exploit credit: it is reported as
-// found, never softened.
+// package, locator, what the relation compares against and the
+// measured number. A fix-fails on an attack row means the shipped fix
+// still pays the exploit; on an honest re-check row (an equals-oracle
+// clause) it means the grader still rejects the honest answer, and
+// the verdict cell says so. Both are reported as found, never
+// softened.
 function verdictsFloat(stats) {
   const countLine = (part) =>
     `${EXPL_PART_LABEL[part]} & ${stats.explPartClauses[part]} & ${stats.explCounts[part].replicated} & ${stats.explCounts[part]["not-replicated"]} & ${stats.explCounts[part]["fix-holds"]} & ${stats.explCounts[part]["fix-fails"]} & ${stats.explCounts[part]["not-runnable"]} \\\\`;
+  const verdictCell = (r) => `${r.verdict.replace("-", " ")}${r.attack ? "" : " (honest)"}`;
   return `% Generated by scripts/exp/macros.mjs. Do not edit.
-% Table T3: clause verdicts on the E2 re-measurement, from
+% Table T3: clause verdicts on the exploit re-measurement, from
 % paper/data/exp/exploit-results-{a,b,c}.csv over the frozen list
 % paper/data/exp/exploits.csv.
 \\begin{table}[!tbp]
 \\centering
-\\caption{Verdicts on the \\expExplClauses{} clauses the E2 runs evaluated over the \\expExplFrozen{} frozen exploit rows, by run part (data: \\texttt{exploit-results-}\\allowbreak\\texttt{\\{a,b,c\\}.csv}). A replicated clause re-measures the logged number or bound; fix-holds and fix-fails judge the post-fix state against the frozen clause; the single not-runnable row is a locator-coverage row outside the E2 plan. The lower block lists every clause that did not replicate and every post-fix clause that still gives the exploit credit; \\texttt{r<n>} is the row's line in \\texttt{paper/data/exp/exploits.csv}. \\expExplPolicyOnly{} further frozen rows need the reviewer's unreleased policy and produced no clause.}
+\\caption{Verdicts on the \\expExplClauses{} clauses the re-measurement runs evaluated over the \\expExplFrozen{} frozen exploit rows, by run part (data: \\texttt{exploit-results-}\\allowbreak\\texttt{\\{a,b,c\\}.csv}). A clause pairs a target, a released version or a pinned commit, with the relation the measured score must satisfy there, and the vs column names what the relation compares against. A replicated clause re-measured the logged number or bound; fix-holds and fix-fails judge the post-fix state against the frozen relation, so a fix-fails on an attack row means the shipped fix still pays the exploit, while on an honest re-check row (an \\emph{equals oracle} clause, marked \\emph{honest}) it means the grader still rejects the honest answer. The single not-runnable row is a locator-coverage row outside the run plan. The lower block lists every clause that did not replicate and every post-fix clause that failed; \\texttt{r<n>} is the row's line in \\texttt{paper/data/exp/exploits.csv}. A further \\expExplPolicyOnly{} frozen rows need the reviewer's unreleased policy and produced no clause.}
 \\label{tab:exploit-verdicts}
 {\\small
 \\begin{tabular}{@{}lrrrrrr@{}}
@@ -990,18 +1104,19 @@ total & ${stats.explClauses} & ${stats.explTotals.replicated} & ${stats.explTota
 \\end{tabular}
 
 \\vspace{1.5ex}
-\\begin{tabular}{@{}lllllrr@{}}
+{\\footnotesize\\setlength{\\tabcolsep}{3pt}
+\\begin{tabular}{@{}llllllrr@{}}
 \\toprule
-row & package & locator & verdict & where & measured & record \\\\
+row & package & locator & verdict & where & vs & measured & record \\\\
 \\midrule
 ${stats.explBadRows
   .map(
     (r) =>
-      `r${r.row} & ${ttId(r.pkg)} & \\texttt{${shortLocator(r.locator)}} & ${r.verdict.replace("-", " ")} & ${r.where} & ${r.measured} & ${r.record.replace("%", "\\%")} \\\\`,
+      `r${r.row} & ${ttId(r.pkg)} & \\texttt{${shortLocator(r.locator)}} & ${verdictCell(r)} & ${r.where} & ${r.vs} & ${r.measured} & ${r.record.replace("%", "\\%")} \\\\`,
   )
   .join("\n")}
 \\bottomrule
-\\end{tabular}
+\\end{tabular}}
 }
 \\end{table}
 `;

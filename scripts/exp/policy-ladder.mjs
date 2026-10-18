@@ -7,7 +7,7 @@
 //   policy-ladder-taskaware.csv  x,y: best E2 attack row (or absent)
 //   policy-ladder-oracle.csv     x,y: mock good mean at the version
 //   policy-ladder-labels.csv     y,label per package row
-//   policy-ladder-stems.tex      \draw segments + no-E2-row nodes
+//   policy-ladder-stems.tex      \draw segments + no-attack-row nodes
 //   policy-ladder-macros.tex     row/tier counts for the .tex
 // One row per package at its released version (highest pinned). The
 // prompt-reading tier does not exist: E3 was not run. Part c
@@ -175,8 +175,10 @@ ordered.forEach((pkg, y) => {
     stems.push(`\\draw[black!25] (axis cs:${lo},${y}) -- (axis cs:${hi},${y});`);
   }
   // The node comes after the stem so its white fill covers the line.
+  // The mark names the real absence: every package here has E2 result
+  // rows; what it lacks is an attack row in the frozen list.
   if (!hasTa) {
-    stems.push(`\\node[font=\\tiny, text=black!55, fill=white, inner sep=1pt] at (axis cs:0.5,${y}) {no E2 row};`);
+    stems.push(`\\node[font=\\tiny, text=black!55, fill=white, inner sep=1pt] at (axis cs:0.5,${y}) {no attack row};`);
   }
 });
 // Package boundaries as light rules every four rows would clutter;
