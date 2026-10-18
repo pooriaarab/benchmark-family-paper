@@ -18,8 +18,8 @@ trap 'rm -rf "$OUT"' EXIT
 echo "== title still matches the suite size"
 for m in paper/main.tex paper/main-dmlr.tex; do
   grep -q 'Cases}' "$m" || { echo "$m: title lost the case count"; exit 1; }
-  grep -oE 'title\{[^}]*\}' "$m" | grep -q '22' \
-    || { echo "$m: title count drifted from the data"; exit 1; }
+  grep -q '\\suitePackages' "$m" \
+    || { echo "$m: title lost the suitePackages macro"; exit 1; }
 done
 grep -q 'newcommand{\\suitePackages}{22}' paper/generated/macros.tex \
   || { echo 'suitePackages is not 22; the title must change with it'; exit 1; }
