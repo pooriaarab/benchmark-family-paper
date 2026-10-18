@@ -348,7 +348,7 @@ function suiteTable(doc) {
     ...rows,
     "\\bottomrule",
     "\\end{tabular}",
-    "\\caption{Suite measured from \\texttt{index-entry} and a mock run. Package names omit the \\texttt{benchmark-} prefix. Data and licence list the distinct provenance fields.}",
+    "\\caption{Suite measured from each package's \\texttt{index-entry} output, the machine-readable catalogue record its CLI prints, and a mock run. Package names omit the \\texttt{benchmark-} prefix. Data and licence list the distinct provenance fields.}",
     "\\label{tab:suite}",
     "\\end{table}",
     "",

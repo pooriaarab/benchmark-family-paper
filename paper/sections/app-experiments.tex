@@ -1,5 +1,43 @@
 \section{Experiment specifications and frozen probe lists}
 \label{app:experiments}
 
-% TODO(A-series): move the experiment specifications and the frozen probe lists here.
-This appendix is a placeholder for the experiment specifications and the frozen probe lists.
+This appendix is the reference for the scripted checks that Sections~\ref{sec:prereg} and \ref{sec:soundness} report: what each run is, which input list was frozen before it ran, which files hold its output, and what it cannot show. Table~\ref{tab:experiments} gives the summary and the paragraphs below name the frozen inputs. Everything ran offline, free and deterministically against the artifacts pinned in \texttt{scripts/exp/versions.json} (\expArtifacts{} tarballs, each checked against its pinned \texttt{sha512} on install by \texttt{scripts/exp/install.mjs}); each script carries a failure-modes note beside it in \texttt{scripts/exp/}, and \texttt{paper/data/exp/README.md} describes every output file. Regeneration is covered in Appendix~\ref{app:reproducibility} and the deviations from the registered record in Appendix~\ref{app:deviations}.
+
+\begin{table}[t]
+\centering\small
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.17\textwidth}>{\raggedright\arraybackslash}p{0.20\textwidth}>{\raggedright\arraybackslash}p{0.22\textwidth}>{\raggedright\arraybackslash}p{0.09\textwidth}>{\raggedright\arraybackslash}p{0.17\textwidth}@{}}
+\toprule
+Run & Script & Output files & Runtime & What it cannot show \\
+\midrule
+Extended trivial battery and the zero-row classification (Section~\ref{sec:prereg}) & \texttt{trivial}-\allowbreak\texttt{battery.mjs} & \texttt{trivial}-\allowbreak\texttt{battery}-\allowbreak\texttt{cells.csv}, \texttt{trivial}-\allowbreak\texttt{reasons.csv}, \texttt{trivial}-\allowbreak\texttt{headroom.csv} & \expRuntimeBatteryMin{} min & a before/after for the wave-2 arm, or a detection rate for defects nobody logged \\
+\addlinespace
+Exploit re-measurement, part a (single answers) & \texttt{exploits}-\allowbreak\texttt{run}-\allowbreak\texttt{a.mjs} & \texttt{exploit}-\allowbreak\texttt{results}-\allowbreak\texttt{a.csv} & \expRuntimeExplASec{} s & a detection rate; the exploit list is post hoc \\
+Exploit re-measurement, part b (episodes) & \texttt{exploits}-\allowbreak\texttt{run}-\allowbreak\texttt{b.mjs} & \texttt{exploit}-\allowbreak\texttt{results}-\allowbreak\texttt{b.csv} & \expRuntimeExplBSec{} s & a detection rate; the exploit list is post hoc \\
+Exploit re-measurement, part c (source checkouts) & \texttt{exploits}-\allowbreak\texttt{run}-\allowbreak\texttt{c.mjs} & \texttt{exploit}-\allowbreak\texttt{results}-\allowbreak\texttt{c.csv} & \expRuntimeExplCSec{} s & a released-artifact claim; these rows measure pinned commits \\
+\addlinespace
+Contract probes (Section~\ref{sec:soundness}) & \texttt{contract}-\allowbreak\texttt{probes.mjs} & \texttt{contract}-\allowbreak\texttt{probes.csv} & \expRuntimeProbesSec{} s & that the graders are correct; a pass is one frozen rule held on the listed probes at the pinned version \\
+\addlinespace
+Tarball audit and hidden-split overlap & \texttt{tarball}-\allowbreak\texttt{audit.mjs}, \texttt{hidden}-\allowbreak\texttt{overlap.mjs} & \texttt{tarball}-\allowbreak\texttt{audit.csv}, \texttt{hidden}-\allowbreak\texttt{census.csv}, \texttt{hidden}-\allowbreak\texttt{overlap.csv} & \expRuntimeAuditSec{} s and \expRuntimeOverlapSec{} s & anything about training-data contamination; the audit reads shipped files only \\
+\addlinespace
+Determinism run & \texttt{determinism.mjs} & \texttt{determinism.csv} & \expRuntimeDeterminismSec{} s & anything about variance under a real model; every run goes through the mock adapter or the vendored trivial server \\
+\addlinespace
+Prompt-reading heuristic tier & \emph{never written} & none & none & the rung between blind and task-aware policies is unmeasured; this paper reports no cell on it \\
+Free-model run & \emph{did not complete} & none vendored & none & the registered real-model hypotheses stay uncomputable; no cell report is in this repository \\
+\bottomrule
+\end{tabular}
+\caption{The scripted checks this paper reports: one row per run, the script that produces it, the committed output files, a single-machine order-of-cost runtime from \texttt{paper/data/exp/runtimes.csv}, and what the run cannot show. The last two rows name the experiments that produced no data: the prompt-reading heuristic tier was never written, and the free-model run was stopped before completion.}
+\label{tab:experiments}
+\end{table}
+
+\paragraph{The frozen lists.}
+Every run that scores against a list had the list committed before the run. The trivial battery's zero-row classes sit in \texttt{scripts/exp/reason-classes.json}: \expReasonClasses{} declared classes (format-gate, contract-violation, wrong-answer, abort) over \expReasonClassRules{} regex rules, shared rules first and then per-package rules for all \expReasonClassPkgs{} packages, with first-match precedence and an unclassified remainder that is counted, never dropped. The contract-probe list is \texttt{scripts/exp/probes.json}: \expProbes{} probes, \expProbesHonest{} honest variants that reformat the oracle answer only in ways a shipped document promises, \expProbesAttack{} attacks, and \expProbesExploratory{} unpromised exploratory probe reported but never counted as a defect; the per-artifact applicability contract is \texttt{paper/data/exp/probe-applicability.csv} and the oracle definition is \texttt{paper/data/exp/oracle-definition.csv}. The exploit list is \texttt{paper/data/exp/exploits.csv}: \expExplFrozen{} frozen rows, each joining a logged number or bound to the package, locator, policy description, version pins and comparison clauses it is measured under; the results land in the three files \texttt{exploit-results-\{a,b,c\}.csv}. The audit seeds are \texttt{scripts/exp/hidden-seeds.json} (\expAuditSeeds{} seeds, never the public seed) and the determinism grid is \texttt{scripts/exp/determinism.json}.
+
+\paragraph{Rows no run reached.}
+\expExplPolicyOnly{} of the \expExplFrozen{} frozen exploit rows are marked needs-reviewer-policy: the record does not pin the reviewer's policy enough for two implementers to rebuild it identically, so the runs never produced a clause for them. They are listed below because they still bound what the re-measurement can claim: the numbers Section~\ref{sec:review} quotes are over the other \expExplRunRows{} rows.
+
+\begin{center}\small
+\input{generated/exploit-policy-only.tex}
+\end{center}
+
+\paragraph{Deviations.}
+The registered record's deviation log lives in Appendix~\ref{app:deviations}: the stopped paid run, the move to the free-model roster, the proxy that refuses paid model ids, the mooted spending cap, and the fixed output cap and reasoning effort, plus the grid-runner and analysis commits. This appendix adds nothing beyond those entries; the runtimes above are order-of-cost figures, not registration parameters.

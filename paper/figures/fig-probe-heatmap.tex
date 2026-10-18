@@ -25,8 +25,8 @@
   yticklabels from table={generated/probe-heatmap-rows.csv}{label},
   y tick label style={font=\tiny},
   axis x line*=bottom, axis y line*=left,
-  colormap={probecells}{rgb255(0)=(255,255,255) rgb255(1)=(217,217,217) rgb255(2)=(0,114,178) rgb255(3)=(38,38,38)},
-  point meta min=0, point meta max=3,
+  colormap={probecells}{rgb255(0)=(255,255,255) rgb255(1)=(217,217,217) rgb255(2)=(0,114,178) rgb255(3)=(38,38,38) rgb255(4)=(230,159,0)},
+  point meta min=0, point meta max=4,
 ]
 \addplot[matrix plot*, mesh/cols=\probesCols, point meta=explicit]
   table[x=x,y=y,meta=state] {generated/probe-heatmap.csv};
@@ -53,21 +53,26 @@
   xtick/.expanded=\probesFailTicks,
   xlabel={fails},
   axis x line*=bottom, axis y line*=left,
+  xbar stacked,
 ]
 \addplot[fill=black!70, draw=black]
   table[x=fails,y=y] {generated/probe-heatmap-fails.csv};
+\addplot[fill=okorange, draw=black]
+  table[x=designed,y=y] {generated/probe-heatmap-fails.csv};
 \end{axis}
 \fill[okblue] ([yshift=-3.55cm]probes.south west) rectangle ++(0.16,0.16);
 \node[anchor=west, font=\tiny] at ([yshift=-3.47cm,xshift=0.22cm]probes.south west) {pass};
 \fill[black!85] ([yshift=-3.55cm,xshift=1.0cm]probes.south west) rectangle ++(0.16,0.16);
 \node[anchor=west, font=\tiny] at ([yshift=-3.47cm,xshift=1.22cm]probes.south west) {fail};
-\fill[black!15, draw=black!40] ([yshift=-3.55cm,xshift=2.0cm]probes.south west) rectangle ++(0.16,0.16);
-\node[anchor=west, font=\tiny] at ([yshift=-3.47cm,xshift=2.22cm]probes.south west) {exploratory};
-\fill[pattern=north east lines, pattern color=black!55, draw=black!40] ([yshift=-3.55cm,xshift=4.0cm]probes.south west) rectangle ++(0.16,0.16);
-\node[anchor=west, font=\tiny] at ([yshift=-3.47cm,xshift=4.22cm]probes.south west) {outside contract};
-\fill[pattern=crosshatch, pattern color=black!55, draw=black!40] ([yshift=-3.55cm,xshift=6.5cm]probes.south west) rectangle ++(0.16,0.16);
-\node[anchor=west, font=\tiny] at ([yshift=-3.47cm,xshift=6.72cm]probes.south west) {not runnable};
+\fill[okorange] ([yshift=-3.55cm,xshift=1.85cm]probes.south west) rectangle ++(0.16,0.16);
+\node[anchor=west, font=\tiny] at ([yshift=-3.47cm,xshift=2.07cm]probes.south west) {expected penalty};
+\fill[black!15, draw=black!40] ([yshift=-3.55cm,xshift=4.1cm]probes.south west) rectangle ++(0.16,0.16);
+\node[anchor=west, font=\tiny] at ([yshift=-3.47cm,xshift=4.32cm]probes.south west) {exploratory};
+\fill[pattern=north east lines, pattern color=black!55, draw=black!40] ([yshift=-3.55cm,xshift=6.1cm]probes.south west) rectangle ++(0.16,0.16);
+\node[anchor=west, font=\tiny] at ([yshift=-3.47cm,xshift=6.32cm]probes.south west) {outside contract};
+\fill[pattern=crosshatch, pattern color=black!55, draw=black!40] ([yshift=-3.55cm,xshift=8.6cm]probes.south west) rectangle ++(0.16,0.16);
+\node[anchor=west, font=\tiny] at ([yshift=-3.47cm,xshift=8.82cm]probes.south west) {not runnable};
 \end{tikzpicture}
-\caption{Contract probes on the \expArtifacts{} pinned artifacts, generated from \texttt{paper/data/exp/}\allowbreak\texttt{contract-probes.csv}. Rows are the \expPackages{} packages (wave 1 shows both pinned versions above the dashed rule, wave 2 below it), columns the \expProbes{} frozen probes: the \texttt{hv-} honest variants left of the first dashed rule, the single unpromised exploratory probe between the rules, and the \texttt{atk-} attacks right of it. A cell passes when the artifact's frozen expected rule held, and outside-contract or not-runnable cells are hatched rather than read as pass or fail; margin bars count each row's fails.}
+\caption{Contract probes on the \expArtifacts{} pinned artifacts, generated from \texttt{paper/data/exp/}\allowbreak\texttt{contract-probes.csv}. Rows are the \expPackages{} packages (wave 1 shows both pinned versions above the dashed rule, wave 2 below it), columns the \expProbes{} frozen probes: the \texttt{hv-} honest variants left of the first dashed rule, the single unpromised exploratory probe between the rules, and the \texttt{atk-} attacks right of it. A cell passes when the artifact's frozen expected rule held, and outside-contract or not-runnable cells are hatched rather than read as pass or fail. The orange \texttt{atk-dup-tool-calls} cells are expected penalties: those graders score a repeated side effect zero by design, so the margin bars count each row's genuine fails in black and stack the expected penalties on top in orange.}
 \label{fig:probes}
 \end{figure}

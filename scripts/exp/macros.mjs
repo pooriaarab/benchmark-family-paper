@@ -27,6 +27,7 @@ const CLASSES = join(ROOT, "scripts/exp/reason-classes.json");
 const PROBES = join(ROOT, "scripts/exp/probes.json");
 const OUT = join(ROOT, "paper/generated/exp-macros.tex");
 const VERDICTS_OUT = join(ROOT, "paper/generated/exploit-verdicts.tex");
+const POLICY_ONLY_OUT = join(ROOT, "paper/generated/exploit-policy-only.tex");
 const PAPER = join(ROOT, "paper");
 const REASON_CLASSES = ["format-gate", "contract-violation", "wrong-answer", "abort", "unclassified"];
 const PROBE_RESULTS = ["pass", "fail", "exploratory", "not-runnable", "outside-contract"];
@@ -233,7 +234,7 @@ function loadInputs() {
     ["package", "locator", "measured_state", "record_value", "measured_value", "clause", "record_holds", "postfix_holds", "status", "notes"]);
   const runtimes = readCsv(SOURCES[17].path,
     ["experiment", "script", "artifacts", "cells", "wall_seconds", "measured_at"]);
-  return { versions, pinned, waveOf, released, cells, headroom, reasons, probeIds, probeType, contract, seeds, publicSeed, audit, census, overlap, detConfig, determinism, exploits, explA, explB, explC, runtimes };
+  return { versions, pinned, waveOf, released, classes, cells, headroom, reasons, probeIds, probeType, contract, seeds, publicSeed, audit, census, overlap, detConfig, determinism, exploits, explA, explB, explC, runtimes };
 }
 
 // A `;`-joined list where `none` means empty; an empty entry after a
@@ -249,7 +250,7 @@ function listLen(rel, row, field) {
 }
 
 function analyse(input) {
-  const { pinned, waveOf, released, cells, headroom, reasons, probeIds, probeType, contract, seeds, publicSeed, audit, census, overlap, detConfig, determinism, exploits, explA, explB, explC, runtimes } = input;
+  const { pinned, waveOf, released, classes, cells, headroom, reasons, probeIds, probeType, contract, seeds, publicSeed, audit, census, overlap, detConfig, determinism, exploits, explA, explB, explC, runtimes } = input;
   const artifacts = new Set();
   const policies = new Set();
   const seenCell = new Set();
@@ -756,14 +757,22 @@ function analyse(input) {
     if (probeSeen.has(cellKey)) fail(`contract-probes.csv: duplicate cell ${cellKey}`);
     probeSeen.add(cellKey);
     if (!probeStats.has(key)) {
-      probeStats.set(key, { hvPromised: 0, hvFail: 0, forgedFail: 0, fails: 0, creditFail: 0, movedFail: 0 });
+      probeStats.set(key, { hvPromised: 0, hvFail: 0, forgedFail: 0, fails: 0, creditFail: 0, movedFail: 0, dupFail: 0, wrapFail: 0 });
     }
     const stat = probeStats.get(key);
     if (row.result === "fail") {
       stat.fails += 1;
       const type = probeType.get(row.probe);
       if (type === "A") stat.creditFail += 1;
-      else if (type === "B") stat.movedFail += 1;
+      else if (type === "B") {
+        stat.movedFail += 1;
+        // The duplicate-call penalty is documented behaviour on these
+        // graders (issue #213, M4); the text wraps are real defects.
+        if (row.probe === "atk-dup-tool-calls") stat.dupFail += 1;
+        else if (row.probe === "atk-prompt-echo" || row.probe === "atk-score-injection") {
+          stat.wrapFail += 1;
+        }
+      }
       else if (row.class === "attack") fail(`contract-probes.csv: ${cellKey} failed under ${row.probe} which is no frozen attack type`);
     }
     if (row.class === "honest-variant" && (row.result === "pass" || row.result === "fail")) {
@@ -793,9 +802,13 @@ function analyse(input) {
   let probesFailedCells = 0;
   let probesCreditFailCells = 0;
   let probesMovedFailCells = 0;
+  let probesDupCallCells = 0;
+  let probesWrapCells = 0;
   const forgedAcceptedPkgs = [];
   const creditFailPkgs = [];
   const movedFailPkgs = [];
+  const dupCallPkgs = [];
+  const wrapPkgs = [];
   for (const [pkg, ver] of released) {
     const stat = probeStats.get(keyOf(pkg, ver));
     if (stat.hvFail === 0) probesHonestAccepted += 1;
@@ -805,9 +818,45 @@ function analyse(input) {
     probesFailedCells += stat.fails;
     probesCreditFailCells += stat.creditFail;
     probesMovedFailCells += stat.movedFail;
+    probesDupCallCells += stat.dupFail;
+    probesWrapCells += stat.wrapFail;
     if (stat.forgedFail > 0) forgedAcceptedPkgs.push(pkg);
     if (stat.creditFail > 0) creditFailPkgs.push(pkg);
     if (stat.movedFail > 0) movedFailPkgs.push(pkg);
+    if (stat.dupFail > 0) dupCallPkgs.push(pkg);
+    if (stat.wrapFail > 0) wrapPkgs.push(pkg);
+  }
+  // The type-B split must name every moved-fail cell: the designed
+  // duplicate-call penalties plus the text wraps (issue #213, M4). A
+  // nonzero remainder means a third kind the text does not cover.
+  const probesMovedOtherCells = probesMovedFailCells - probesDupCallCells - probesWrapCells;
+  if (probesMovedOtherCells !== 0) {
+    fail(`type-B split ${probesDupCallCells}+${probesWrapCells} leaves ${probesMovedOtherCells} unnamed moved fails`);
+  }
+  const probesHonestUnpromised = released.size - probesHonestPromised;
+
+  // Frozen-list shapes for Appendix J: declared reason classes and
+  // their regex-rule count, probe counts by kind, and the frozen
+  // exploit rows no run could reach (the reviewer's unreleased
+  // policies), each with its line number for the r<n> citation.
+  const reasonClassCount = Object.keys(classes.classMeanings ?? {}).length;
+  const reasonClassRules =
+    (classes.shared ?? []).length +
+    Object.values(classes.packages ?? {}).reduce((sum, rules) => sum + rules.length, 0);
+  const reasonClassPkgs = Object.keys(classes.packages ?? {}).length;
+  let probesHonest = 0;
+  let probesAttack = 0;
+  let probesExploratory = 0;
+  for (const kind of probeIds.values()) {
+    if (kind === "honest-variant") probesHonest += 1;
+    else if (kind === "attack") probesAttack += 1;
+    else probesExploratory += 1;
+  }
+  const policyOnlyRows = exploits
+    .map((row, index) => ({ row, line: index + 2 }))
+    .filter(({ row }) => row.reproducibility === "needs-reviewer-policy");
+  if (policyOnlyRows.length !== explPolicyOnly) {
+    fail("needs-reviewer-policy rows disagree with the unrun-row count");
   }
 
   const releasedBest = releasedRows.map((row) => row.best);
@@ -881,6 +930,7 @@ function analyse(input) {
     probeCells: contract.length,
     probesHonestAccepted,
     probesHonestPromised,
+    probesHonestUnpromised,
     probesHonestCells,
     probesHonestHeld,
     probesForgedAccepted: forgedAcceptedPkgs.length,
@@ -891,8 +941,14 @@ function analyse(input) {
     probesNotRunnable,
     probesCreditFailCells,
     probesMovedFailCells,
+    probesDupCallCells,
+    probesWrapCells,
     probesCreditFailPkgs: creditFailPkgs,
     probesMovedFailPkgCount: movedFailPkgs.length,
+    probesDupCallPkgs: dupCallPkgs,
+    probesDupCallPkgCount: dupCallPkgs.length,
+    probesWrapPkgs: wrapPkgs,
+    probesWrapPkgCount: wrapPkgs.length,
     auditArtifacts: auditKeys.size,
     auditLeaksFound: leaksFound,
     auditSeedExamples: seedExamples,
@@ -955,6 +1011,19 @@ function analyse(input) {
     explNotReplicatedList,
     runtimeBatteryMin,
     runtimeProbesSec,
+    reasonClassCount,
+    reasonClassRules,
+    reasonClassPkgs,
+    probesHonest,
+    probesAttack,
+    probesExploratory,
+    policyOnlyRows,
+    runtimeExplASec: runtimeSec(runtimes, "E2a"),
+    runtimeExplBSec: runtimeSec(runtimes, "E2b"),
+    runtimeExplCSec: runtimeSec(runtimes, "E2c"),
+    runtimeAuditSec: runtimeSec(runtimes, "E5a"),
+    runtimeOverlapSec: runtimeSec(runtimes, "E5b"),
+    runtimeDeterminismSec: runtimeSec(runtimes, "E6"),
   };
 }
 
@@ -1025,6 +1094,7 @@ function generate(stats) {
     `\\newcommand{\\expProbeCells}{${stats.probeCells}}`,
     `\\newcommand{\\expProbesHonestAccepted}{${stats.probesHonestAccepted}}`,
     `\\newcommand{\\expProbesHonestPromised}{${stats.probesHonestPromised}}`,
+    `\\newcommand{\\expProbesHonestUnpromised}{${stats.probesHonestUnpromised}}`,
     `\\newcommand{\\expProbesHonestCells}{${stats.probesHonestCells}}`,
     `\\newcommand{\\expProbesHonestHeld}{${stats.probesHonestHeld}}`,
     `\\newcommand{\\expProbesForgedAccepted}{${stats.probesForgedAccepted}}`,
@@ -1037,6 +1107,12 @@ function generate(stats) {
     `\\newcommand{\\expProbesMovedFailCells}{${stats.probesMovedFailCells}}`,
     `\\newcommand{\\expProbesCreditFailPkgs}{${pkgList(stats.probesCreditFailPkgs)}}`,
     `\\newcommand{\\expProbesMovedFailPkgCount}{${stats.probesMovedFailPkgCount}}`,
+    `\\newcommand{\\expProbesDupCallCells}{${stats.probesDupCallCells}}`,
+    `\\newcommand{\\expProbesDupCallPkgs}{${pkgList(stats.probesDupCallPkgs)}}`,
+    `\\newcommand{\\expProbesDupCallPkgCount}{${stats.probesDupCallPkgCount}}`,
+    `\\newcommand{\\expProbesWrapCells}{${stats.probesWrapCells}}`,
+    `\\newcommand{\\expProbesWrapPkgs}{${pkgList(stats.probesWrapPkgs)}}`,
+    `\\newcommand{\\expProbesWrapPkgCount}{${stats.probesWrapPkgCount}}`,
     `\\newcommand{\\expAuditArtifacts}{${stats.auditArtifacts}}`,
     `\\newcommand{\\expAuditLeaksFound}{${stats.auditLeaksFound}}`,
     `\\newcommand{\\expAuditSeedExamples}{${stats.auditSeedExamples}}`,
@@ -1093,6 +1169,18 @@ function generate(stats) {
     `\\newcommand{\\expExplAtkMedianNewPaired}{${fmt(stats.explAtkMedianNewPaired)}}`,
     `\\newcommand{\\expExplAtkNewOnly}{${stats.explAtkNewOnly}}`,
     `\\newcommand{\\expExplNotReplicatedList}{${stats.explNotReplicatedList}}`,
+    `\\newcommand{\\expReasonClasses}{${stats.reasonClassCount}}`,
+    `\\newcommand{\\expReasonClassRules}{${stats.reasonClassRules}}`,
+    `\\newcommand{\\expReasonClassPkgs}{${stats.reasonClassPkgs}}`,
+    `\\newcommand{\\expProbesHonest}{${stats.probesHonest}}`,
+    `\\newcommand{\\expProbesAttack}{${stats.probesAttack}}`,
+    `\\newcommand{\\expProbesExploratory}{${stats.probesExploratory}}`,
+    `\\newcommand{\\expRuntimeExplASec}{${stats.runtimeExplASec}}`,
+    `\\newcommand{\\expRuntimeExplBSec}{${stats.runtimeExplBSec}}`,
+    `\\newcommand{\\expRuntimeExplCSec}{${stats.runtimeExplCSec}}`,
+    `\\newcommand{\\expRuntimeAuditSec}{${stats.runtimeAuditSec}}`,
+    `\\newcommand{\\expRuntimeOverlapSec}{${stats.runtimeOverlapSec}}`,
+    `\\newcommand{\\expRuntimeDeterminismSec}{${stats.runtimeDeterminismSec}}`,
     ...["a", "b", "c"].flatMap((part) => [
       `\\newcommand{\\expExpl${part.toUpperCase()}Clauses}{${stats.explPartClauses[part]}}`,
       ...Object.keys(stats.explCounts[part]).map(
@@ -1117,6 +1205,40 @@ function shortLocator(locator) {
   const blob = locator.match(/\/blob\/[0-9a-f]{40}\/([^#]+?)(?:#L(\d+))?$/);
   if (blob) return `${blob[1].split("/").pop()}${blob[2] ? ` L${blob[2]}` : ""}`;
   fail(`locator does not shorten: ${locator}`);
+}
+
+// Escape free text from the frozen exploit list for a table cell.
+function texCell(text) {
+  return String(text)
+    .replace(/\\/g, "\\textbackslash{}")
+    .replace(/[&%#_]/g, (ch) => `\\${ch}`)
+    .replace(/\^/g, "\\textasciicircum{}")
+    .replace(/~/g, "\\textasciitilde{}");
+}
+
+// The frozen rows no run could reach: every needs-reviewer-policy row
+// of exploits.csv as a table body, so the appendix list cannot drift
+// from the list it describes. r<n> is the row's line number, the same
+// citation Table T3 uses.
+function policyOnlyTex(stats) {
+  const rows = stats.policyOnlyRows
+    .map(
+      ({ row, line }) =>
+        `r${line} & ${ttId(row.package)} & \\texttt{${shortLocator(row.locator)}} & ${texCell(row.why)} \\\\`,
+    )
+    .join("\n");
+  return `% Generated by scripts/exp/macros.mjs. Do not edit.
+% The needs-reviewer-policy rows of paper/data/exp/exploits.csv: the
+% frozen exploit rows no run could measure because the record does not
+% pin the reviewer's policy enough to rebuild it identically.
+\\begin{tabular}{@{}r>{\\raggedright\\arraybackslash}p{0.18\\textwidth}>{\\raggedright\\arraybackslash}p{0.16\\textwidth}>{\\raggedright\\arraybackslash}p{0.48\\textwidth}@{}}
+\\toprule
+row & package & locator & why no run reached it \\\\
+\\midrule
+${rows}
+\\bottomrule
+\\end{tabular}
+`;
 }
 
 const EXPL_PART_LABEL = {
@@ -1227,15 +1349,18 @@ const input = loadInputs();
 const stats = analyse(input);
 const expected = generate(stats);
 const verdicts = verdictsFloat(stats);
+const policyOnly = policyOnlyTex(stats);
 
 if (process.argv.includes("--check")) {
   const defined = check(expected);
   checkFresh(VERDICTS_OUT, verdicts);
+  checkFresh(POLICY_ONLY_OUT, policyOnly);
   console.log(`exp-macros.mjs: ${defined} macros defined, all \\exp* uses covered, generated files fresh`);
 } else {
   mkdirSync(dirname(OUT), { recursive: true });
   writeFileSync(OUT, expected);
   writeFileSync(VERDICTS_OUT, verdicts);
+  writeFileSync(POLICY_ONLY_OUT, policyOnly);
   console.log(`packages=${stats.packages} artifacts=${stats.artifacts} cells=${stats.cells} failed=${stats.failedCells} rows=${stats.batteryRows}`);
   console.log(`released best-trivial max=${fmt(stats.releasedMax)} zero=${stats.releasedZero}/${stats.packages} headroom ${fmt(stats.headroomMin)}..${fmt(stats.headroomMax)} (median ${fmt(stats.headroomMedian)})`);
   console.log(`zero rows=${stats.zeroRows} format-gate=${stats.classCounts["format-gate"]} (${pct(stats.classCounts["format-gate"], stats.zeroRows)}% of zeros)`);
