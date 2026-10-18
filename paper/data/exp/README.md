@@ -162,8 +162,9 @@ bash scripts/exp/exploits-run-b.test.sh       # runs twice, diffs the CSVs
 - `exploit-results-b.csv` - same per-clause shape as
   `exploit-results-a.csv`, covering the part-b rows
   (re-measurable-before-and-after for tool-errors, mcp-safety,
-  checkout-consent, honesty, sycophancy, hundred-step; the after-only
-  rows land in the follow-up PR). Episode builders run a scripted
+  checkout-consent, honesty, sycophancy, hundred-step and
+  re-measurable-after-only for exploit-resistance, rollback-recovery,
+  silent-constraints). Episode builders run a scripted
   policy against a fresh package environment per task and record only
   the `{name, args}` calls, which the shipped grader replays. Findings
   reported as found: the tool-errors blind write-wait-write still
