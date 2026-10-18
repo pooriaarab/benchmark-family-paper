@@ -32,6 +32,9 @@ const REASON_CLASSES = ["format-gate", "contract-violation", "wrong-answer", "ab
 const PROBE_RESULTS = ["pass", "fail", "exploratory", "not-runnable", "outside-contract"];
 const NAME_RE = /^[a-z0-9][a-z0-9-]*$/;
 const FORGED_RE = /^atk-forged-/;
+// A bare four-digit year is not a seed value; the hidden-seed recount
+// drops years along with the public seed itself (issue #212, M9).
+const YEAR_RE = /^(19|20)\d{2}$/;
 
 const SOURCES = [
   { key: "versions", path: VERSIONS, rel: "scripts/exp/versions.json" },
@@ -209,8 +212,11 @@ function loadInputs() {
   const reasons = readCsv(SOURCES[5].path, ["package", "version", "class", "count"]);
   const contract = readQuotedCsv(SOURCES[6].path,
     ["package", "version", "probe", "class", "result", "score", "reason", "outside_contract"]);
-  const seeds = JSON.parse(readFileSync(SOURCES[7].path, "utf8")).seeds ?? [];
+  const seedsDoc = JSON.parse(readFileSync(SOURCES[7].path, "utf8"));
+  const seeds = seedsDoc.seeds ?? [];
   if (seeds.length === 0) fail("hidden-seeds.json lists no seeds");
+  const publicSeed = String(seedsDoc.publicSeed ?? "");
+  if (!/^\d+$/.test(publicSeed)) fail("hidden-seeds.json lists no publicSeed");
   const audit = readCsv(SOURCES[8].path, ["package", "version", "wave", "files", "tasks_file", "public_tasks", "hidden_named_files", "answer_bearing_files", "doc_seeds", "doc_hidden_seed_examples"]);
   const census = readCsv(SOURCES[9].path, ["package", "version", "wave", "generator", "split_flag", "seed_flag", "output_flag", "hidden_default", "hidden_needs_seed", "tasks_flag", "qualifies"]);
   const overlap = readCsv(SOURCES[10].path, ["package", "version", "wave", "seed", "generator", "hidden_tasks", "public_tasks", "prompt_pairs", "prompt_exact_overlap", "prompt_norm_overlap", "expected_pairs", "expected_exact_overlap", "expected_norm_overlap", "id_exact_overlap", "id_suffix_overlap"]);
@@ -227,7 +233,7 @@ function loadInputs() {
     ["package", "locator", "measured_state", "record_value", "measured_value", "clause", "record_holds", "postfix_holds", "status", "notes"]);
   const runtimes = readCsv(SOURCES[17].path,
     ["experiment", "script", "artifacts", "cells", "wall_seconds", "measured_at"]);
-  return { versions, pinned, waveOf, released, cells, headroom, reasons, probeIds, probeType, contract, seeds, audit, census, overlap, detConfig, determinism, exploits, explA, explB, explC, runtimes };
+  return { versions, pinned, waveOf, released, cells, headroom, reasons, probeIds, probeType, contract, seeds, publicSeed, audit, census, overlap, detConfig, determinism, exploits, explA, explB, explC, runtimes };
 }
 
 // A `;`-joined list where `none` means empty; an empty entry after a
@@ -243,7 +249,7 @@ function listLen(rel, row, field) {
 }
 
 function analyse(input) {
-  const { pinned, waveOf, released, cells, headroom, reasons, probeIds, probeType, contract, seeds, audit, census, overlap, detConfig, determinism, exploits, explA, explB, explC, runtimes } = input;
+  const { pinned, waveOf, released, cells, headroom, reasons, probeIds, probeType, contract, seeds, publicSeed, audit, census, overlap, detConfig, determinism, exploits, explA, explB, explC, runtimes } = input;
   const artifacts = new Set();
   const policies = new Set();
   const seenCell = new Set();
@@ -341,6 +347,7 @@ function analyse(input) {
   const qualified = new Set();
   let leaksFound = 0;
   let seedExamples = 0;
+  let seedExamplesOther = 0;
   let seedlessQualified = 0;
   for (const row of audit) {
     const key = keyOf(row.package, row.version);
@@ -350,6 +357,12 @@ function analyse(input) {
     leaksFound += listLen(SOURCES[8].rel, row, "hidden_named_files")
       + listLen(SOURCES[8].rel, row, "answer_bearing_files");
     seedExamples += listLen(SOURCES[8].rel, row, "doc_hidden_seed_examples");
+    // The recount: a documented value counts only when it is neither
+    // the public seed itself nor a bare year (issue #212, M9).
+    if (row.doc_hidden_seed_examples.trim() !== "none") {
+      seedExamplesOther += row.doc_hidden_seed_examples.split(";")
+        .filter((v) => v !== publicSeed && !YEAR_RE.test(v)).length;
+    }
   }
   for (const row of census) {
     const key = keyOf(row.package, row.version);
@@ -655,6 +668,13 @@ function analyse(input) {
   for (const v of VERDICTS) explTotals[v] = explCounts.a[v] + explCounts.b[v] + explCounts.c[v];
   const explClauses = explA.length + explB.length + explC.length;
   const explRecordClauses = explTotals.replicated + explTotals["not-replicated"];
+  // The artifact-kind split of the record clauses must account for
+  // every one of them (issue #212, M2).
+  const recordReleased = explCounts.a.replicated + explCounts.b.replicated + replTarball
+    + explCounts.a["not-replicated"] + explCounts.b["not-replicated"] + notReplTarball;
+  if (recordReleased + replCommit + notReplCommit !== explRecordClauses) {
+    fail(`record-clause artifact split ${recordReleased}+${replCommit + notReplCommit} != ${explRecordClauses} record clauses`);
+  }
   const explPostfixClauses = explTotals["fix-holds"] + explTotals["fix-fails"];
   const explAtkRows = new Set(
     [...explPair].map((pair) => Number(pair.split("|")[0])).filter((line) => isAttackRow(frozen.get(line))),
@@ -876,6 +896,7 @@ function analyse(input) {
     auditArtifacts: auditKeys.size,
     auditLeaksFound: leaksFound,
     auditSeedExamples: seedExamples,
+    auditSeedExamplesOther: seedExamplesOther,
     auditCensusQualified: qualified.size,
     auditSeedlessQualified: seedlessQualified,
     auditSeeds: seedSet.size,
@@ -915,6 +936,12 @@ function analyse(input) {
     explReplCommit: replCommit,
     explNotReplReleased: explCounts.a["not-replicated"] + explCounts.b["not-replicated"] + notReplTarball,
     explNotReplCommit: notReplCommit,
+    // Record-clause totals split by artifact kind: released tarballs
+    // versus the pinned intermediate commits the record cited. The
+    // two must sum to the record-clause total (issue #212, M2).
+    explRecordReleased: explCounts.a.replicated + explCounts.b.replicated + replTarball
+      + explCounts.a["not-replicated"] + explCounts.b["not-replicated"] + notReplTarball,
+    explRecordCommit: replCommit + notReplCommit,
     explFixFailsAttack: explBadRows.filter((r) => r.verdict === "fix-fails" && r.attack).length,
     explFixFailsHonest: explBadRows.filter((r) => r.verdict === "fix-fails" && !r.attack).length,
     explFixFailsAttackPkgs: [...fixFailAttackPkgs],
@@ -1013,6 +1040,7 @@ function generate(stats) {
     `\\newcommand{\\expAuditArtifacts}{${stats.auditArtifacts}}`,
     `\\newcommand{\\expAuditLeaksFound}{${stats.auditLeaksFound}}`,
     `\\newcommand{\\expAuditSeedExamples}{${stats.auditSeedExamples}}`,
+    `\\newcommand{\\expAuditSeedExamplesOther}{${stats.auditSeedExamplesOther}}`,
     `\\newcommand{\\expAuditCensusQualified}{${stats.auditCensusQualified}}`,
     `\\newcommand{\\expAuditSeedlessQual}{${stats.auditSeedlessQualified}}`,
     `\\newcommand{\\expAuditSeeds}{${stats.auditSeeds}}`,
@@ -1053,6 +1081,8 @@ function generate(stats) {
     `\\newcommand{\\expExplReplCommit}{${stats.explReplCommit}}`,
     `\\newcommand{\\expExplNotReplReleased}{${stats.explNotReplReleased}}`,
     `\\newcommand{\\expExplNotReplCommit}{${stats.explNotReplCommit}}`,
+    `\\newcommand{\\expExplRecordReleased}{${stats.explRecordReleased}}`,
+    `\\newcommand{\\expExplRecordCommit}{${stats.explRecordCommit}}`,
     `\\newcommand{\\expExplFixFailsAttack}{${stats.explFixFailsAttack}}`,
     `\\newcommand{\\expExplFixFailsHonest}{${stats.explFixFailsHonest}}`,
     `\\newcommand{\\expExplFixFailsAttackPkgs}{${pkgList(stats.explFixFailsAttackPkgs)}}`,
