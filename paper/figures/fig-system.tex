@@ -56,6 +56,6 @@
 \draw[flow] (0.9,-6.05) -- (10.4,-6.05);
 \node[font=\scriptsize] at (5.6,-6.45) {policy ladder: each rung to the right sees more of the package};
 \end{tikzpicture}
-\caption{The build pipeline, the three verification gates, and the policy ladder. Each package passes L1 (its own tests and CI), L2 (an LLM council reading the diff), and L3 (probing sessions that attack the running package); findings return to the builder as fix rounds. The ladder orders attack policies by what they may see: blind policies see only run-time input, prompt-reading policies read the package's public text, task-aware policies are written against the package's own task shape, and the oracle is the scripted ideal answer shipped with each package.}
+\caption{The build pipeline, the three verification gates, and the policy ladder. Each package passes L1 (its own tests and CI), L2 (LLM diff review), and L3 (probing sessions that attack the running package); findings return to the builder as fix rounds. The ladder orders attack policies by what they may see: blind policies see only run-time input, prompt-reading policies read the package's public text, task-aware policies are written against the package's own task shape, and the oracle is the scripted ideal answer shipped with each package.}
 \label{fig:system}
 \end{figure}
