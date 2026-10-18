@@ -24,7 +24,7 @@ const NAME_RE = /^[a-z0-9][a-z0-9-]*$/;
 // column counts only values that are neither the public seed nor a
 // year, the same recount macros.mjs applies (issue #212, M9).
 const YEAR_RE = /^(19|20)\d{2}$/;
-const LEAK_COLS = ["hidden files", "answer files", "other seed values"];
+const LEAK_COLS = ["hidden files", "answer files", "other seed-like values"];
 const JITTER = 0.14;
 
 function fail(message) {
