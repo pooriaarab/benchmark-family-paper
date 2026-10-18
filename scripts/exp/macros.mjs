@@ -737,14 +737,22 @@ function analyse(input) {
     if (probeSeen.has(cellKey)) fail(`contract-probes.csv: duplicate cell ${cellKey}`);
     probeSeen.add(cellKey);
     if (!probeStats.has(key)) {
-      probeStats.set(key, { hvPromised: 0, hvFail: 0, forgedFail: 0, fails: 0, creditFail: 0, movedFail: 0 });
+      probeStats.set(key, { hvPromised: 0, hvFail: 0, forgedFail: 0, fails: 0, creditFail: 0, movedFail: 0, dupFail: 0, wrapFail: 0 });
     }
     const stat = probeStats.get(key);
     if (row.result === "fail") {
       stat.fails += 1;
       const type = probeType.get(row.probe);
       if (type === "A") stat.creditFail += 1;
-      else if (type === "B") stat.movedFail += 1;
+      else if (type === "B") {
+        stat.movedFail += 1;
+        // The duplicate-call penalty is documented behaviour on these
+        // graders (issue #213, M4); the text wraps are real defects.
+        if (row.probe === "atk-dup-tool-calls") stat.dupFail += 1;
+        else if (row.probe === "atk-prompt-echo" || row.probe === "atk-score-injection") {
+          stat.wrapFail += 1;
+        }
+      }
       else if (row.class === "attack") fail(`contract-probes.csv: ${cellKey} failed under ${row.probe} which is no frozen attack type`);
     }
     if (row.class === "honest-variant" && (row.result === "pass" || row.result === "fail")) {
@@ -774,9 +782,13 @@ function analyse(input) {
   let probesFailedCells = 0;
   let probesCreditFailCells = 0;
   let probesMovedFailCells = 0;
+  let probesDupCallCells = 0;
+  let probesWrapCells = 0;
   const forgedAcceptedPkgs = [];
   const creditFailPkgs = [];
   const movedFailPkgs = [];
+  const dupCallPkgs = [];
+  const wrapPkgs = [];
   for (const [pkg, ver] of released) {
     const stat = probeStats.get(keyOf(pkg, ver));
     if (stat.hvFail === 0) probesHonestAccepted += 1;
@@ -786,10 +798,22 @@ function analyse(input) {
     probesFailedCells += stat.fails;
     probesCreditFailCells += stat.creditFail;
     probesMovedFailCells += stat.movedFail;
+    probesDupCallCells += stat.dupFail;
+    probesWrapCells += stat.wrapFail;
     if (stat.forgedFail > 0) forgedAcceptedPkgs.push(pkg);
     if (stat.creditFail > 0) creditFailPkgs.push(pkg);
     if (stat.movedFail > 0) movedFailPkgs.push(pkg);
+    if (stat.dupFail > 0) dupCallPkgs.push(pkg);
+    if (stat.wrapFail > 0) wrapPkgs.push(pkg);
   }
+  // The type-B split must name every moved-fail cell: the designed
+  // duplicate-call penalties plus the text wraps (issue #213, M4). A
+  // nonzero remainder means a third kind the text does not cover.
+  const probesMovedOtherCells = probesMovedFailCells - probesDupCallCells - probesWrapCells;
+  if (probesMovedOtherCells !== 0) {
+    fail(`type-B split ${probesDupCallCells}+${probesWrapCells} leaves ${probesMovedOtherCells} unnamed moved fails`);
+  }
+  const probesHonestUnpromised = released.size - probesHonestPromised;
 
   // Frozen-list shapes for Appendix J: declared reason classes and
   // their regex-rule count, probe counts by kind, and the frozen
@@ -886,6 +910,7 @@ function analyse(input) {
     probeCells: contract.length,
     probesHonestAccepted,
     probesHonestPromised,
+    probesHonestUnpromised,
     probesHonestCells,
     probesHonestHeld,
     probesForgedAccepted: forgedAcceptedPkgs.length,
@@ -896,8 +921,14 @@ function analyse(input) {
     probesNotRunnable,
     probesCreditFailCells,
     probesMovedFailCells,
+    probesDupCallCells,
+    probesWrapCells,
     probesCreditFailPkgs: creditFailPkgs,
     probesMovedFailPkgCount: movedFailPkgs.length,
+    probesDupCallPkgs: dupCallPkgs,
+    probesDupCallPkgCount: dupCallPkgs.length,
+    probesWrapPkgs: wrapPkgs,
+    probesWrapPkgCount: wrapPkgs.length,
     auditArtifacts: auditKeys.size,
     auditLeaksFound: leaksFound,
     auditSeedExamples: seedExamples,
@@ -1036,6 +1067,7 @@ function generate(stats) {
     `\\newcommand{\\expProbeCells}{${stats.probeCells}}`,
     `\\newcommand{\\expProbesHonestAccepted}{${stats.probesHonestAccepted}}`,
     `\\newcommand{\\expProbesHonestPromised}{${stats.probesHonestPromised}}`,
+    `\\newcommand{\\expProbesHonestUnpromised}{${stats.probesHonestUnpromised}}`,
     `\\newcommand{\\expProbesHonestCells}{${stats.probesHonestCells}}`,
     `\\newcommand{\\expProbesHonestHeld}{${stats.probesHonestHeld}}`,
     `\\newcommand{\\expProbesForgedAccepted}{${stats.probesForgedAccepted}}`,
@@ -1048,6 +1080,12 @@ function generate(stats) {
     `\\newcommand{\\expProbesMovedFailCells}{${stats.probesMovedFailCells}}`,
     `\\newcommand{\\expProbesCreditFailPkgs}{${pkgList(stats.probesCreditFailPkgs)}}`,
     `\\newcommand{\\expProbesMovedFailPkgCount}{${stats.probesMovedFailPkgCount}}`,
+    `\\newcommand{\\expProbesDupCallCells}{${stats.probesDupCallCells}}`,
+    `\\newcommand{\\expProbesDupCallPkgs}{${pkgList(stats.probesDupCallPkgs)}}`,
+    `\\newcommand{\\expProbesDupCallPkgCount}{${stats.probesDupCallPkgCount}}`,
+    `\\newcommand{\\expProbesWrapCells}{${stats.probesWrapCells}}`,
+    `\\newcommand{\\expProbesWrapPkgs}{${pkgList(stats.probesWrapPkgs)}}`,
+    `\\newcommand{\\expProbesWrapPkgCount}{${stats.probesWrapPkgCount}}`,
     `\\newcommand{\\expAuditArtifacts}{${stats.auditArtifacts}}`,
     `\\newcommand{\\expAuditLeaksFound}{${stats.auditLeaksFound}}`,
     `\\newcommand{\\expAuditSeedExamples}{${stats.auditSeedExamples}}`,
